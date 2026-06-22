@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>avalone.online</title>
+<script>
+(function(){try{var t=localStorage.getItem('avalone_theme');
+  if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();
+</script>
+<link rel="manifest" href="/manifest.json">
+<style>
+:root{--bg:#0f1115;--card:#1a1d24;--line:#2a2f3a;--txt:#e6e8ec;--muted:#9aa3b2;
+      --green:#3fb950;--red:#f85149;--accent:#58a6ff;--amber:#d29922}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#f4f6f9;--card:#ffffff;--line:#d6dbe3;--txt:#1a1d24;
+    --muted:#5b6573;--green:#1a7f37;--red:#cf222e;--accent:#0969da;--amber:#9a6700}
+}
+:root[data-theme="light"]{--bg:#f4f6f9;--card:#ffffff;--line:#d6dbe3;--txt:#1a1d24;
+  --muted:#5b6573;--green:#1a7f37;--red:#cf222e;--accent:#0969da;--amber:#9a6700}
+:root[data-theme="dark"]{--bg:#0f1115;--card:#1a1d24;--line:#2a2f3a;--txt:#e6e8ec;
+  --muted:#9aa3b2;--green:#3fb950;--red:#f85149;--accent:#58a6ff;--amber:#d29922}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:40px 16px}
+header{text-align:center;margin-bottom:36px}
+.logo{font-size:42px;margin-bottom:8px}
+h1{font-size:24px;margin:0 0 8px}
+p.lead{margin:0;color:var(--muted);font-size:15px}
+.apps{display:grid;gap:14px}
+.app-card{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;color:inherit;transition:transform .08s,border-color .15s}
+.app-card:hover{border-color:var(--accent)}
+.app-card:active{transform:scale(.99)}
+.app-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.app-icon{font-size:36px;line-height:1}
+.app-name{font-size:18px;font-weight:600}
+.app-desc{color:var(--muted);font-size:14px;line-height:1.4}
+.app-arrow{margin-left:auto;color:var(--muted);font-size:20px}
+footer{margin-top:40px;text-align:center;color:var(--muted);font-size:13px}
+.lang-switch{position:fixed;top:14px;right:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--txt);font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+  <select class="lang-switch" id="lang" onchange="setLang(this.value)">
+    <option value="auto">Auto</option>
+    <option value="ru">Русский</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+  </select>
+
+  <div class="wrap">
+    <header>
+      <div class="logo">◈</div>
+      <h1 data-i="title">avalone.online</h1>
+      <p class="lead" data-i="subtitle">Пространство простых приложений для личного и семейного учёта.</p>
+    </header>
+
+    <main class="apps" id="apps">
+      {% for app in apps %}
+      <a class="app-card" href="{{ app.url }}">
+        <div class="app-head">
+          <div class="app-icon">{{ app.icon }}</div>
+          <div>
+            <div class="app-name">{{ app.name }}</div>
+            <div class="app-desc">{{ app.description }}</div>
+          </div>
+          <div class="app-arrow">→</div>
+        </div>
+      </a>
+      {% endfor %}
+    </main>
+
+    <footer>
+      <span data-i="footer">© avalone.online</span>
+    </footer>
+  </div>
+
+<script>
+const I18N = {
+  ru:{title:'avalone.online',subtitle:'Простые приложения, которые решают реальные задачи людей.',footer:'© avalone.online'},
+  en:{title:'avalone.online',subtitle:'Simple apps that solve real problems for real people.',footer:'© avalone.online'},
+  ko:{title:'avalone.online',subtitle:'사람들의 실제 문제를 해결하는 간단한 앱.',footer:'© avalone.online'}
+};
+function detectLang(){var s=navigator.language||navigator.userLanguage||'ru';if(s.startsWith('ko'))return'ko';if(s.startsWith('en'))return'en';return'ru';}
+function resolveLang(l){return l==='auto'?detectLang():(I18N[l]?l:'ru');}
+function applyLang(l){
+  l=resolveLang(l); localStorage.setItem('avalone_lang', l);
+  document.documentElement.lang=l;
+  var t=I18N[l];
+  document.querySelectorAll('[data-i]').forEach(function(el){var k=el.dataset.i;if(t[k])el.textContent=t[k];});
+}
+function setLang(l){applyLang(l);}
+(function(){
+  var stored=localStorage.getItem('avalone_lang')||'auto';
+  document.getElementById('lang').value=stored;
+  applyLang(stored);
+})();
+</script>
+</body>
+</html>
