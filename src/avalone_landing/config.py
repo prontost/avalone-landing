@@ -28,4 +28,11 @@ APPS = [
         "description": "Деньги перестают течь сквозь пальцы: учёт, аналитика, советы.",
         "url": "https://counta.avalone.online",
     },
+    {
+        "id": "routa",
+        "name": "Routa",
+        "icon": "🚐",
+        "description": "Организация поездок людей на работу: маршруты, места, уведомления.",
+        "url": "https://routa.avalone.online",
+    },
 ]
