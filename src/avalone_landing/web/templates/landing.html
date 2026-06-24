@@ -175,7 +175,7 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="installBtn" onclick="installPWA()" title="Установить" style="display:none">⬇️</button>
+        <button class="icon-btn" id="installBtn" onclick="installPWA()" title="Установить приложение">⬇️</button>
         <select class="lang-select" id="lang" onchange="setLang(this.value)" title="Язык">
           <option value="auto">🌐</option>
           <option value="ru">RU</option>
@@ -262,7 +262,13 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 var deferredInstallPrompt = null;
-var isInstalled = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function isInstalledPWA(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.matchMedia('(display-mode: fullscreen)').matches ||
+         window.matchMedia('(display-mode: minimal-ui)').matches ||
+         navigator.standalone === true;
+}
 
 function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -270,11 +276,25 @@ function isIOS(){
 function isIOSSafari(){
   return isIOS() && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS/.test(navigator.userAgent);
 }
+function isAndroid(){
+  return /Android/.test(navigator.userAgent);
+}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('/sw.js').then(function(reg){
       console.log('SW registered:', reg.scope);
+      reg.addEventListener('updatefound', function(){
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', function(){
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            // New version available — activate it immediately.
+            newWorker.postMessage({action:'skipWaiting'});
+            window.location.reload();
+          }
+        });
+      });
     }).catch(function(err){
       console.log('SW registration failed:', err);
     });
@@ -284,59 +304,59 @@ if('serviceWorker' in navigator){
 window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault();
   deferredInstallPrompt = e;
-  showInstallButton();
+  console.log('beforeinstallprompt captured');
 });
 
 window.addEventListener('appinstalled', function(){
   deferredInstallPrompt = null;
-  hideInstallButton();
+  updateInstallButton();
 });
 
-function showInstallButton(){
-  if(isInstalled)return;
+function updateInstallButton(){
   var btn = document.getElementById('installBtn');
-  if(btn)btn.style.display = 'flex';
-}
-function hideInstallButton(){
-  var btn = document.getElementById('installBtn');
-  if(btn)btn.style.display = 'none';
-}
-function installPWA(){
-  if(isIOSSafari()){
-    alert('На iPhone: нажмите «Поделиться» внизу Safari, затем «На экран «Домой»».');
-    return;
+  if(!btn)return;
+  if(isInstalledPWA()){
+    btn.style.display = 'none';
+  }else{
+    btn.style.display = 'flex';
   }
-  if(!deferredInstallPrompt){
-    // Try to re-trigger by checking if install is available.
-    if(isInstalled){
-      alert('Приложение уже установлено.');
-    }else{
-      alert('Установка доступна в Chrome/Edge на Android или Windows. Обновите страницу.');
-    }
-    return;
-  }
-  deferredInstallPrompt.prompt();
-  deferredInstallPrompt.userChoice.then(function(choice){
-    if(choice.outcome === 'accepted'){
-      hideInstallButton();
-    }
-    deferredInstallPrompt = null;
-  });
 }
 
-// Show install button if conditions are right.
-(function checkInstallable(){
-  if(isInstalled)return;
-  // If on iOS Safari, always show install hint button.
-  if(isIOSSafari()){
-    showInstallButton();
+function installPWA(){
+  if(isInstalledPWA()){
+    alert('Приложение уже установлено.');
     return;
   }
-  // On other platforms, wait for beforeinstallprompt.
-  // If it doesn't fire within 3s, still show button as a hint.
-  setTimeout(function(){
-    if(!isInstalled)showInstallButton();
-  }, 3000);
+  if(isIOSSafari()){
+    alert('На iPhone нажмите кнопку «Поделиться» внизу Safari, затем выберите «На экран «Домой»».');
+    return;
+  }
+  if(isIOS()){
+    alert('На iPhone PWA устанавливается только через Safari. Откройте сайт в Safari и нажмите «Поделиться» → «На экран «Домой»».');
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(function(choice){
+      if(choice.outcome === 'accepted'){
+        updateInstallButton();
+      }
+      deferredInstallPrompt = null;
+    });
+    return;
+  }
+  // No deferred prompt available (e.g. already dismissed or not supported).
+  if(isAndroid()){
+    alert('Чтобы установить, нажмите «⋮» в Chrome и выберите «Добавить на главный экран».');
+  }else{
+    alert('Чтобы установить, нажмите в браузере «⋯» → «Приложения» → «Установить Avalone» (Chrome/Edge).');
+  }
+}
+
+(function initInstallButton(){
+  updateInstallButton();
+  // Re-check if display mode changes.
+  window.matchMedia('(display-mode: standalone)').addEventListener('change', updateInstallButton);
 })();
 
 const I18N = {
