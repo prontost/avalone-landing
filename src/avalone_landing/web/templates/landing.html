@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#0a0c10">
 <meta name="description" content="Avalone — цифровая вселенная поверх реального мира.">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <title>Avalone</title>
 <link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <style>
 :root{
   --bg:#0a0c10;
@@ -65,17 +67,19 @@ body::before{
              radial-gradient(circle at 80% 90%, rgba(124,92,255,.08), transparent 35%);
   pointer-events:none;
 }
-.wrap{max-width:720px;margin:0 auto;padding:24px 16px 100px}
+.wrap{max-width:720px;margin:0 auto;padding:24px 16px 110px}
 
 /* Header */
-.portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.brand{display:flex;align-items:center;gap:12px}
-.logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow)}
+.portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:nowrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow);flex:0 0 auto}
 .brand-title{font-size:22px;font-weight:700;letter-spacing:-.3px}
 .brand-sub{color:var(--muted);font-size:12px;margin-top:-2px}
-.header-actions{display:flex;gap:10px;align-items:center}
+.header-actions{display:flex;gap:10px;align-items:center;flex:0 0 auto}
 .icon-btn{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--txt);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:background .15s,border-color .15s}
 .icon-btn:hover{border-color:var(--accent);background:var(--card-2)}
+.lang-select{height:40px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--txt);font-size:14px;padding:0 10px;cursor:pointer;outline:none}
+.lang-select:focus{border-color:var(--accent)}
 
 /* Status card */
 .status-card{
@@ -85,9 +89,11 @@ body::before{
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
 .status-card.active{background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(63,185,80,.05));border-color:rgba(63,185,80,.3)}
+.status-card.dev{background:linear-gradient(135deg,rgba(217,153,34,.15),rgba(217,153,34,.05));border-color:rgba(217,153,34,.3)}
 .status-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
 .status-dot.active{background:var(--green);animation:none}
+.status-dot.dev{background:var(--amber);animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .status-text{color:var(--muted);font-size:13px;line-height:1.5;margin:0}
 .status-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
@@ -108,6 +114,7 @@ body::before{
 .branch:hover{border-color:var(--accent);box-shadow:var(--shadow)}
 .branch:active{transform:scale(.98)}
 .branch.active{border-color:rgba(124,92,255,.4);background:linear-gradient(180deg,var(--card),var(--card-2))}
+.branch.dev{border-color:rgba(217,153,34,.35);background:linear-gradient(180deg,var(--card),rgba(217,153,34,.05))}
 .branch.coming{opacity:.72}
 .branch-icon{font-size:32px;line-height:1}
 .branch-name{font-size:15px;font-weight:700}
@@ -117,6 +124,7 @@ body::before{
   padding:3px 7px;border-radius:999px;background:rgba(217,153,34,.15);color:var(--amber);border:1px solid rgba(217,153,34,.25)
 }
 .branch-badge.active{background:rgba(63,185,80,.15);color:var(--green);border-color:rgba(63,185,80,.25)}
+.branch-badge.dev{background:rgba(217,153,34,.2);color:var(--amber);border-color:rgba(217,153,34,.3)}
 .branch-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .branch-action{font-size:11px;padding:5px 9px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);color:var(--txt);text-decoration:none;white-space:nowrap}
 .branch-action:hover{border-color:var(--accent)}
@@ -154,19 +162,9 @@ body::before{
 
 /* Footer */
 footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
-
-/* Language switch */
-.lang-switch{position:fixed;top:14px;right:62px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--txt);font-size:13px;cursor:pointer;z-index:101}
 </style>
 </head>
 <body>
-  <select class="lang-switch" id="lang" onchange="setLang(this.value)">
-    <option value="auto">Auto</option>
-    <option value="ru">Русский</option>
-    <option value="en">English</option>
-    <option value="ko">한국어</option>
-  </select>
-
   <div class="wrap">
     <header class="portal-header">
       <div class="brand">
@@ -177,33 +175,41 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
         </div>
       </div>
       <div class="header-actions">
+        <select class="lang-select" id="lang" onchange="setLang(this.value)" title="Язык">
+          <option value="auto">🌐</option>
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+          <option value="ko">KO</option>
+        </select>
         <button class="icon-btn" onclick="toggleTheme()" title="Тема">🌓</button>
         <button class="icon-btn" onclick="showSearch()" title="Поиск">⌘</button>
       </div>
     </header>
 
-    <div class="status-card active" id="statusCard">
-      <div class="status-title"><span class="status-dot active"></span><span data-i="status_title">Активно</span></div>
-      <p class="status-text" data-i="status_text">Ветка «Работа» уже работает. Routa помогает координировать поездки на завод.</p>
+    <div class="status-card dev" id="statusCard">
+      <div class="status-title"><span class="status-dot dev"></span><span data-i="status_title">В разработке</span></div>
+      <p class="status-text" data-i="status_text">Первая ветка — Работа. Скоро здесь будут поездки, смены и координация.</p>
       <div class="status-actions">
-        <a class="pill-btn" href="https://routa.avalone.online" data-i="status_btn1">🚐 Открыть Routa</a>
-        <a class="pill-btn" href="https://counta.avalone.online" data-i="status_btn2">🪙 Counta</a>
+        <a class="pill-btn" href="https://counta.avalone.online" data-i="status_btn1">🪙 Открыть Counta</a>
+        <a class="pill-btn" href="#" onclick="showComingSoon('Работа');return false" data-i="status_btn2">🛠️ Узнать о Работе</a>
       </div>
     </div>
 
     <div class="section-title" data-i="quick_title">Быстрые действия</div>
     <div class="quick-actions">
-      <a class="quick-action" href="https://routa.avalone.online/trips" data-i="quick_1">🚐 Мои поездки</a>
-      <a class="quick-action" href="https://routa.avalone.online/shifts" data-i="quick_2">📋 Смены</a>
-      <a class="quick-action" href="https://counta.avalone.online" data-i="quick_3">🪙 Бюджет</a>
-      <a class="quick-action" href="#" data-i="quick_4">👤 Профиль</a>
+      <a class="quick-action" href="https://counta.avalone.online" data-i="quick_1">🪙 Бюджет</a>
+      <a class="quick-action" href="#" onclick="showComingSoon('Работа');return false" data-i="quick_2">🛠️ Работа</a>
+      <a class="quick-action" href="#" onclick="showComingSoon('Профиль');return false" data-i="quick_3">👤 Профиль</a>
+      <a class="quick-action" href="#" onclick="showComingSoon('Сообщества');return false" data-i="quick_4">🌐 Сообщества</a>
     </div>
 
     <div class="section-title" data-i="branches_title">Вселенная Avalone</div>
     <main class="bento" id="branches">
       {% for branch in branches %}
-      <a class="branch {{ 'active' if branch.status == 'active' else 'coming' }}" href="{{ branch.url or '#' }}" {% if branch.status != 'active' %}onclick="return showComingSoon('{{ branch.name }}')"{% endif %}>
-        <span class="branch-badge {{ 'active' if branch.status == 'active' }}">{{ 'Работает' if branch.status == 'active' else 'Скоро' }}</span>
+      <a class="branch {{ 'active' if branch.status == 'active' else ('dev' if branch.status == 'in_dev' else 'coming') }}" href="{{ branch.url or '#' }}" {% if branch.status != 'active' %}onclick="return showComingSoon('{{ branch.name }}')"{% endif %}>
+        <span class="branch-badge {{ 'active' if branch.status == 'active' else ('dev' if branch.status == 'in_dev' else '') }}">
+          {{ 'Работает' if branch.status == 'active' else ('В разработке' if branch.status == 'in_dev' else 'Скоро') }}
+        </span>
         <div class="branch-icon">{{ branch.icon }}</div>
         <div class="branch-name">{{ branch.name }}</div>
         <div class="branch-desc">{{ branch.description }}</div>
@@ -238,9 +244,9 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
         <span class="bottom-icon">◈</span>
         <span data-i="nav_home">Портал</span>
       </a>
-      <a class="bottom-item" href="https://routa.avalone.online">
-        <span class="bottom-icon">🚐</span>
-        <span data-i="nav_work">Работа</span>
+      <a class="bottom-item" href="https://counta.avalone.online">
+        <span class="bottom-icon">🪙</span>
+        <span data-i="nav_work">Финансы</span>
       </a>
       <a class="bottom-item" href="#" onclick="showComingSoon('Сообщества');return false">
         <span class="bottom-icon">💬</span>
@@ -254,41 +260,51 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
   </nav>
 
 <script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/sw.js').then(function(reg){
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err){
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
 const I18N = {
   ru:{
     brand:'Avalone',tagline:'Цифровая вселенная',
-    status_title:'Активно',status_text:'Ветка «Работа» уже работает. Routa помогает координировать поездки на завод.',
-    status_btn1:'🚐 Открыть Routa',status_btn2:'🪙 Counta',
-    quick_title:'Быстрые действия',quick_1:'🚐 Мои поездки',quick_2:'📋 Смены',quick_3:'🪙 Бюджет',quick_4:'👤 Профиль',
+    status_title:'В разработке',status_text:'Первая ветка — Работа. Скоро здесь будут поездки, смены и координация.',
+    status_btn1:'🪙 Открыть Counta',status_btn2:'🛠️ Узнать о Работе',
+    quick_title:'Быстрые действия',quick_1:'🪙 Бюджет',quick_2:'🛠️ Работа',quick_3:'👤 Профиль',quick_4:'🌐 Сообщества',
     branches_title:'Вселенная Avalone',
     teaser_title:'Новые ветки уже в разработке',teaser_text:'Оставьте способ связи, и мы сообщим, когда запустится нужная вам ветка.',
     teaser_placeholder:'Telegram / KakaoTalk / email',teaser_btn:'Сообщить',
     footer:'© Avalone — цифровая вселенная поверх реального мира',
-    nav_home:'Портал',nav_work:'Работа',nav_chat:'Чат',nav_profile:'Профиль',
+    nav_home:'Портал',nav_work:'Финансы',nav_chat:'Чат',nav_profile:'Профиль',
     coming_soon:'Скоро запустим: '
   },
   en:{
     brand:'Avalone',tagline:'Digital universe',
-    status_title:'Active',status_text:'The Work branch is live. Routa helps coordinate rides to the factory.',
-    status_btn1:'🚐 Open Routa',status_btn2:'🪙 Counta',
-    quick_title:'Quick actions',quick_1:'🚐 My rides',quick_2:'📋 Shifts',quick_3:'🪙 Budget',quick_4:'👤 Profile',
+    status_title:'In development',status_text:'The first branch — Work. Rides, shifts and coordination coming soon.',
+    status_btn1:'🪙 Open Counta',status_btn2:'🛠️ About Work',
+    quick_title:'Quick actions',quick_1:'🪙 Budget',quick_2:'🛠️ Work',quick_3:'👤 Profile',quick_4:'🌐 Community',
     branches_title:'Avalone Universe',
     teaser_title:'New branches are in development',teaser_text:'Leave your contact and we will notify you when your branch launches.',
     teaser_placeholder:'Telegram / KakaoTalk / email',teaser_btn:'Notify me',
     footer:'© Avalone — a digital universe on top of the real world',
-    nav_home:'Portal',nav_work:'Work',nav_chat:'Chat',nav_profile:'Profile',
+    nav_home:'Portal',nav_work:'Finance',nav_chat:'Chat',nav_profile:'Profile',
     coming_soon:'Coming soon: '
   },
   ko:{
     brand:'Avalone',tagline:'디지털 우주',
-    status_title:'활성',status_text:'"일" 브랜치가 이미 작동 중입니다. Routa는 공장 출퇴근을 조정합니다.',
-    status_btn1:'🚐 Routa 열기',status_btn2:'🪙 Counta',
-    quick_title:'빠른 작업',quick_1:'🚐 내 출퇴근',quick_2:'📋 교대',quick_3:'🪙 예산',quick_4:'👤 프로필',
+    status_title:'개발 중',status_text:'첫 번째 브랜치 — 일. 곧 출퇴근, 교대 및 조정이 가능합니다.',
+    status_btn1:'🪙 Counta 열기',status_btn2:'🛠️ 일 알아보기',
+    quick_title:'빠른 작업',quick_1:'🪙 예산',quick_2:'🛠️ 일',quick_3:'👤 프로필',quick_4:'🌐 커뮤니티',
     branches_title:'Avalone 우주',
     teaser_title:'새로운 브랜치가 개발 중입니다',teaser_text:'연락처를 남기시면 해당 브랜치가 출시되면 알려드립니다.',
     teaser_placeholder:'Telegram / KakaoTalk / email',teaser_btn:'알림 받기',
     footer:'© Avalone — 현실 세계 위의 디지털 우주',
-    nav_home:'포털',nav_work:'일',nav_chat:'채팅',nav_profile:'프로필',
+    nav_home:'포털',nav_work:'재정',nav_chat:'채팅',nav_profile:'프로필',
     coming_soon:'곧 출시: '
   }
 };

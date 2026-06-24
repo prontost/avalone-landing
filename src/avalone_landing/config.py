@@ -29,13 +29,10 @@ BRANCHES = [
         "name_ko": "일",
         "icon": "🛠️",
         "description": "Арбайт, смены, поездки, фриланс, карьера.",
-        "status": "active",
-        "app_id": "routa",
-        "url": "https://routa.avalone.online",
-        "actions": [
-            {"label": "Мои поездки", "url": "https://routa.avalone.online/trips"},
-            {"label": "Найти смену", "url": "https://routa.avalone.online/shifts"},
-        ],
+        "status": "in_dev",
+        "app_id": None,
+        "url": None,
+        "actions": [],
     },
     {
         "id": "money",

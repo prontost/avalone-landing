@@ -23,4 +23,7 @@ build-backend = "hatchling.build"
 packages = ["src/avalone_landing"]
 
 [tool.uv]
-dev-dependencies = ["pytest>=8.3"]
+dev-dependencies = [
+    "pillow>=12.2.0",
+    "pytest>=8.3",
+]
