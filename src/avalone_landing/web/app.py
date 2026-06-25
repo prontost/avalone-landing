@@ -8,12 +8,28 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from avalone_landing.config import APPS, BRANCHES, settings
+from avalone_landing.core import users
+from avalone_landing.web.auth import SESSION_COOKIE, _signer, router as auth_router
 
 app = FastAPI(title="avalone.online")
+app.include_router(auth_router)
 BASE = Path(__file__).parent
 _templates_dir = BASE / "templates"
 _static_dir = BASE / "static"
 templates = Jinja2Templates(directory=str(_templates_dir))
+
+
+@app.middleware("http")
+async def current_user_ctx(request: Request, call_next):
+    token = request.cookies.get(SESSION_COOKIE)
+    user_id = 0
+    if token:
+        try:
+            user_id = int(_signer.loads(token))
+        except Exception:
+            user_id = 0
+    users.set_current(user_id)
+    return await call_next(request)
 
 
 def _build_id() -> str:
@@ -41,11 +57,12 @@ def _no_cache(resp: Response) -> Response:
 
 @app.get("/", response_class=HTMLResponse)
 async def landing(request: Request):
+    user = users.get_user(users.current())
     return _no_cache(
         templates.TemplateResponse(
             request,
             "landing.html",
-            {"apps": APPS, "branches": BRANCHES, "build_id": BUILD_ID},
+            {"apps": APPS, "branches": BRANCHES, "build_id": BUILD_ID, "user": user},
         )
     )
 

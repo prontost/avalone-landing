@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     web_base_url: str = "https://avalone.online"
     web_host: str = "127.0.0.1"
     web_port: int = 8811
+    fernet_key: str = "change-me-in-production"
 
 
 @lru_cache
