@@ -31,9 +31,11 @@ BRANCHES = [
         "icon": "🛠️",
         "description": "Арбайт, смены, поездки, фриланс, карьера.",
         "status": "in_dev",
-        "app_id": None,
-        "url": None,
-        "actions": [],
+        "app_id": "work",
+        "url": "https://routa.avalone.online",
+        "actions": [
+            {"label": "Work", "url": "https://routa.avalone.online"},
+        ],
     },
     {
         "id": "money",
@@ -127,10 +129,10 @@ APPS = [
         "url": "https://counta.avalone.online",
     },
     {
-        "id": "routa",
-        "name": "Routa",
-        "icon": "🚐",
-        "description": "Организация поездок людей на работу: маршруты, места, уведомления.",
+        "id": "work",
+        "name": "Work",
+        "icon": "🛠️",
+        "description": "Рабочая координация: поездки, смены, задачи, команда.",
         "url": "https://routa.avalone.online",
     },
 ]
