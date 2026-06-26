@@ -36,6 +36,20 @@
 - Не обесценивать масштаб идеи, но и не обещать лёгкого успеха.
 - Бюджет и личные финансы оператора — отдельно, см. `~/github-work/denis-root-continuity/skills/family-budget/SKILL.md`.
 
+## Backup, commit и push
+
+> Конкретика для правила «после любого изменения — бэкап + коммит + пуш».
+> Само правило живёт в скилле `git-commit-push`, здесь только пути и параметры.
+
+- **Бэкап баз:** `infra/backup/backup_db.py`
+- **Конфиг бэкапа:** `infra/backup/backup-config.json` (список путей к `.db`)
+- **Глубина архива:** 14 дней, автоматическая ротация
+- **Расписание:** launchd-агент `online.avalone.db-backup`, каждый час
+- **Бэкапы складываются в:** `~/.avalone/backups/auto/`
+- **Git-репозитории платформы:** `~/github-work/counta`, `~/github-work/routa`, `~/github-work/avalone.online`
+
+После любого изменения кода/конфига/базы запускать бэкап и пушить все грязные репозитории из списка.
+
 ## Безопасность
 
 - Секреты проекта хранить в `~/infrastructure-secrets.env` или project-specific `.env` (в `.gitignore`).
