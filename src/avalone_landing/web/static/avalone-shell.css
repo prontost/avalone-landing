@@ -178,6 +178,12 @@ a:hover { opacity: 0.85; }
   .avalone-shell { grid-template-columns: 1fr; grid-template-areas: "header" "main"; }
   .avalone-sidebar { display: none; }
   .avalone-main { padding: 16px 12px 80px; }
+  .avalone-shell:not(.no-sidebar) .avalone-main { padding-bottom: 100px; }
+  .avalone-shell:not(.no-sidebar) .avalone-main::after {
+    content: '';
+    display: block;
+    height: 80px;
+  }
   .avalone-header {
     flex-wrap: wrap;
     height: auto;
