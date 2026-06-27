@@ -1,24 +1,25 @@
 """Avalone users and password auth.
 
-Uses the unified Avalone DB (avalone_core.db). Passwords are PBKDF2-HMAC-SHA256
-(stdlib only). The session itself is a signed cookie handled by the web layer.
+Thin backward-compatible facade over the class-based identity layer.
+New code should use UserService / UserRepository directly.
 """
 
-import hashlib
-import hmac
-import os
-import sqlite3
+from __future__ import annotations
+
 from contextvars import ContextVar
 from datetime import datetime, timezone
 
-from avalone_core.db import connection
+from avalone_landing.core.models import User
+from avalone_landing.core.user_repository import UserRepository
+from avalone_landing.core.user_service import UserService
 
 _current: ContextVar[int] = ContextVar("user_id", default=0)
 
+_default_repo = UserRepository()
+_default_service = UserService(_default_repo)
 
-def _conn() -> sqlite3.Connection:
-    return connection()
 
+# --- request context ---
 
 def set_current(user_id: int) -> None:
     _current.set(user_id)
@@ -35,79 +36,105 @@ def require_current() -> int:
     return uid
 
 
-def hash_password(password: str) -> str:
-    salt = os.urandom(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200_000)
-    return f"pbkdf2$200000${salt.hex()}${dk.hex()}"
+# --- password helpers ---
+
+hash_password = _default_repo.hash_password
+verify_password = _default_repo.verify_password
 
 
-def verify_password(password: str, stored: str) -> bool:
-    try:
-        algo, iters, salt_hex, dk_hex = stored.split("$")
-        if algo != "pbkdf2":
-            return False
-        dk = hashlib.pbkdf2_hmac(
-            "sha256", password.encode(), bytes.fromhex(salt_hex), int(iters)
-        )
-        return hmac.compare_digest(dk.hex(), dk_hex)
-    except Exception:
-        return False
+# --- user lookup ---
 
-
-def create_user(login: str, password: str, email: str = "") -> int:
-    login = login.strip().lower()
-    if not login or not password:
-        raise ValueError("login and password are required")
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    with _conn() as con:
-        cur = con.execute(
-            "INSERT INTO users (login, pwhash, email, created_at) VALUES (?, ?, ?, ?)",
-            (login, hash_password(password), email.strip().lower(), now),
-        )
-        return cur.lastrowid
+def _user_to_dict(user: User | None) -> dict | None:
+    if user is None:
+        return None
+    return {
+        "id": user.id,
+        "login": user.login,
+        "email": user.email,
+        "created_at": user.created_at,
+    }
 
 
 def get_by_login(login: str) -> dict | None:
-    with _conn() as con:
-        r = con.execute(
+    login = login.strip().lower()
+    with _default_repo._conn() as con:
+        row = con.execute(
             "SELECT id, login, pwhash, email, created_at FROM users WHERE login = ?",
-            (login.strip().lower(),),
+            (login,),
         ).fetchone()
-    if not r:
+    if not row:
         return None
-    return {"id": r[0], "login": r[1], "pwhash": r[2], "email": r[3], "created_at": r[4]}
+    return {
+        "id": row["id"],
+        "login": row["login"],
+        "pwhash": row["pwhash"],
+        "email": row["email"] or "",
+        "created_at": row["created_at"],
+    }
 
 
 def get_user(user_id: int) -> dict | None:
-    with _conn() as con:
-        r = con.execute(
-            "SELECT id, login, email, created_at FROM users WHERE id = ?", (user_id,)
-        ).fetchone()
-    if not r:
-        return None
-    return {"id": r[0], "login": r[1], "email": r[2], "created_at": r[3]}
+    return _user_to_dict(_default_service.get_user(user_id))
 
 
 def authenticate(login: str, password: str) -> int | None:
-    u = get_by_login(login)
-    if u and verify_password(password, u["pwhash"]):
-        return u["id"]
-    return None
+    user = _default_service.authenticate(login, password)
+    return user.id if user else None
 
 
 def login_taken(login: str) -> bool:
-    return get_by_login(login) is not None
+    return _default_service.login_taken(login)
 
+
+def create_user(login: str, password: str, email: str = "") -> int:
+    return _default_service.create_user(login, password, email)
+
+
+# --- password changes ---
 
 def change_password(user_id: int, current_password: str, new_password: str) -> bool:
-    """Return True on success, False if current password is wrong."""
-    if len(new_password) < 6:
-        raise ValueError("password too short")
-    with _conn() as con:
-        r = con.execute("SELECT pwhash FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not r:
-            return False
-        if not verify_password(current_password, r[0]):
-            return False
-        con.execute("UPDATE users SET pwhash = ? WHERE id = ?", (hash_password(new_password), user_id))
-    return True
+    return _default_service.change_password(user_id, current_password, new_password)
+
+
+# --- password reset tokens ---
+
+def set_reset_token(login_or_email: str) -> tuple[int, str] | None:
+    result = _default_service.request_password_reset(login_or_email)
+    if result is None:
+        return None
+    user, token = result
+    return user.id, token
+
+
+def get_by_reset_token(token: str) -> dict | None:
+    user = _default_repo.get_by_reset_token(token)
+    if user is None:
+        return None
+    return {
+        "id": user.id,
+        "login": user.login,
+        "email": user.email,
+    }
+
+
+def reset_password(user_id: int, new_password: str) -> None:
+    _default_repo.set_password_hash(user_id, _default_repo.hash_password(new_password))
+    _default_repo.clear_reset_token(user_id)
+
+
+# --- admin helpers ---
+
+def is_admin(user_id: int | None) -> bool:
+    return _default_service.is_admin(user_id)
+
+
+def list_admins() -> list[dict]:
+    return [_user_to_dict(u) for u in _default_service.list_admins() if u]
+
+
+def add_admin(user_id: int) -> None:
+    _default_service.ensure_admin(user_id)
+
+
+def remove_admin(user_id: int) -> None:
+    _default_service._repo.remove_admin(user_id)

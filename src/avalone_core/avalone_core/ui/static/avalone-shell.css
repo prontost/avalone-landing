@@ -557,6 +557,7 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
 .avalone-btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
 
 .avalone-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; border-radius: var(--radius-xs); }
+.avalone-btn-block { width: 100%; }
 
 /* Forms */
 .avalone-form-group { margin-bottom: 16px; }
@@ -664,6 +665,9 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
 
 .mt-0 { margin-top: 0; }
 .mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
 .mr-auto { margin-right: auto; }
 .ml-auto { margin-left: auto; }
 
@@ -676,7 +680,134 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
 
 .col { flex: 1; min-width: 0; }
 
+/* Auth layout: centered card form used by login/register/reset pages */
+.avalone-auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--header-h) - 40px);
+  position: relative;
+}
+
+.avalone-auth-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(124, 92, 255, 0.08), transparent 35%);
+}
+
+.avalone-auth-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.avalone-auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.avalone-auth-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.avalone-auth-heading {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.avalone-auth-hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.avalone-auth-lead {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.avalone-auth-forgot {
+  text-align: right;
+  margin: -8px 0 14px;
+  font-size: 13px;
+}
+
+.avalone-auth-brand__title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.avalone-auth-dev-link {
+  word-break: break-all;
+  background: var(--bg-2);
+  padding: 10px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  margin: 12px 0 0;
+  border: 1px solid var(--line);
+}
+
+.avalone-auth-footer {
+  margin-top: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Container helpers */
+.avalone-container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.avalone-text-center { text-align: center; }
+
+.avalone-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.avalone-avatar-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 auto 16px;
+}
+
 @media (max-width: 768px) {
   .avalone-page-title { font-size: 20px; }
   .avalone-search { order: 2; flex: 0 0 auto; margin-left: auto; margin-top: 0; }
+  .avalone-auth-layout { min-height: calc(100vh - var(--header-h) - 96px); }
+  .avalone-auth-card { padding: 22px; }
 }

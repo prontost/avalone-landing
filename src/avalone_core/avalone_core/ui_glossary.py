@@ -80,6 +80,26 @@ EXACT: dict[str, str] = {
     "profile_section_security": "Section heading for the password-change form in the profile.",
     "profile_section_session": "Section heading for the logout button in the profile.",
 
+    # Password reset.
+    "reset_forgot_title": "Page title and heading for the forgot-password screen.",
+    "reset_forgot_hint": "Short explanation on the forgot-password screen.",
+    "reset_label_login_or_email": "Label for the input that accepts username or email on the forgot-password form.",
+    "reset_placeholder_login_or_email": "Placeholder for the username/email input on the forgot-password form.",
+    "reset_btn_send": "Submit button on the forgot-password form.",
+    "reset_email_subject": "Subject line of the password-reset email.",
+    "reset_email_body": "Body of the password-reset email. Must contain {login} and {url} placeholders.",
+    "reset_email_sent": "Success message shown after a reset link was emailed.",
+    "reset_email_failed": "Error message shown when the email could not be sent. Contains {error} placeholder.",
+    "reset_email_sent_no_email": "Message shown when the account exists but has no email address on file.",
+    "reset_email_sent_generic": "Generic message shown after forgot-password submission to avoid account enumeration.",
+    "reset_error_required": "Error shown when the forgot-password form is submitted empty.",
+    "reset_dev_link_prefix": "Developer-only hint shown when mail is not configured and the reset link is displayed inline.",
+    "reset_title": "Page title and heading for the new-password (reset) screen.",
+    "reset_btn_save": "Submit button on the new-password form.",
+    "reset_token_invalid": "Error shown when the reset token is missing, expired, or invalid.",
+    "reset_password_success": "Success message shown on the login screen after a successful password reset.",
+    "reset_forgot_link": "Link text on the login form that leads to the forgot-password page.",
+
     # Shared shell.
     "shell_apps_label":     "Tooltip/aria-label of the app-switcher button in the top bar.",
     "shell_search_label":   "Tooltip/aria-label of the global search button and its overlay input.",

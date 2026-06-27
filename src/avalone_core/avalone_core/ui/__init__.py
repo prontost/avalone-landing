@@ -13,6 +13,7 @@ from avalone_core.ui.widgets import (
     Card,
     Button,
     PageHeader,
+    Alert,
 )
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "Card",
     "Button",
     "PageHeader",
+    "Alert",
     "build_id",
 ]
 

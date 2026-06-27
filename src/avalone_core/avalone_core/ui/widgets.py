@@ -144,3 +144,11 @@ class PageHeader(Widget):
     template_name: str = "widgets/page_header.html"
     title: str = ""
     actions: List[Any] = field(default_factory=list)
+
+
+@dataclass
+class Alert(Widget):
+    template_name: str = "widgets/alert.html"
+    variant: str = "info"
+    children: Markup = field(default_factory=lambda: Markup(""))
+    extra_class: str = ""

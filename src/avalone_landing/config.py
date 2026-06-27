@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     web_port: int = 8811
     fernet_key: str = "change-me-in-production"
 
+    # Mail: either SMTP relay or local sendmail fallback.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    mail_from: str = "noreply@avalone.online"
+    mail_from_name: str = "Avalone"
+
 
 @lru_cache
 def settings() -> Settings:

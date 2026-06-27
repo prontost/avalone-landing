@@ -11,11 +11,12 @@ from fastapi.templating import Jinja2Templates
 from avalone_core import glossary_db as glossary
 from avalone_core.db import migrate as migrate_db
 from avalone_core.registry import AvaloneRegistry
-from avalone_core.ui import Shell
 import avalone_core.ui
 from avalone_landing.config import settings
+from avalone_landing.core.auth_service import AuthService
 from avalone_landing.core import users
-from avalone_landing.web.auth import SESSION_COOKIE, _signer, router as auth_router
+from avalone_landing.web.auth import router as auth_router
+from avalone_landing.web.shell_context import render_shell_context
 
 t = glossary.t
 migrate_db()
@@ -34,16 +35,12 @@ templates.env.globals["registry"] = AvaloneRegistry
 app.mount("/static/ui", StaticFiles(directory=str(_ui_static_dir)), name="ui_static")
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
+_auth_service = AuthService()
+
 
 @app.middleware("http")
 async def current_user_ctx(request: Request, call_next):
-    token = request.cookies.get(SESSION_COOKIE)
-    user_id = 0
-    if token:
-        try:
-            user_id = int(_signer.loads(token))
-        except Exception:
-            user_id = 0
+    user_id = _auth_service.user_id_of(request)
     users.set_current(user_id)
     return await call_next(request)
 
@@ -70,19 +67,15 @@ def _no_cache(resp: Response) -> Response:
 
 def _render_shell(request: Request, current_app: str = "portal", app_nav=None, **extra):
     user = users.get_user(users.current())
-    branches = AvaloneRegistry.for_shell("ru")
-    shell = Shell(
+    return render_shell_context(
+        templates,
+        request,
+        user,
         current_app=current_app,
-        user=user,
-        branches=branches,
         app_nav=app_nav or [],
+        build_id=BUILD_ID,
         **extra,
     )
-    return {
-        "build_id": BUILD_ID,
-        "user": user,
-        "shell_html": shell.render(templates.env, request),
-    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -101,9 +94,9 @@ async def landing(request: Request):
 @app.get("/manifest.json")
 async def manifest():
     return {
-        "name": t('manifest_name'),
-        "short_name": t('manifest_short_name'),
-        "description": t('manifest_description'),
+        "name": t("manifest_name"),
+        "short_name": t("manifest_short_name"),
+        "description": t("manifest_description"),
         "start_url": "/?source=pwa",
         "display": "standalone",
         "orientation": "portrait",
@@ -153,4 +146,17 @@ async def version():
 
 @app.get("/api/apps")
 async def apps_catalog():
-    return {"apps": APPS}
+    return {
+        "apps": [
+            {
+                "id": b.id,
+                "name_key": b.name_key,
+                "icon": b.icon,
+                "description_key": b.description_key,
+                "status": b.status,
+                "url": b.url,
+                "module": b.module,
+            }
+            for b in AvaloneRegistry.active()
+        ]
+    }

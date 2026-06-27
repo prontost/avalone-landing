@@ -1,94 +1,42 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a0c10">
-<title>{{ t('auth_login_title') }} — {{ t('brand') }}</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="icon" type="image/png" href="/icon-192.png">
-<style>
-:root{
-  --bg:#0a0c10;--bg-2:#11141b;--card:#151922;--card-2:#1c212c;
-  --line:#2a3040;--line-2:#3a4156;--txt:#f0f2f6;--muted:#8b94a7;
-  --accent:#7c5cff;--accent-2:#a78bfa;--red:#f85149;
-  --shadow:0 8px 32px rgba(0,0,0,.35);
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
-    --bg:#f5f7fb;--bg-2:#eef1f7;--card:#ffffff;--card-2:#f8f9fc;
-    --line:#dde2ec;--line-2:#c9d0e0;--txt:#131620;--muted:#5a6275;
-    --accent:#6338e0;--accent-2:#7c5cff;--red:#cf222e;
-    --shadow:0 8px 32px rgba(20,20,40,.12);
-  }
-}
-:root[data-theme="light"]{
-  --bg:#f5f7fb;--bg-2:#eef1f7;--card:#ffffff;--card-2:#f8f9fc;
-  --line:#dde2ec;--line-2:#c9d0e0;--txt:#131620;--muted:#5a6275;
-  --accent:#6338e0;--accent-2:#7c5cff;--red:#cf222e;
-  --shadow:0 8px 32px rgba(20,20,40,.12);
-}
-:root[data-theme="dark"]{
-  --bg:#0a0c10;--bg-2:#11141b;--card:#151922;--card-2:#1c212c;
-  --line:#2a3040;--line-2:#3a4156;--txt:#f0f2f6;--muted:#8b94a7;
-  --accent:#7c5cff;--accent-2:#a78bfa;--red:#f85149;
-  --shadow:0 8px 32px rgba(0,0,0,.35);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-body::before{
-  content:'';position:fixed;inset:0;z-index:-1;
-  background:radial-gradient(circle at 20% 10%, rgba(124,92,255,.12), transparent 40%),
-             radial-gradient(circle at 80% 90%, rgba(124,92,255,.08), transparent 35%);
-  pointer-events:none;
-}
-.card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:var(--shadow)}
-.brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
-.logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:22px}
-.brand-title{font-size:20px;font-weight:700;letter-spacing:-.3px}
-.brand-sub{color:var(--muted);font-size:13px}
-h1{margin:0 0 20px;font-size:22px;font-weight:700}
-label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg-2);color:var(--txt);font-size:15px;outline:none;transition:border-color .15s}
-input:focus{border-color:var(--accent)}
-.field{margin-bottom:16px}
-.btn{width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
-.btn:hover{opacity:.92}
-.btn:active{transform:scale(.98)}
-.error{background:rgba(248,81,73,.12);color:var(--red);padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:16px}
-.footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-.footer a{color:var(--accent);text-decoration:none;font-weight:500}
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="brand">
-    <div class="logo-mark">◈</div>
-    <div>
-      <div class="brand-title">{{ t('brand') }}</div>
-      <div class="brand-sub">{{ t('brand_tagline') }}</div>
+{% extends "avalone_base.html" %}
+
+{% block title %}{{ t('auth_login_title') }} — {{ t('brand') }}{% endblock %}
+
+{% block content %}
+<div class="avalone-auth-layout">
+  <div class="avalone-card avalone-auth-card">
+    <div class="avalone-auth-brand">
+      <div class="avalone-auth-logo" aria-hidden="true">◈</div>
+      <div>
+        <div class="avalone-auth-brand__title">{{ t('brand') }}</div>
+        <div class="avalone-auth-hint">{{ t('brand_tagline') }}</div>
+      </div>
     </div>
-  </div>
-  <h1>{{ t('auth_login_title') }}</h1>
-  {% if error %}<div class="error">{{ error }}</div>{% endif %}
-  <form method="post" action="/login">
-    <input type="hidden" name="next" value="{{ request.query_params.get('next', '') }}">
-    <div class="field">
-      <label for="login">{{ t('auth_label_login') }}</label>
-      <input id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
+
+    <h1 class="avalone-auth-heading">{{ t('auth_login_title') }}</h1>
+
+    {% if error %}<div class="avalone-alert avalone-alert-danger">{{ error }}</div>{% endif %}
+    {% if success %}<div class="avalone-alert avalone-alert-success">{{ success }}</div>{% endif %}
+
+    <form method="post" action="/login">
+      <input type="hidden" name="next" value="{{ request.query_params.get('next', '') }}">
+      <div class="avalone-form-group">
+        <label class="avalone-label" for="login">{{ t('auth_label_login') }}</label>
+        <input class="avalone-input" id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
+      </div>
+      <div class="avalone-form-group">
+        <label class="avalone-label" for="password">{{ t('auth_label_password') }}</label>
+        <input class="avalone-input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password') }}">
+      </div>
+      <div class="avalone-auth-forgot">
+        <a href="/forgot-password">{{ t('reset_forgot_link') }}</a>
+      </div>
+      <button class="avalone-btn avalone-btn-primary avalone-btn-block" type="submit">{{ t('auth_btn_login') }}</button>
+    </form>
+
+    <div class="avalone-auth-footer">
+      {{ t('auth_no_account') }} <a href="/register">{{ t('auth_register_link') }}</a>
     </div>
-    <div class="field">
-      <label for="password">{{ t('auth_label_password') }}</label>
-      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password') }}">
-    </div>
-    <button class="btn" type="submit">{{ t('auth_btn_login') }}</button>
-  </form>
-  <div class="footer">
-    {{ t('auth_no_account') }} <a href="/register">{{ t('auth_register_link') }}</a>
   </div>
 </div>
-</body>
-</html>
+{% endblock %}

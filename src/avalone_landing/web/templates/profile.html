@@ -2,40 +2,39 @@
 
 {% block title %}{{ t('profile_title') }} — {{ t('brand') }}{% endblock %}
 
-{% block extra_head %}
-<style>
-.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600;margin:0 auto 16px}
-</style>
-{% endblock %}
-
 {% block content %}
-<h1 class="avalone-page-title">{{ t('profile_title') }}</h1>
-<div class="avalone-card" style="text-align:center">
-  <div class="profile-avatar">{{ (user.login or 'G')[0].upper() }}</div>
-  <h2 style="margin:0 0 4px">{{ user.login }}</h2>
-  <p class="text-muted" style="margin:0">{{ user.email or t('profile_email_missing') }}</p>
-</div>
+<div class="avalone-container">
+  <header class="avalone-page-header">
+    <h1 class="avalone-page-title">{{ t('profile_title') }}</h1>
+  </header>
 
-<div class="avalone-card">
-  <h3 class="mt-0">{{ t('profile_section_security') }}</h3>
-  {% if error %}<div class="avalone-alert avalone-alert-danger" style="margin-bottom:12px">{{ error }}</div>{% endif %}
-  {% if success %}<div class="avalone-alert avalone-alert-success" style="margin-bottom:12px">{{ success }}</div>{% endif %}
-  <form method="post" action="/profile/password" style="display:flex;flex-direction:column;gap:12px">
-    <label class="avalone-label">{{ t('profile_label_current_password') }}
-      <input class="avalone-input" type="password" name="current_password" required autocomplete="current-password">
-    </label>
-    <label class="avalone-label">{{ t('profile_label_new_password') }}
-      <input class="avalone-input" type="password" name="new_password" required minlength="6" autocomplete="new-password">
-    </label>
-    <label class="avalone-label">{{ t('profile_label_new_password2') }}
-      <input class="avalone-input" type="password" name="new_password2" required minlength="6" autocomplete="new-password">
-    </label>
-    <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('profile_btn_change_password') }}</button>
-  </form>
-</div>
+  <div class="avalone-card avalone-text-center">
+    <div class="avalone-avatar-lg">{{ (user.login or 'G')[0].upper() }}</div>
+    <h2 class="mb-1">{{ user.login }}</h2>
+    <p class="text-muted mb-0">{{ user.email or t('profile_email_missing') }}</p>
+  </div>
 
-<div class="avalone-card">
-  <h3 class="mt-0">{{ t('profile_section_session') }}</h3>
-  <a href="/logout" class="avalone-btn avalone-btn-danger">{{ t('profile_btn_logout') }}</a>
+  <div class="avalone-card">
+    <h3 class="mt-0">{{ t('profile_section_security') }}</h3>
+    {% if error %}<div class="avalone-alert avalone-alert-danger mb-3">{{ error }}</div>{% endif %}
+    {% if success %}<div class="avalone-alert avalone-alert-success mb-3">{{ success }}</div>{% endif %}
+    <form class="avalone-stack" method="post" action="/profile/password">
+      <label class="avalone-label">{{ t('profile_label_current_password') }}
+        <input class="avalone-input" type="password" name="current_password" required autocomplete="current-password">
+      </label>
+      <label class="avalone-label">{{ t('profile_label_new_password') }}
+        <input class="avalone-input" type="password" name="new_password" required minlength="6" autocomplete="new-password">
+      </label>
+      <label class="avalone-label">{{ t('profile_label_new_password2') }}
+        <input class="avalone-input" type="password" name="new_password2" required minlength="6" autocomplete="new-password">
+      </label>
+      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('profile_btn_change_password') }}</button>
+    </form>
+  </div>
+
+  <div class="avalone-card">
+    <h3 class="mt-0">{{ t('profile_section_session') }}</h3>
+    <a href="/logout" class="avalone-btn avalone-btn-danger">{{ t('profile_btn_logout') }}</a>
+  </div>
 </div>
 {% endblock %}
