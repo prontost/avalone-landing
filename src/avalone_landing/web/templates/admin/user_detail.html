@@ -13,7 +13,7 @@
       <div><span class="text-muted">{{ t('admin_col_email', lang=lang) }}:</span> {{ target.email or '-' }}</div>
       <div><span class="text-muted">{{ t('admin_col_roles', lang=lang) }}:</span>
         {% for role in target.roles %}
-        <span class="avalone-badge avalone-badge-blue">{{ t('admin_role_' + role, lang=lang) }}</span>
+        <span class="avalone-badge avalone-badge-blue" title="{{ t('admin_role_' + role + '_desc', lang=lang) }}">{{ t('admin_role_' + role, lang=lang) }}</span>
         {% endfor %}
       </div>
     </div>
@@ -28,9 +28,12 @@
       <div class="avalone-label">{{ t('admin_col_roles', lang=lang) }}</div>
       <div class="avalone-checkbox-group">
         {% for role in all_roles %}
-        <label class="avalone-checkbox">
+        <label class="avalone-checkbox" title="{{ t('admin_role_' + role + '_desc', lang=lang) }}">
           <input type="checkbox" name="roles" value="{{ role }}" {% if role in target.roles %}checked{% endif %}>
-          {{ t('admin_role_' + role, lang=lang) }}
+          <div>
+            <div>{{ t('admin_role_' + role, lang=lang) }}</div>
+            <div class="small text-muted">{{ t('admin_role_' + role + '_desc', lang=lang) }}</div>
+          </div>
         </label>
         {% endfor %}
       </div>

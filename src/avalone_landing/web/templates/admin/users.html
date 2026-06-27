@@ -33,7 +33,7 @@
             <td>{{ u.email or '-' }}</td>
             <td>
               {% for role in u.roles %}
-              <span class="avalone-badge avalone-badge-blue">{{ t('admin_role_' + role, lang=lang) }}</span>
+              <span class="avalone-badge avalone-badge-blue" title="{{ t('admin_role_' + role + '_desc', lang=lang) }}">{{ t('admin_role_' + role, lang=lang) }}</span>
               {% endfor %}
             </td>
             <td class="text-right">
