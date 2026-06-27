@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from avalone_core import glossary
+from avalone_core import glossary_db as glossary
 from avalone_core.db import migrate as migrate_db
 from avalone_core.registry import AvaloneRegistry
 from avalone_core.ui import Shell
@@ -27,7 +27,6 @@ _ui_dir = Path(avalone_core.ui.__file__).parent
 _ui_templates_dir = _ui_dir / "templates"
 _ui_static_dir = _ui_dir / "static"
 templates = Jinja2Templates(directory=[str(_templates_dir), str(_ui_templates_dir)])
-templates.env.globals["glossary"] = glossary.GLOSSARY
 templates.env.globals["t"] = glossary.t
 templates.env.globals["i18n_js"] = glossary.i18n_js
 templates.env.globals["registry"] = AvaloneRegistry
@@ -101,9 +100,9 @@ async def landing(request: Request):
 @app.get("/manifest.json")
 async def manifest():
     return {
-        "name": "Avalone",
-        "short_name": "Avalone",
-        "description": "Ваши инструменты в одном месте.",
+        "name": t('manifest_name'),
+        "short_name": t('manifest_short_name'),
+        "description": t('manifest_description'),
         "start_url": "/?source=pwa",
         "display": "standalone",
         "orientation": "portrait",

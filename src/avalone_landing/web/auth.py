@@ -7,7 +7,7 @@ from itsdangerous import URLSafeSerializer
 
 from pathlib import Path
 
-from avalone_core import glossary
+from avalone_core import glossary_db as glossary
 from avalone_core.registry import AvaloneRegistry
 from avalone_core.ui import Shell, build_id as ui_build_id
 import avalone_core.ui
@@ -18,7 +18,6 @@ router = APIRouter()
 BASE = Path(__file__).parent
 _UI_DIR = Path(avalone_core.ui.__file__).parent
 templates = Jinja2Templates(directory=[str(BASE / "templates"), str(_UI_DIR / "templates")])
-templates.env.globals["glossary"] = glossary.GLOSSARY
 templates.env.globals["t"] = glossary.t
 templates.env.globals["i18n_js"] = glossary.i18n_js
 templates.env.globals["registry"] = AvaloneRegistry
@@ -94,7 +93,7 @@ async def login(request: Request):
         _issue_session(request, resp, user_id)
         return resp
     return templates.TemplateResponse(
-        request, "login.html", {"error": "Неверный логин или пароль"}, status_code=401
+        request, "login.html", {"error": t('auth_error_invalid_credentials')}, status_code=401
     )
 
 
@@ -115,13 +114,13 @@ async def register(request: Request):
 
     error = None
     if not login_field or not pw:
-        error = "Логин и пароль обязательны"
+        error = t('auth_error_required')
     elif pw != pw2:
-        error = "Пароли не совпадают"
+        error = t('auth_error_password_mismatch')
     elif len(pw) < 6:
-        error = "Пароль слишком короткий (минимум 6 символов)"
+        error = t('auth_error_password_too_short')
     elif users.login_taken(login_field):
-        error = "Этот логин уже занят"
+        error = t('auth_error_login_taken')
 
     if error:
         return templates.TemplateResponse(
@@ -151,10 +150,10 @@ async def logout(request: Request):
 async def auth_me(request: Request):
     user_id = _user_id_of(request)
     if not user_id:
-        return JSONResponse({"error": "unauthorized"}, status_code=401)
+        return JSONResponse({"error": t('error_unauthorized')}, status_code=401)
     u = users.get_user(user_id)
     if not u:
-        return JSONResponse({"error": "user not found"}, status_code=401)
+        return JSONResponse({"error": t('error_user_not_found')}, status_code=401)
     return {
         "id": u["id"],
         "login": u["login"],
@@ -168,10 +167,10 @@ async def auth_refresh(request: Request):
     """Prolong the session cookie."""
     user_id = _user_id_of(request)
     if not user_id:
-        return JSONResponse({"error": "unauthorized"}, status_code=401)
+        return JSONResponse({"error": t('error_unauthorized')}, status_code=401)
     u = users.get_user(user_id)
     if not u:
-        return JSONResponse({"error": "user not found"}, status_code=401)
+        return JSONResponse({"error": t('error_user_not_found')}, status_code=401)
     resp = JSONResponse({"ok": True, "user": {"id": u["id"], "login": u["login"]}})
     _issue_session(request, resp, user_id)
     return resp
@@ -203,7 +202,7 @@ async def profile_page(request: Request):
 async def change_password(request: Request):
     user_id = _user_id_of(request)
     if not user_id:
-        return JSONResponse({"error": "unauthorized"}, status_code=401)
+        return JSONResponse({"error": t('error_unauthorized')}, status_code=401)
     form = await request.form()
     current = str(form.get("current_password", ""))
     new_pw = str(form.get("new_password", ""))
@@ -216,7 +215,7 @@ async def change_password(request: Request):
 
     if new_pw != new_pw2:
         return templates.TemplateResponse(
-            request, "profile.html", _profile_ctx(error="Новые пароли не совпадают"), status_code=400
+            request, "profile.html", _profile_ctx(error=t('profile_password_mismatch')), status_code=400
         )
     try:
         ok = users.change_password(user_id, current, new_pw)
@@ -226,8 +225,8 @@ async def change_password(request: Request):
         )
     if not ok:
         return templates.TemplateResponse(
-            request, "profile.html", _profile_ctx(error="Текущий пароль неверный"), status_code=400
+            request, "profile.html", _profile_ctx(error=t('profile_current_password_wrong')), status_code=400
         )
     return templates.TemplateResponse(
-        request, "profile.html", _profile_ctx(success="Пароль изменён")
+        request, "profile.html", _profile_ctx(success=t('profile_password_changed'))
     )

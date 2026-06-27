@@ -1,12 +1,12 @@
 <div class="avalone-shell {% if app_nav %}has-sidebar{% else %}no-sidebar{% endif %}">
   <header class="avalone-header">
-    <a class="avalone-logo" href="https://avalone.online/" title="Avalone">
+    <a class="avalone-logo" href="https://avalone.online/" title="{{ t('brand') }}">
       <div class="avalone-logo-mark" aria-hidden="true">A</div>
-      <span>Avalone</span>
+      <span>{{ t('brand') }}</span>
     </a>
 
     <div class="avalone-app-switcher">
-      <button class="avalone-app-switcher__btn" aria-haspopup="true" aria-expanded="false" aria-label="Приложения" title="Приложения">
+      <button class="avalone-app-switcher__btn" aria-haspopup="true" aria-expanded="false" aria-label="{{ t('shell_apps_label') }}" title="{{ t('shell_apps_label') }}">
         <svg class="avalone-app-switcher__icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
         <span class="avalone-app-switcher__label">{{ active_branch.name or 'Avalone' }}</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -19,7 +19,7 @@
           <span>{{ b.name }}</span>
         </a>
         {% else %}
-        {% set planned_label = 'В разработке' if b.status == 'in_dev' else 'В планах' %}
+        {% set planned_label = t('shell_status_in_dev') if b.status == 'in_dev' else t('shell_status_planned') %}
         <span class="avalone-app-switcher__item coming" title="{{ b.name }} — {{ planned_label }}">
           <span>{{ b.icon or 'A' }}</span>
           <span>{{ b.name }} ({{ planned_label }})</span>
@@ -30,32 +30,32 @@
     </div>
 
     <div class="avalone-search">
-      <button type="button" class="avalone-search__toggle" onclick="openGlobalSearch()" aria-label="Поиск">
+      <button type="button" class="avalone-search__toggle" onclick="openGlobalSearch()" aria-label="{{ t('shell_search_label') }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <span class="avalone-search__label">Поиск</span>
+        <span class="avalone-search__label">{{ t('shell_search_label') }}</span>
       </button>
     </div>
 
     <div class="avalone-header__actions">
-      <button class="avalone-icon-btn" onclick="toggleTheme()" title="Тема" aria-label="Тема">
+      <button class="avalone-icon-btn" onclick="toggleTheme()" title="{{ t('shell_theme_label') }}" aria-label="{{ t('shell_theme_label') }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
 
-      <button class="avalone-icon-btn avalone-notifications" onclick="openNotifications()" title="Уведомления" aria-label="Уведомления">
+      <button class="avalone-icon-btn avalone-notifications" onclick="openNotifications()" title="{{ t('shell_notifications_label') }}" aria-label="{{ t('shell_notifications_label') }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span class="avalone-notifications__count" style="display:none"></span>
       </button>
 
       <div class="avalone-profile">
-        <button type="button" class="avalone-profile__avatar" aria-label="Профиль" aria-haspopup="true" aria-expanded="false" title="{{ user.login if user else 'Гость' }}">
+        <button type="button" class="avalone-profile__avatar" aria-label="{{ t('shell_profile_label') }}" aria-haspopup="true" aria-expanded="false" title="{{ user.login if user else t('shell_profile_guest') }}">
           {{ (user.login or 'G')[0].upper() if user else 'G' }}
         </button>
         <div class="avalone-profile__menu" id="profile-menu">
           {% if user %}
-          <a href="https://avalone.online/profile" class="avalone-nav__item">Профиль</a>
-          <a href="https://avalone.online/logout" class="avalone-nav__item">Выйти</a>
+          <a href="https://avalone.online/profile" class="avalone-nav__item">{{ t('shell_profile_profile') }}</a>
+          <a href="https://avalone.online/logout" class="avalone-nav__item">{{ t('shell_profile_logout') }}</a>
           {% else %}
-          <a href="https://avalone.online/login" class="avalone-nav__item">Войти</a>
+          <a href="https://avalone.online/login" class="avalone-nav__item">{{ t('shell_profile_login') }}</a>
           {% endif %}
         </div>
       </div>
@@ -65,8 +65,8 @@
   <div class="avalone-search-overlay" id="global-search-overlay" aria-hidden="true">
     <div class="avalone-search-overlay__backdrop" onclick="closeGlobalSearch()"></div>
     <div class="avalone-search-overlay__panel">
-      <input type="text" class="avalone-search-overlay__input" placeholder="Поиск..." aria-label="Поиск">
-      <button type="button" class="avalone-search-overlay__close" onclick="closeGlobalSearch()" aria-label="Закрыть">×</button>
+      <input type="text" class="avalone-search-overlay__input" placeholder="{{ t('shell_search_placeholder') }}" aria-label="{{ t('shell_search_label') }}">
+      <button type="button" class="avalone-search-overlay__close" onclick="closeGlobalSearch()" aria-label="{{ t('shell_search_close') }}">×</button>
     </div>
   </div>
 

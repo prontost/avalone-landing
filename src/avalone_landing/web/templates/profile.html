@@ -1,6 +1,6 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}Профиль — Avalone{% endblock %}
+{% block title %}{{ t('profile_title') }} — {{ t('brand') }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -9,33 +9,33 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="avalone-page-title">Профиль</h1>
+<h1 class="avalone-page-title">{{ t('profile_title') }}</h1>
 <div class="avalone-card" style="text-align:center">
   <div class="profile-avatar">{{ (user.login or 'G')[0].upper() }}</div>
   <h2 style="margin:0 0 4px">{{ user.login }}</h2>
-  <p class="text-muted" style="margin:0">{{ user.email or 'Email не указан' }}</p>
+  <p class="text-muted" style="margin:0">{{ user.email or t('profile_email_missing') }}</p>
 </div>
 
 <div class="avalone-card">
-  <h3 class="mt-0">Безопасность</h3>
+  <h3 class="mt-0">{{ t('profile_section_security') }}</h3>
   {% if error %}<div class="avalone-alert avalone-alert-danger" style="margin-bottom:12px">{{ error }}</div>{% endif %}
   {% if success %}<div class="avalone-alert avalone-alert-success" style="margin-bottom:12px">{{ success }}</div>{% endif %}
   <form method="post" action="/profile/password" style="display:flex;flex-direction:column;gap:12px">
-    <label class="avalone-label">Текущий пароль
+    <label class="avalone-label">{{ t('profile_label_current_password') }}
       <input class="avalone-input" type="password" name="current_password" required autocomplete="current-password">
     </label>
-    <label class="avalone-label">Новый пароль
+    <label class="avalone-label">{{ t('profile_label_new_password') }}
       <input class="avalone-input" type="password" name="new_password" required minlength="6" autocomplete="new-password">
     </label>
-    <label class="avalone-label">Повторите новый пароль
+    <label class="avalone-label">{{ t('profile_label_new_password2') }}
       <input class="avalone-input" type="password" name="new_password2" required minlength="6" autocomplete="new-password">
     </label>
-    <button class="avalone-btn avalone-btn-primary" type="submit">Сменить пароль</button>
+    <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('profile_btn_change_password') }}</button>
   </form>
 </div>
 
 <div class="avalone-card">
-  <h3 class="mt-0">Сессия</h3>
-  <a href="/logout" class="avalone-btn avalone-btn-danger">Выйти</a>
+  <h3 class="mt-0">{{ t('profile_section_session') }}</h3>
+  <a href="/logout" class="avalone-btn avalone-btn-danger">{{ t('profile_btn_logout') }}</a>
 </div>
 {% endblock %}

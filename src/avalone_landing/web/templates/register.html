@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a0c10">
-<title>Регистрация — Avalone</title>
+<title>{{ t('auth_register_title') }} — {{ t('brand') }}</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -69,34 +69,34 @@ input:focus{border-color:var(--accent)}
   <div class="brand">
     <div class="logo-mark">◈</div>
     <div>
-      <div class="brand-title">Avalone</div>
-      <div class="brand-sub">Ваши инструменты в одном месте</div>
+      <div class="brand-title">{{ t('brand') }}</div>
+      <div class="brand-sub">{{ t('brand_tagline') }}</div>
     </div>
   </div>
-  <h1>Регистрация</h1>
+  <h1>{{ t('auth_register_title') }}</h1>
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
   <form method="post" action="/register">
     <div class="field">
-      <label for="login">Логин</label>
-      <input id="login" name="login" type="text" required autocomplete="username" autofocus>
+      <label for="login">{{ t('auth_label_login') }}</label>
+      <input id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
     </div>
     <div class="field">
-      <label for="password">Пароль</label>
-      <input id="password" name="password" type="password" required autocomplete="new-password">
-      <div class="hint">Минимум 6 символов</div>
+      <label for="password">{{ t('auth_label_password') }}</label>
+      <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password') }}">
+      <div class="hint">{{ t('auth_hint_password_min') }}</div>
     </div>
     <div class="field">
-      <label for="password2">Повторите пароль</label>
-      <input id="password2" name="password2" type="password" required autocomplete="new-password">
+      <label for="password2">{{ t('auth_label_password2') }}</label>
+      <input id="password2" name="password2" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password2') }}">
     </div>
     <div class="field">
-      <label for="invite">Код приглашения (опционально)</label>
-      <input id="invite" name="invite" type="text" autocomplete="off">
+      <label for="invite">{{ t('auth_label_invite') }}</label>
+      <input id="invite" name="invite" type="text" autocomplete="off" placeholder="{{ t('auth_placeholder_invite') }}">
     </div>
-    <button class="btn" type="submit">Создать аккаунт</button>
+    <button class="btn" type="submit">{{ t('auth_btn_register') }}</button>
   </form>
   <div class="footer">
-    Уже есть аккаунт? <a href="/login">Войти</a>
+    {{ t('auth_has_account') }} <a href="/login">{{ t('auth_login_link') }}</a>
   </div>
 </div>
 </body>

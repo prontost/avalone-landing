@@ -179,11 +179,11 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
       <div class="header-actions">
         <label class="lang-select-wrap" for="langSelect">
           <span class="lang-select-icon" aria-hidden="true">🌐</span>
-          <select class="lang-select" id="langSelect" aria-label="Язык">
-            <option value="auto">Auto</option>
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-            <option value="ko">한국어</option>
+          <select class="lang-select" id="langSelect" aria-label="{{ t('lang_selector_label') }}">
+            <option value="auto">{{ t('lang_auto') }}</option>
+            <option value="ru">{{ t('lang_ru') }}</option>
+            <option value="en">{{ t('lang_en') }}</option>
+            <option value="ko">{{ t('lang_ko') }}</option>
           </select>
         </label>
       </div>
@@ -200,10 +200,10 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
 
     <div class="section-title" data-i="quick_title">{{ t('quick_title') }}</div>
     <div class="quick-actions">
-      <a class="quick-action" href="https://counta.avalone.online"  data-i="quick_budget">{{ glossary.app_money.ru }}</a>
-      <a class="quick-action" href="https://work.avalone.online"  data-i="quick_work">{{ glossary.app_work.ru }}</a>
+      <a class="quick-action" href="https://counta.avalone.online"  data-i="quick_budget">{{ t('app_money') }}</a>
+      <a class="quick-action" href="https://work.avalone.online"  data-i="quick_work">{{ t('app_work') }}</a>
       <a class="quick-action" href="https://avalone.online/profile" data-i="quick_profile">{{ t('quick_profile') }}</a>
-      <a class="quick-action" href="#" onclick="showComingSoon('{{ glossary.app_education.ru }}');return false" data-i="quick_community">{{ t('quick_community') }}</a>
+      <a class="quick-action" href="#" onclick="showComingSoon('{{ t('app_education') }}');return false" data-i="quick_community">{{ t('quick_community') }}</a>
     </div>
 
     <div class="section-title" data-i="apps_title">{{ t('apps_title') }}</div>
@@ -244,7 +244,7 @@ footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px}
         <span class="bottom-icon">🪙</span>
         <span data-i="nav_money">{{ t('nav_money') }}</span>
       </a>
-      <a class="bottom-item" href="#" onclick="showComingSoon('{{ glossary.app_education.ru }}');return false">
+      <a class="bottom-item" href="#" onclick="showComingSoon('{{ t('app_education') }}');return false">
         <span class="bottom-icon">💬</span>
         <span data-i="nav_chat">{{ t('nav_chat') }}</span>
       </a>
@@ -317,16 +317,17 @@ function updateInstallButton(){
 }
 
 function installPWA(){
+  var l=resolveLang(localStorage.getItem('avalone_lang')||'auto');
   if(isInstalledPWA()){
-    alert('Приложение уже установлено.');
+    alert(I18N[l].pwa_already_installed);
     return;
   }
   if(isIOSSafari()){
-    alert('На iPhone нажмите кнопку «Поделиться» внизу Safari, затем выберите «На экран «Домой»».');
+    alert(I18N[l].pwa_install_ios_safari);
     return;
   }
   if(isIOS()){
-    alert('На iPhone PWA устанавливается только через Safari. Откройте сайт в Safari и нажмите «Поделиться» → «На экран «Домой»».');
+    alert(I18N[l].pwa_install_ios_other);
     return;
   }
   if(deferredInstallPrompt){
@@ -340,9 +341,9 @@ function installPWA(){
     return;
   }
   if(isAndroid()){
-    alert('Чтобы установить, нажмите «⋮» в Chrome и выберите «Добавить на главный экран».');
+    alert(I18N[l].pwa_install_android);
   }else{
-    alert('Чтобы установить, нажмите в браузере «⋯» → «Приложения» → «Установить Avalone» (Chrome/Edge).');
+    alert(I18N[l].pwa_install_desktop);
   }
 }
 
@@ -373,14 +374,16 @@ function showComingSoon(name){
   return false;
 }
 function showSearch(){
-  var q=prompt(I18N[resolveLang(localStorage.getItem('avalone_lang')||'auto')].search_placeholder || 'Поиск...');
-  if(q)alert('Вы искали: '+q);
+  var l=resolveLang(localStorage.getItem('avalone_lang')||'auto');
+  var q=prompt(I18N[l].search_placeholder || 'Search...');
+  if(q)alert(I18N[l].search_result_prefix + q);
 }
 function submitWaitlist(e){
   e.preventDefault();
+  var l=resolveLang(localStorage.getItem('avalone_lang')||'auto');
   var input=e.target.querySelector('input');
   if(input.value.trim()){
-    alert('Спасибо! Мы запомнили: '+input.value);
+    alert(I18N[l].waitlist_thanks_prefix + input.value);
     input.value='';
   }
   return false;

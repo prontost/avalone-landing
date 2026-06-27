@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a0c10">
-<title>Вход — Avalone</title>
+<title>{{ t('auth_login_title') }} — {{ t('brand') }}</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -68,26 +68,26 @@ input:focus{border-color:var(--accent)}
   <div class="brand">
     <div class="logo-mark">◈</div>
     <div>
-      <div class="brand-title">Avalone</div>
-      <div class="brand-sub">Ваши инструменты в одном месте</div>
+      <div class="brand-title">{{ t('brand') }}</div>
+      <div class="brand-sub">{{ t('brand_tagline') }}</div>
     </div>
   </div>
-  <h1>Вход</h1>
+  <h1>{{ t('auth_login_title') }}</h1>
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
   <form method="post" action="/login">
     <input type="hidden" name="next" value="{{ request.query_params.get('next', '') }}">
     <div class="field">
-      <label for="login">Логин</label>
-      <input id="login" name="login" type="text" required autocomplete="username" autofocus>
+      <label for="login">{{ t('auth_label_login') }}</label>
+      <input id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
     </div>
     <div class="field">
-      <label for="password">Пароль</label>
-      <input id="password" name="password" type="password" required autocomplete="current-password">
+      <label for="password">{{ t('auth_label_password') }}</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password') }}">
     </div>
-    <button class="btn" type="submit">Войти</button>
+    <button class="btn" type="submit">{{ t('auth_btn_login') }}</button>
   </form>
   <div class="footer">
-    Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+    {{ t('auth_no_account') }} <a href="/register">{{ t('auth_register_link') }}</a>
   </div>
 </div>
 </body>

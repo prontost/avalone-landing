@@ -261,6 +261,20 @@ CREATE TABLE IF NOT EXISTS work_glossary (
     desc TEXT DEFAULT ''
 );
 
+-- Unified glossary: single source of truth for all apps.
+CREATE TABLE IF NOT EXISTS avalone_glossary (
+    key        TEXT PRIMARY KEY,
+    ru         TEXT,
+    en         TEXT,
+    ko         TEXT,
+    kind       TEXT DEFAULT 'ui',
+    module     TEXT DEFAULT '',
+    desc       TEXT DEFAULT '',
+    updated_at TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_avalone_glossary_kind   ON avalone_glossary(kind);
+CREATE INDEX IF NOT EXISTS idx_avalone_glossary_module ON avalone_glossary(module);
+
 CREATE TABLE IF NOT EXISTS work_user_settings (
     tenant INTEGER NOT NULL DEFAULT 1,
     key    TEXT NOT NULL,
@@ -320,6 +334,9 @@ CREATE TABLE IF NOT EXISTS work_slept_entries (
 def migrate() -> None:
     with connection() as con:
         _execute_script(con, SCHEMA)
+    # Migrate legacy per-app glossaries into the unified table and seed portal keys.
+    from avalone_core import glossary_db
+    glossary_db.migrate()
 
 
 def table_exists(name: str) -> bool:
