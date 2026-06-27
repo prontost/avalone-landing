@@ -236,8 +236,12 @@ def upsert_many(rows: list[dict[str, Any]]) -> int:
                     "INSERT INTO avalone_glossary "
                     "(key, ru, en, ko, kind, module, desc, updated_at) VALUES (?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(key) DO UPDATE SET "
-                    "ru=excluded.ru, en=excluded.en, ko=excluded.ko, "
-                    "kind=excluded.kind, module=excluded.module, updated_at=excluded.updated_at "
+                    "ru=COALESCE(NULLIF(excluded.ru,''),avalone_glossary.ru), "
+                    "en=COALESCE(NULLIF(excluded.en,''),avalone_glossary.en), "
+                    "ko=COALESCE(NULLIF(excluded.ko,''),avalone_glossary.ko), "
+                    "kind=COALESCE(NULLIF(excluded.kind,''),avalone_glossary.kind), "
+                    "module=COALESCE(NULLIF(excluded.module,''),avalone_glossary.module), "
+                    "updated_at=excluded.updated_at "
                     "WHERE excluded.ru<>avalone_glossary.ru OR excluded.en<>avalone_glossary.en "
                     "OR excluded.ko<>avalone_glossary.ko OR excluded.kind<>avalone_glossary.kind "
                     "OR excluded.module<>avalone_glossary.module",
@@ -248,9 +252,12 @@ def upsert_many(rows: list[dict[str, Any]]) -> int:
                     "INSERT INTO avalone_glossary "
                     "(key, ru, en, ko, kind, module, desc, updated_at) VALUES (?,?,?,?,?,?,?,?) "
                     "ON CONFLICT(key) DO UPDATE SET "
-                    "ru=excluded.ru, en=excluded.en, ko=excluded.ko, "
-                    "kind=excluded.kind, module=excluded.module, desc=excluded.desc, "
-                    "updated_at=excluded.updated_at",
+                    "ru=COALESCE(NULLIF(excluded.ru,''),avalone_glossary.ru), "
+                    "en=COALESCE(NULLIF(excluded.en,''),avalone_glossary.en), "
+                    "ko=COALESCE(NULLIF(excluded.ko,''),avalone_glossary.ko), "
+                    "kind=COALESCE(NULLIF(excluded.kind,''),avalone_glossary.kind), "
+                    "module=COALESCE(NULLIF(excluded.module,''),avalone_glossary.module), "
+                    "desc=excluded.desc, updated_at=excluded.updated_at",
                     params,
                 )
     return len(rows)
