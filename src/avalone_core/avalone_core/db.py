@@ -271,6 +271,12 @@ CREATE TABLE IF NOT EXISTS avalone_glossary (
 CREATE INDEX IF NOT EXISTS idx_avalone_glossary_kind   ON avalone_glossary(kind);
 CREATE INDEX IF NOT EXISTS idx_avalone_glossary_module ON avalone_glossary(module);
 
+-- Platform-wide server settings (SMTP, VAPID, etc.) managed by the admin panel.
+CREATE TABLE IF NOT EXISTS avalone_global_settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS work_user_settings (
     tenant INTEGER NOT NULL DEFAULT 1,
     key    TEXT NOT NULL,

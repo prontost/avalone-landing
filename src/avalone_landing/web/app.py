@@ -15,13 +15,27 @@ import avalone_core.ui
 from avalone_landing.config import settings
 from avalone_landing.core.auth_service import AuthService
 from avalone_landing.core import users
+from avalone_landing.core.user_service import UserService
+from avalone_landing.web.admin_router import router as admin_router
+from avalone_landing.web.api.admin import router as admin_api_router
 from avalone_landing.web.auth import router as auth_router
 from avalone_landing.web.shell_context import render_shell_context
 
 t = glossary.t
 migrate_db()
+
+# Ensure the platform owner account always has portal admin rights.
+try:
+    _user_service = UserService()
+    if _user_service.get_user(1):
+        _user_service.ensure_admin(1)
+except Exception:
+    pass
+
 app = FastAPI(title="avalone.online")
 app.include_router(auth_router)
+app.include_router(admin_router)
+app.include_router(admin_api_router)
 BASE = Path(__file__).parent
 _templates_dir = BASE / "templates"
 _static_dir = BASE / "static"

@@ -165,7 +165,7 @@ PREFIX: list[tuple[str, str]] = [
     ("auth_",   "Text in the authentication flows (login, register, profile)."),
     ("profile_","Text in the user profile screen."),
     ("manifest_", "Field in the PWA web-app manifest."),
-    ("admin_",  "Label in the admin dashboard."),
+    ("admin_",  "Label, button, or message in the platform admin dashboard."),
     ("error_",  "Error message returned by the backend or shown to the user."),
 ]
 

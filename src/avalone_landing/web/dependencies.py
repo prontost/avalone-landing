@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Request, status
 
+from avalone_landing.core.admin_service import AdminService
 from avalone_landing.core.auth_service import AuthService
 from avalone_landing.core.mail_service import MailService
 from avalone_landing.core.models import User
@@ -20,6 +21,10 @@ def get_auth_service() -> AuthService:
 
 def get_mail_service() -> MailService:
     return MailService()
+
+
+def get_admin_service() -> AdminService:
+    return AdminService()
 
 
 async def current_user(

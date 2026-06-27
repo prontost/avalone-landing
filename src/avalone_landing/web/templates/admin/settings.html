@@ -1,0 +1,107 @@
+{% extends "avalone_base.html" %}
+
+{% block title %}{{ t('admin_settings_title') }} — {{ t('brand') }}{% endblock %}
+
+{% block content %}
+<div class="avalone-container">
+  {{ header|safe }}
+
+  <div class="avalone-card">
+    <h3 class="mt-0">{{ t('admin_settings_smtp') }}</h3>
+    <form class="avalone-stack" id="settings-form">
+      <label class="avalone-label">{{ t('admin_smtp_host') }}
+        <input class="avalone-input" type="text" name="smtp_host" value="{{ settings.smtp_host }}" autocomplete="off">
+      </label>
+      <label class="avalone-label">{{ t('admin_smtp_port') }}
+        <input class="avalone-input" type="number" name="smtp_port" value="{{ settings.smtp_port }}" autocomplete="off">
+      </label>
+      <label class="avalone-label">{{ t('admin_smtp_user') }}
+        <input class="avalone-input" type="text" name="smtp_user" value="{{ settings.smtp_user }}" autocomplete="off">
+      </label>
+      <label class="avalone-label">{{ t('admin_smtp_password') }}
+        <input class="avalone-input" type="password" name="smtp_password" value="{{ settings.smtp_password }}" autocomplete="off">
+      </label>
+      <label class="avalone-label avalone-checkbox">
+        <input type="checkbox" name="smtp_use_tls" value="true" {% if settings.smtp_use_tls %}checked{% endif %}>
+        {{ t('admin_smtp_use_tls') }}
+      </label>
+      <label class="avalone-label">{{ t('admin_mail_from') }}
+        <input class="avalone-input" type="email" name="mail_from" value="{{ settings.mail_from }}" autocomplete="off">
+      </label>
+      <label class="avalone-label">{{ t('admin_mail_from_name') }}
+        <input class="avalone-input" type="text" name="mail_from_name" value="{{ settings.mail_from_name }}" autocomplete="off">
+      </label>
+      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save') }}</button>
+    </form>
+    <div id="settings-message"></div>
+  </div>
+
+  <div class="avalone-card">
+    <h3 class="mt-0">{{ t('admin_settings_test_email') }}</h3>
+    <form class="avalone-stack" id="test-email-form">
+      <label class="avalone-label">{{ t('admin_test_email_to') }}
+        <input class="avalone-input" type="email" name="to" required autocomplete="email">
+      </label>
+      <button class="avalone-btn avalone-btn-secondary" type="submit">{{ t('admin_btn_test_email') }}</button>
+    </form>
+    <div id="test-email-message"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const settingsForm = document.getElementById('settings-form');
+  settingsForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(settingsForm);
+    const body = { settings: {} };
+    formData.forEach((value, key) => {
+      if (key === 'smtp_use_tls') {
+        body.settings[key] = true;
+      } else {
+        body.settings[key] = value;
+      }
+    });
+    if (!body.settings.smtp_use_tls) body.settings.smtp_use_tls = false;
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const msg = document.getElementById('settings-message');
+      if (res.ok) {
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_saved') }}</div>';
+      } else {
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_save_failed') }}</div>';
+      }
+    } catch (err) {
+      document.getElementById('settings-message').innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';
+    }
+  });
+
+  const testForm = document.getElementById('test-email-form');
+  testForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const to = testForm.querySelector('[name="to"]').value;
+    try {
+      const res = await fetch('/api/admin/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: to })
+      });
+      const msg = document.getElementById('test-email-message');
+      if (res.ok) {
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_test_email_sent') }}</div>';
+      } else {
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_test_email_failed') }}</div>';
+      }
+    } catch (err) {
+      document.getElementById('test-email-message').innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';
+    }
+  });
+});
+</script>
+{% endblock %}
