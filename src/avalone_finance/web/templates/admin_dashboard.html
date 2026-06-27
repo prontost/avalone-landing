@@ -112,12 +112,6 @@
 </section>
 
 <section>
-  <h2>{{ t('label_qr', lang=lang) }}</h2>
-  <p class="muted">{{ t('hint_qr', lang=lang) }}</p>
-  <div id="qr-wrap"></div>
-</section>
-
-<section>
   <h2>{{ t('label_health', lang=lang) }}</h2>
   <div id="health">{{ t('label_loading', lang=lang) }}</div>
 </section>
@@ -321,13 +315,8 @@ async function loadHealth(){
   `;
 }
 
-function loadQR(){
-  $('qr-wrap').innerHTML = `<img src="/finance/qr?size=200" alt="QR" style="max-width:200px;background:#fff;padding:8px;border-radius:12px">`;
-}
-
 (async ()=>{
   await Promise.all([loadStats(), loadConfig(), loadConstantsList(), loadSecrets(), loadUsers(), loadAdmins(), loadHealth()]);
-  loadQR();
   loadLogs();
 })();
 </script>

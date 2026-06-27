@@ -1334,6 +1334,61 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
   font-size: 13px;
 }
 
+/* Invite/share modal (single place for referral link + QR) */
+.avalone-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.avalone-modal.open { display: flex; }
+.avalone-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+.avalone-modal__panel {
+  position: relative;
+  width: min(360px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.avalone-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.avalone-modal__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--txt);
+}
+.avalone-modal__body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.avalone-invite__qr {
+  display: flex;
+  justify-content: center;
+}
+.avalone-invite__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 @media (max-width: 768px) {
   .avalone-landing { padding-bottom: 24px; }
   .landing-hero { padding: 16px 0 12px; }
@@ -1341,4 +1396,5 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
   .bento { grid-template-columns: 1fr; }
   .teaser-form { flex-direction: column; }
   .teaser-input { width: 100%; }
+  .avalone-invite__actions { grid-template-columns: 1fr; }
 }

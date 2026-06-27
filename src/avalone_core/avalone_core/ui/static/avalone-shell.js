@@ -111,24 +111,61 @@ const AVALONE_I18N = window.AVALONE_I18N || {};
     window.location.reload();
   };
 
-  // Share Avalone
-  window.shareAvalone = async function() {
+  // Invite / share Avalone (single entry point in the burger menu)
+  let _inviteUrl = 'https://avalone.online';
+
+  async function loadInviteUrl() {
     let url = 'https://avalone.online';
     try {
       const res = await fetch('/api/referral/code', { credentials: 'same-origin' });
       if (res.ok) {
         const data = await res.json();
-        if (data.code || data.url) {
-          url = data.url || (url + '?ref=' + encodeURIComponent(data.code));
-        }
+        if (data.url) url = data.url;
+        else if (data.code) url = url + '?ref=' + encodeURIComponent(data.code);
       }
     } catch (e) {
       // referral API optional
     }
+    _inviteUrl = url;
+    return url;
+  }
+
+  window.openInviteModal = async function() {
+    closeAvaloneMenu();
+    const url = await loadInviteUrl();
+    const modal = document.getElementById('avalone-invite-modal');
+    const qrImg = document.getElementById('avalone-invite-qr-img');
+    if (qrImg) {
+      qrImg.src = '/finance/qr?url=' + encodeURIComponent(url) + '&size=200';
+      qrImg.style.display = 'block';
+    }
+    if (modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  window.closeInviteModal = function() {
+    const modal = document.getElementById('avalone-invite-modal');
+    if (modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.shareInviteLink = async function() {
+    const url = _inviteUrl;
     const text = AVALONE_I18N.share_text || document.title;
     if (navigator.share) {
       try { await navigator.share({ title: document.title, text, url }); return; } catch (e) {}
     }
+    copyInviteLink();
+  };
+
+  window.copyInviteLink = async function() {
+    const url = _inviteUrl;
     try {
       await navigator.clipboard.writeText(url);
       if (window.toast) window.toast(AVALONE_I18N.toast_share_link_copied || 'Link copied');

@@ -119,6 +119,14 @@ EXACT: dict[str, str] = {
     "shell_profile_logout": "Label of the 'Log out' link in the profile dropdown.",
     "shell_status_in_dev":  "Badge label for branches that are in development.",
     "shell_status_planned": "Badge label for branches that are planned but not yet available.",
+    "shell_share_app":      "Label of the single 'Invite friends' entry in the burger menu. Opens a modal with share, copy and QR options.",
+    "shell_invite_title":   "Title of the invite-friend modal dialog.",
+    "shell_invite_hint":    "Short explanation in the invite modal: the link already contains the user's referral code.",
+    "shell_invite_share_btn": "Button label in the invite modal that triggers the native system share sheet (iOS/Android/desktop).",
+    "shell_invite_copy_btn": "Button label in the invite modal that copies the referral link to the clipboard.",
+    "shell_invite_qr_alt":  "Alt text for the QR code image in the invite modal.",
+    "toast_share_link_copied": "Short toast message shown after the referral link has been copied to the clipboard.",
+    "share_copy_prompt":    "Fallback dialog title when the browser cannot copy automatically and asks the user to copy manually.",
 
     # Manifest / PWA.
     "manifest_name":        "PWA manifest: full application name including brand.",

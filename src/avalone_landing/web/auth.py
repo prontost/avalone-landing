@@ -331,14 +331,12 @@ async def profile_page(
     u = user_service.get_user(user.id)
     if not u:
         return RedirectResponse("/login", status_code=303)
-    referral = ReferralService().stats(u.id)
     screen_time = DeviceService().screen_time_summary(u.id)
     ctx = _shell_context(
         request,
         {"id": u.id, "login": u.login, "email": u.email, "created_at": u.created_at,
          "is_admin": u.is_admin},
     )
-    ctx["referral"] = referral
     ctx["screen_time"] = screen_time
     return templates.TemplateResponse(request, "profile.html", ctx)
 

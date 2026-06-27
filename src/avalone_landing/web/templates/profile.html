@@ -15,22 +15,6 @@
   </div>
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('profile_referral_title', lang=lang) }}</h3>
-    <p class="text-muted">{{ t('profile_referral_share_hint', lang=lang) }}</p>
-    <div class="avalone-form-group">
-      <label class="avalone-label">{{ t('profile_referral_code_label', lang=lang) }}</label>
-      <div class="row">
-        <input class="avalone-input col" id="profileRefCode" type="text" readonly value="{{ referral.code }}">
-        <button class="avalone-btn avalone-btn-secondary" type="button" onclick="copyReferralCode()">{{ t('profile_referral_copy', lang=lang) }}</button>
-      </div>
-    </div>
-    <div class="row">
-      <span class="text-muted">{{ t('profile_referral_invitees', lang=lang) }}:</span>
-      <span>{{ referral.invitees_count }}</span>
-    </div>
-  </div>
-
-  <div class="avalone-card">
     <h3 class="mt-0">{{ t('profile_screen_time_title', lang=lang) }}</h3>
     <div class="row">
       <span class="text-muted">{{ t('profile_screen_time_today', lang=lang) }}:</span>
@@ -78,16 +62,5 @@ function formatSeconds(total){
   if(today) today.textContent = formatSeconds(parseInt(today.textContent, 10) || 0);
   if(total) total.textContent = formatSeconds(parseInt(total.textContent, 10) || 0);
 })();
-function copyReferralCode(){
-  var input = document.getElementById('profileRefCode');
-  if(!input) return;
-  try {
-    navigator.clipboard.writeText(input.value).then(function(){}, function(){
-      prompt({{ t('share_copy_prompt', lang=lang) | tojson }}, input.value);
-    });
-  } catch(e) {
-    prompt({{ t('share_copy_prompt', lang=lang) | tojson }}, input.value);
-  }
-}
 </script>
 {% endblock %}

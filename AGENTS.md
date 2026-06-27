@@ -46,9 +46,10 @@
 - **Глубина архива:** 14 дней, автоматическая ротация
 - **Расписание:** launchd-агент `online.avalone.db-backup`, каждый час
 - **Бэкапы складываются в:** `~/.avalone/backups/auto/`
-- **Git-репозитории платформы:** `~/github-work/counta`, `~/github-work/routa`, `~/github-work/avalone.online`
+- **Git-репозиторий платформы:** `~/github-work/avalone.online`
+- **Удалённые репозитории Counta/Routa:** ещё не удалены на GitHub вручную (требуется scope `delete_repo`)
 
-После любого изменения кода/конфига/базы запускать бэкап и пушить все грязные репозитории из списка.
+После любого изменения кода/конфига/базы запускать бэкап и пушить изменения в `~/github-work/avalone.online`.
 
 ## Безопасность
 
@@ -118,8 +119,8 @@ def get_trip_service() -> TripService: ...
 
 # web/api/trips.py
 from fastapi import APIRouter, Depends
-from counta.core.trip_service import TripService
-from counta.web.api.dependencies import get_trip_service
+from avalone_landing.core.trip_service import TripService
+from avalone_landing.web.api.dependencies import get_trip_service
 
 router = APIRouter()
 
@@ -127,3 +128,39 @@ router = APIRouter()
 async def list_trips(service: TripService = Depends(get_trip_service)):
     return service.upcoming(...)
 ```
+
+## Internationalization (i18n) and glossary
+
+All user-facing text must live in the glossary. No hardcoded strings in templates or code.
+
+- Use `t('key', lang=lang)` in Jinja2 templates.
+- Use `glossary.t('key', lang=...)` in Python services/repositories.
+- Every new key must be added to:
+  1. `src/avalone_core/avalone_core/glossary_db.py` seed data (at least `ru`, `en`, `ko`).
+  2. `src/avalone_core/avalone_core/ui_glossary.py` `EXACT` or `PREFIX` with a **precise, unambiguous description**.
+
+### Writing translation-friendly source text
+
+- State the **screen/location** where the string appears.
+- State the **control type**: button label, heading, placeholder, tooltip, error message, alt text, etc.
+- Mention any **placeholders** (`{name}`, `{count}`) and what they will contain.
+- Avoid idioms, abbreviations, culture-specific jokes, and ambiguous pronouns.
+- Keep sentences short and use plain language so cheap/machine translation produces correct results.
+- If a string has a length constraint, note it.
+- If a term is a brand name or should not be translated, say so explicitly.
+
+Example of a good description:
+
+```python
+"shell_invite_share_btn": (
+    "Button label inside the invite-friend modal that opens the native OS share sheet. "
+    "The user has already opened the modal from the burger menu. "
+    "Use the verb that means 'share via the phone/computer system dialog', not 'split' or 'divide'."
+),
+```
+
+### Quality bar
+
+- Korean and any other non-English translation must be reviewed by a native speaker before being shown to end users.
+- Until review, prefer a clearly correct but plain translation over a clever one.
+- Do not leave empty translations; fall back to English if a proper translation is not ready.
