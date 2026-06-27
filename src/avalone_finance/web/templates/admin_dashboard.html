@@ -1,0 +1,334 @@
+{% extends "avalone_base.html" %}
+
+{% block title %}{{ t('title_admin_money', lang=lang) }}{% endblock %}
+
+{% block content %}
+<style>
+  label { display:block; color:var(--muted); font-size:13px; margin-top:12px; }
+  input, select { width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--txt); font-size:14px; margin-top:4px; }
+  #config-form { margin-top:6px; }
+  #logs { white-space:pre-wrap; word-break:break-word; }
+</style>
+<h1>{{ t('title_admin_money', lang=lang) }}</h1>
+<p class="muted">{{ t('label_build', lang=lang).replace('{build_id}', build_id) }}</p>
+
+<section>
+  <h2>{{ t('label_instance', lang=lang) }}</h2>
+  <div id="stats">{{ t('label_loading', lang=lang) }}</div>
+</section>
+
+<section>
+  <h2>{{ t('label_configuration', lang=lang) }}</h2>
+  <form id="config-form" style="max-width:480px">
+    <label>{{ t('label_reg_mode', lang=lang) }}</label>
+    <select id="cfg-reg-mode">
+      <option value="open">{{ t('option_reg_open', lang=lang) }}</option>
+      <option value="invite">{{ t('option_reg_invite', lang=lang) }}</option>
+      <option value="closed">{{ t('option_reg_closed', lang=lang) }}</option>
+    </select>
+    <div id="cfg-invite-wrap" style="display:none;margin-top:10px">
+      <label>{{ t('label_invite_code', lang=lang) }}</label>
+      <input type="text" id="cfg-invite-code" autocomplete="off">
+    </div>
+
+    <label style="margin-top:14px;display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="cfg-strict-pw">
+      {{ t('label_strict_pw', lang=lang) }}
+    </label>
+
+    <label style="margin-top:14px">{{ t('label_base_currency', lang=lang) }}</label>
+    <select id="cfg-currency"></select>
+
+    <label style="margin-top:14px">{{ t('label_llm_provider', lang=lang) }}</label>
+    <select id="cfg-llm-provider"></select>
+
+    <label style="margin-top:14px">{{ t('label_llm_model', lang=lang) }}</label>
+    <input type="text" id="cfg-llm-model" autocomplete="off">
+    <input type="hidden" id="cfg-llm-full">
+
+    <label style="margin-top:14px">{{ t('label_llm_fallback', lang=lang) }}</label>
+    <input type="text" id="cfg-llm-fallback" autocomplete="off">
+
+    <label style="margin-top:14px">{{ t('label_stt_model', lang=lang) }}</label>
+    <select id="cfg-stt-model"></select>
+
+    <label style="margin-top:14px">{{ t('label_web_base_url', lang=lang) }}</label>
+    <input type="text" id="cfg-web-url" autocomplete="off">
+
+    <button type="submit" class="btn" style="margin-top:18px;width:100%">{{ t('btn_save_settings', lang=lang) }}</button>
+    <p id="config-msg" style="margin-top:8px;font-size:13px"></p>
+  </form>
+
+  <h3 style="margin-top:20px;color:var(--muted);font-size:13px;text-transform:uppercase">{{ t('label_static_constants', lang=lang) }}</h3>
+  <div id="static-constants">{{ t('label_loading', lang=lang) }}</div>
+</section>
+
+<section>
+  <h2>{{ t('label_runtime_constants', lang=lang) }}</h2>
+  <p class="muted">{{ t('hint_runtime_constants', lang=lang) }}</p>
+  <div id="constants-list" style="max-width:480px">{{ t('label_loading', lang=lang) }}</div>
+  <button class="btn" style="margin-top:14px;width:100%;max-width:480px" onclick="saveConstants()">{{ t('btn_save_constants', lang=lang) }}</button>
+  <p id="constants-msg" style="margin-top:8px;font-size:13px"></p>
+</section>
+
+<section>
+  <h2>{{ t('label_secrets', lang=lang) }}</h2>
+  <p class="muted">{{ t('hint_secrets', lang=lang) }}</p>
+  <div id="secrets">{{ t('label_loading', lang=lang) }}</div>
+</section>
+
+<section>
+  <h2>{{ t('label_users', lang=lang) }}</h2>
+  <div id="users">{{ t('label_loading', lang=lang) }}</div>
+</section>
+
+<section>
+  <h2>{{ t('label_admins', lang=lang) }}</h2>
+  <div id="admins">{{ t('label_loading', lang=lang) }}</div>
+  <form id="add-admin-form" style="max-width:320px;margin-top:14px">
+    <label>{{ t('label_add_admin', lang=lang) }}</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="add-admin-login" placeholder="{{ t('placeholder_login', lang=lang) }}" style="flex:1">
+      <button type="submit" class="btn" style="padding:10px 14px">+</button>
+    </div>
+    <p id="add-admin-msg" style="margin-top:6px;font-size:13px"></p>
+  </form>
+</section>
+
+<section>
+  <h2>{{ t('label_logs', lang=lang) }}</h2>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn" onclick="loadLogs()" type="button">{{ t('btn_update', lang=lang) }}</button>
+    <span id="log-path" class="muted" style="align-self:center"></span>
+  </div>
+  <pre id="logs" style="background:#0b0d12;color:#c9d1d9;padding:12px;border-radius:8px;max-height:400px;overflow:auto;font-size:12px;margin:0">{{ t('label_loading', lang=lang) }}</pre>
+</section>
+
+<section style="border-color:var(--red)">
+  <h2>{{ t('label_danger_zone', lang=lang) }}</h2>
+  <p class="muted">{{ t('hint_restart', lang=lang) }}</p>
+  <button class="btn" style="background:var(--red)" onclick="restartService()" type="button">{{ t('btn_restart', lang=lang) }}</button>
+  <p id="restart-msg" style="margin-top:8px;font-size:13px"></p>
+</section>
+
+<section>
+  <h2>{{ t('label_qr', lang=lang) }}</h2>
+  <p class="muted">{{ t('hint_qr', lang=lang) }}</p>
+  <div id="qr-wrap"></div>
+</section>
+
+<section>
+  <h2>{{ t('label_health', lang=lang) }}</h2>
+  <div id="health">{{ t('label_loading', lang=lang) }}</div>
+</section>
+
+<p style="margin-top:20px"><a href="/logout" style="color:var(--red)">{{ t('link_logout', lang=lang) }}</a></p>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const I18N = {{ i18n|tojson }};
+const LANG = 'ru';
+function T(k){ return (I18N[LANG] && I18N[LANG][k]) || k; }
+function $(id){ return document.getElementById(id); }
+function fmtBytes(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/(1024*1024)).toFixed(2)+' MB'; }
+async function api(path, opts){ const r = await fetch('/finance/api/admin'+path, opts||{}); return r.json(); }
+
+let CFG_OPTIONS = {};
+
+async function loadStats(){
+  const d = await api('/stats');
+  $('stats').innerHTML = d.error ? d.error : `
+    <div class="cards">
+      <div class="card"><div class="label">${T('label_users')}</div><div class="val">${d.users}</div></div>
+      <div class="card"><div class="label">${T('label_entries')}</div><div class="val">${d.entries}</div></div>
+      <div class="card"><div class="label">${T('label_currencies')}</div><div class="val">${d.currencies}</div></div>
+    </div>`;
+}
+
+async function loadConfig(){
+  const d = await api('/config');
+  if(d.error){ $('config-form').innerHTML = d.error; return; }
+  CFG_OPTIONS = d.options || {};
+  $('cfg-reg-mode').value = d.registration_mode || 'open';
+  $('cfg-invite-wrap').style.display = d.registration_mode === 'invite' ? 'block' : 'none';
+  $('cfg-invite-code').value = d.registration_invite_code || '';
+  $('cfg-strict-pw').checked = d.strict_password_policy;
+  $('cfg-web-url').value = d.web_base_url || '';
+  populateSelect('cfg-currency', CFG_OPTIONS.currencies || [], d.default_currency);
+  populateSelect('cfg-llm-provider', CFG_OPTIONS.llm_providers || [], d.llm_provider);
+  $('cfg-llm-model').value = d.llm_model || '';
+  $('cfg-llm-fallback').value = d.llm_fallback || '';
+  populateSelect('cfg-stt-model', CFG_OPTIONS.stt_models || [], d.stt_model);
+}
+$('cfg-reg-mode').addEventListener('change', e=>{
+  $('cfg-invite-wrap').style.display = e.target.value === 'invite' ? 'block' : 'none';
+});
+function populateSelect(id, items, selected){
+  const sel = $(id); sel.innerHTML = '';
+  items.forEach(it=>{
+    const opt = document.createElement('option');
+    opt.value = it.value || it;
+    opt.textContent = it.label || it.value || it;
+    if((it.value||it) === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+$('config-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const body = {
+    registration_mode: $('cfg-reg-mode').value,
+    registration_invite_code: $('cfg-invite-code').value,
+    strict_password_policy: $('cfg-strict-pw').checked,
+    default_currency: $('cfg-currency').value,
+    llm_provider: $('cfg-llm-provider').value,
+    llm_model: $('cfg-llm-model').value,
+    llm_fallback: $('cfg-llm-fallback').value,
+    stt_model: $('cfg-stt-model').value,
+    web_base_url: $('cfg-web-url').value,
+  };
+  const r = await api('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  $('config-msg').textContent = r.error ? T('error_prefix') + r.error : T('t_saved');
+  $('config-msg').style.color = r.error ? 'var(--red)' : 'var(--green)';
+});
+
+async function loadStaticConstants(){
+  const d = await api('/static-constants');
+  $('static-constants').innerHTML = d.error ? d.error : `
+    <div class="cards">${Object.entries(d.constants||{}).map(([k,v])=>
+      `<div class="card"><div class="label">${k}</div><div class="val">${v}</div></div>`
+    ).join('')}</div>`;
+}
+
+async function loadSecrets(){
+  const d = await api('/secrets');
+  $('secrets').innerHTML = d.error ? d.error : `
+    <div style="display:grid;gap:8px;max-width:480px">
+      ${(d.secrets||[]).map(s=>`<div class="row"><span>${s.key}</span><span class="muted">${s.set?T('label_set'):T('label_not_set')}</span></div>`).join('')}
+    </div>
+    <p class="muted">${T('hint_secrets_edit')}</p>`;
+}
+
+async function loadUsers(){
+  const d = await api('/users');
+  if(d.error){ $('users').textContent = d.error; return; }
+  $('users').innerHTML = d.users.map(u=>`
+    <div class="row" style="align-items:center;margin:6px 0">
+      <span>${u.login} <span class="muted">(#${u.id})</span></span>
+      <span>
+        <button class="btn" style="padding:4px 10px;font-size:12px" onclick="resetPassword(${u.id},'${u.login}')">${T('btn_reset_password')}</button>
+        <button class="btn" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px" onclick="deleteUser(${u.id},'${u.login}')">${T('btn_delete')}</button>
+      </span>
+    </div>
+  `).join('') || '<p class="muted">' + T('label_no_users') + '</p>';
+}
+async function resetPassword(id,login){
+  const el = $('user-action-msg') || document.createElement('p');
+  el.id = 'user-action-msg';
+  if(!$('user-action-msg')){
+    el.style.marginTop = '8px'; el.style.fontSize = '13px';
+    $('users').after(el);
+  }
+  if(!confirm(T('confirm_reset_password').replace('{login}', login))) return;
+  const d = await api('/users/'+id+'/reset-password',{method:'POST'});
+  if(d.error){
+    el.textContent = T('error_prefix') + d.error;
+    el.style.color = 'var(--red)';
+    return;
+  }
+  el.innerHTML = `<span style="color:var(--green)">${T('reset_link_for').replace('{login}', d.login).replace('{expires_min}', d.expires_min)}</span><br>
+    <a href="${d.reset_link}" target="_blank" style="word-break:break-all;color:var(--accent)">${d.reset_link}</a>
+    <button class="btn" style="margin-top:6px;padding:4px 8px;font-size:12px" onclick="navigator.clipboard.writeText('${d.reset_link}').then(()=>toast(T('msg_copied')))">${T('btn_copy')}</button>`;
+}
+async function deleteUser(id,login){
+  if(!confirm(T('confirm_delete_user').replace('{login}', login))) return;
+  const d = await api('/users/'+id,{method:'DELETE'});
+  $('user-action-msg').textContent = d.error ? T('error_prefix') + d.error : T('msg_user_deleted');
+  $('user-action-msg').style.color = d.error ? 'var(--red)' : 'var(--green)';
+  if(!d.error) loadUsers();
+}
+
+async function loadAdmins(){
+  const d = await api('/admins');
+  if(d.error){ $('admins').textContent = d.error; return; }
+  $('admins').innerHTML = d.admins.map(a=>
+    `<div class="row"><span>${a.login}</span><button class="btn" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px" onclick="removeAdmin(${a.id})">${T('btn_delete')}</button></div>`
+  ).join('') || '<p class="muted">' + T('label_no_admins') + '</p>';
+}
+async function removeAdmin(id){
+  if(!confirm(T('confirm_remove_admin'))) return;
+  await api('/admins/'+id,{method:'DELETE'});
+  loadAdmins();
+}
+$('add-admin-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const login = $('add-admin-login').value.trim();
+  const d = await api('/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login})});
+  $('add-admin-msg').textContent = d.error ? T('error_prefix') + d.error : T('msg_admin_added').replace('{login}', d.login);
+  $('add-admin-msg').style.color = d.error ? 'var(--red)' : 'var(--green)';
+  if(!d.error){ $('add-admin-login').value=''; loadAdmins(); loadUsers(); }
+});
+
+async function loadLogs(){
+  const d = await api('/logs?lines=200');
+  $('logs').textContent = d.error ? d.error : (d.lines.join('') || T('logs_empty'));
+  $('log-path').textContent = d.path || '';
+  $('logs').scrollTop = $('logs').scrollHeight;
+}
+
+async function loadConstantsList(){
+  const d = await api('/constants');
+  if(d.error){ $('constants-list').textContent = d.error; return; }
+  $('constants-list').innerHTML = d.constants.map(c=>{
+    const inputType = c.type === 'bool' ? 'checkbox' : (c.type === 'int' || c.type === 'float' || c.type === 'Decimal' ? 'number' : 'text');
+    const step = c.type === 'int' ? '1' : 'any';
+    const checked = c.value ? 'checked' : '';
+    const valAttr = c.type === 'bool' ? '' : `value="${c.value}"`;
+    const input = c.type === 'bool'
+      ? `<input type="checkbox" id="const-${c.key}" ${checked} style="width:auto">`
+      : `<input type="${inputType}" id="const-${c.key}" ${valAttr} step="${step}" autocomplete="off">`;
+    return `<label style="margin-top:10px">${c.key} <span class="muted">(default: ${c.default})</span></label>${input}`;
+  }).join('');
+}
+async function saveConstants(){
+  const d = await api('/constants');
+  if(d.error){ $('constants-msg').textContent = d.error; return; }
+  const updates = {};
+  for(const c of d.constants){
+    const el = $('const-'+c.key);
+    if(!el) continue;
+    if(c.type === 'bool'){ updates[c.key] = el.checked ? 'true' : 'false'; }
+    else { updates[c.key] = el.value; }
+  }
+  const r = await api('/constants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updates})});
+  $('constants-msg').textContent = r.error ? T('error_prefix') + r.error : T('t_saved');
+  $('constants-msg').style.color = r.error ? 'var(--red)' : 'var(--green)';
+}
+
+async function restartService(){
+  if(!confirm(T('confirm_restart'))) return;
+  if(!confirm(T('confirm_restart_sure'))) return;
+  const d = await api('/restart',{method:'POST'});
+  $('restart-msg').textContent = d.error ? T('error_prefix') + d.error : T('msg_restarting');
+  $('restart-msg').style.color = d.error ? 'var(--red)' : 'var(--green)';
+}
+
+async function loadHealth(){
+  const d = await api('/health');
+  $('health').innerHTML = d.error ? d.error : `
+    <div class="row"><span>${T('label_db_available')}</span><span style="color:${d.db_ok?'var(--green)':'var(--red)'}">${d.db_ok?T('label_ok'):T('label_fail')}</span></div>
+    <div class="row"><span>${T('label_db_path')}</span><span class="num">${d.db_path}</span></div>
+  `;
+}
+
+function loadQR(){
+  $('qr-wrap').innerHTML = `<img src="/finance/qr?size=200" alt="QR" style="max-width:200px;background:#fff;padding:8px;border-radius:12px">`;
+}
+
+(async ()=>{
+  await Promise.all([loadStats(), loadConfig(), loadConstantsList(), loadSecrets(), loadUsers(), loadAdmins(), loadHealth()]);
+  loadQR();
+  loadLogs();
+})();
+</script>
+{% endblock %}

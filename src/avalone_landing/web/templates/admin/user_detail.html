@@ -1,6 +1,6 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('admin_user_detail_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('admin_user_detail_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-container">
@@ -10,42 +10,41 @@
     <h3 class="mt-0">{{ target.login }}</h3>
     <div class="admin-meta">
       <div><span class="text-muted">ID:</span> {{ target.id }}</div>
-      <div><span class="text-muted">{{ t('admin_col_email') }}:</span> {{ target.email or '-' }}</div>
-      <div><span class="text-muted">{{ t('admin_col_roles') }}:</span>
-        {% if target.is_platform_admin %}<span class="avalone-badge avalone-badge-blue">{{ t('admin_role_platform') }}</span>{% endif %}
-        {% if target.is_money_admin %}<span class="avalone-badge avalone-badge-green">{{ t('admin_role_money') }}</span>{% endif %}
+      <div><span class="text-muted">{{ t('admin_col_email', lang=lang) }}:</span> {{ target.email or '-' }}</div>
+      <div><span class="text-muted">{{ t('admin_col_roles', lang=lang) }}:</span>
+        {% for role in target.roles %}
+        <span class="avalone-badge avalone-badge-blue">{{ t('admin_role_' + role, lang=lang) }}</span>
+        {% endfor %}
       </div>
     </div>
   </div>
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('admin_section_edit') }}</h3>
+    <h3 class="mt-0">{{ t('admin_section_edit', lang=lang) }}</h3>
     <form class="avalone-stack" id="user-edit-form" data-user-id="{{ target.id }}">
-      <label class="avalone-label">{{ t('admin_col_email') }}
+      <label class="avalone-label">{{ t('admin_col_email', lang=lang) }}
         <input class="avalone-input" type="email" name="email" value="{{ target.email }}" autocomplete="email">
       </label>
-      <div class="avalone-label">{{ t('admin_col_roles') }}</div>
+      <div class="avalone-label">{{ t('admin_col_roles', lang=lang) }}</div>
       <div class="avalone-checkbox-group">
+        {% for role in all_roles %}
         <label class="avalone-checkbox">
-          <input type="checkbox" name="roles" value="portal" {% if target.is_platform_admin %}checked{% endif %}>
-          {{ t('admin_role_platform') }}
+          <input type="checkbox" name="roles" value="{{ role }}" {% if role in target.roles %}checked{% endif %}>
+          {{ t('admin_role_' + role, lang=lang) }}
         </label>
-        <label class="avalone-checkbox">
-          <input type="checkbox" name="roles" value="money" {% if target.is_money_admin %}checked{% endif %}>
-          {{ t('admin_role_money') }}
-        </label>
+        {% endfor %}
       </div>
-      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save') }}</button>
+      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save', lang=lang) }}</button>
     </form>
     <div id="edit-message"></div>
   </div>
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('admin_section_actions') }}</h3>
+    <h3 class="mt-0">{{ t('admin_section_actions', lang=lang) }}</h3>
     <div class="avalone-stack">
-      <button class="avalone-btn avalone-btn-secondary" id="btn-reset-password" data-user-id="{{ target.id }}">{{ t('admin_action_reset_password') }}</button>
-      <button class="avalone-btn avalone-btn-danger" id="btn-wipe-data" data-user-id="{{ target.id }}">{{ t('admin_action_wipe_data') }}</button>
-      <a class="avalone-btn avalone-btn-secondary" href="/api/admin/users/{{ target.id }}/export">{{ t('admin_action_export') }}</a>
+      <button class="avalone-btn avalone-btn-secondary" id="btn-reset-password" data-user-id="{{ target.id }}">{{ t('admin_action_reset_password', lang=lang) }}</button>
+      <button class="avalone-btn avalone-btn-danger" id="btn-wipe-data" data-user-id="{{ target.id }}">{{ t('admin_action_wipe_data', lang=lang) }}</button>
+      <a class="avalone-btn avalone-btn-secondary" href="/api/admin/users/{{ target.id }}/export">{{ t('admin_action_export', lang=lang) }}</a>
     </div>
     <div id="action-result"></div>
   </div>
@@ -70,9 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       const msg = document.getElementById('edit-message');
       if (res.ok) {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_saved') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_saved', lang=lang) }}</div>';
       } else {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_save_failed') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_save_failed', lang=lang) }}</div>';
       }
     } catch (err) {
       document.getElementById('edit-message').innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';
@@ -82,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-reset-password').addEventListener('click', async function() {
     const userId = this.dataset.userId;
     const result = document.getElementById('action-result');
-    if (!confirm('{{ t('admin_alert_confirm_reset') }}')) return;
+    if (!confirm('{{ t('admin_alert_confirm_reset', lang=lang) }}')) return;
     try {
       const res = await fetch('/api/admin/users/' + userId + '/reset-password?temp=true', { method: 'POST' });
       const data = await res.json();
@@ -92,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
           (data.temp_password ? '<div><strong>Temp password:</strong> ' + data.temp_password + '</div>' : '') +
           '</div>';
       } else {
-        result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_action_failed') }}</div>';
+        result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_action_failed', lang=lang) }}</div>';
       }
     } catch (err) {
       result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';
@@ -102,15 +101,15 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-wipe-data').addEventListener('click', async function() {
     const userId = this.dataset.userId;
     const result = document.getElementById('action-result');
-    if (!confirm('{{ t('admin_alert_confirm_wipe') }}')) return;
+    if (!confirm('{{ t('admin_alert_confirm_wipe', lang=lang) }}')) return;
     try {
       const res = await fetch('/api/admin/users/' + userId + '/wipe-data', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         const total = Object.values(data.deleted).reduce((a, b) => a + b, 0);
-        result.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">' + total + ' {{ t('admin_rows_deleted') }}</div>';
+        result.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">' + total + ' {{ t('admin_rows_deleted', lang=lang) }}</div>';
       } else {
-        result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_action_failed') }}</div>';
+        result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_action_failed', lang=lang) }}</div>';
       }
     } catch (err) {
       result.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';

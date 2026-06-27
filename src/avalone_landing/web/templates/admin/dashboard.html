@@ -1,25 +1,25 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('admin_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('admin_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-container">
   {{ header|safe }}
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('admin_stats_title') }}</h3>
+    <h3 class="mt-0">{{ t('admin_stats_title', lang=lang) }}</h3>
     <div class="admin-stats-grid">
       <div class="admin-stat">
         <div class="admin-stat__value">{{ user_count }}</div>
-        <div class="admin-stat__label">{{ t('admin_stat_users') }}</div>
+        <div class="admin-stat__label">{{ t('admin_stat_users', lang=lang) }}</div>
       </div>
       <div class="admin-stat">
         <div class="admin-stat__value">{{ admin_count }}</div>
-        <div class="admin-stat__label">{{ t('admin_stat_admins') }}</div>
+        <div class="admin-stat__label">{{ t('admin_stat_admins', lang=lang) }}</div>
       </div>
       <div class="admin-stat">
         <div class="admin-stat__value">{{ money_count }}</div>
-        <div class="admin-stat__label">{{ t('admin_stat_money_rows') }}</div>
+        <div class="admin-stat__label">{{ t('admin_stat_money_rows', lang=lang) }}</div>
       </div>
     </div>
   </div>

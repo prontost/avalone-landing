@@ -1,6 +1,6 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('admin_users_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('admin_users_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-container">
@@ -9,9 +9,9 @@
   <div class="avalone-card">
     <form class="row" method="get" action="/admin/users">
       <div class="col">
-        <input class="avalone-input" type="search" name="q" value="{{ query }}" placeholder="{{ t('admin_search_placeholder') }}">
+        <input class="avalone-input" type="search" name="q" value="{{ query }}" placeholder="{{ t('admin_search_placeholder', lang=lang) }}">
       </div>
-      <button class="avalone-btn avalone-btn-secondary" type="submit">{{ t('admin_btn_search') }}</button>
+      <button class="avalone-btn avalone-btn-secondary" type="submit">{{ t('admin_btn_search', lang=lang) }}</button>
     </form>
   </div>
 
@@ -20,10 +20,10 @@
       <table class="avalone-table">
         <thead>
           <tr>
-            <th>{{ t('admin_col_login') }}</th>
-            <th>{{ t('admin_col_email') }}</th>
-            <th>{{ t('admin_col_roles') }}</th>
-            <th class="text-right">{{ t('admin_col_actions') }}</th>
+            <th>{{ t('admin_col_login', lang=lang) }}</th>
+            <th>{{ t('admin_col_email', lang=lang) }}</th>
+            <th>{{ t('admin_col_roles', lang=lang) }}</th>
+            <th class="text-right">{{ t('admin_col_actions', lang=lang) }}</th>
           </tr>
         </thead>
         <tbody>
@@ -32,11 +32,12 @@
             <td><a href="/admin/users/{{ u.id }}">{{ u.login }}</a></td>
             <td>{{ u.email or '-' }}</td>
             <td>
-              {% if u.is_platform_admin %}<span class="avalone-badge avalone-badge-blue">{{ t('admin_role_platform') }}</span>{% endif %}
-              {% if u.is_money_admin %}<span class="avalone-badge avalone-badge-green">{{ t('admin_role_money') }}</span>{% endif %}
+              {% for role in u.roles %}
+              <span class="avalone-badge avalone-badge-blue">{{ t('admin_role_' + role, lang=lang) }}</span>
+              {% endfor %}
             </td>
             <td class="text-right">
-              <a class="avalone-btn avalone-btn-sm avalone-btn-secondary" href="/admin/users/{{ u.id }}">{{ t('admin_action_view') }}</a>
+              <a class="avalone-btn avalone-btn-sm avalone-btn-secondary" href="/admin/users/{{ u.id }}">{{ t('admin_action_view', lang=lang) }}</a>
             </td>
           </tr>
           {% endfor %}

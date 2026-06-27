@@ -1,0 +1,24 @@
+[project]
+name = "avalone-finance"
+version = "0.1.0"
+description = "Avalone finance module (formerly Counta)."
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "jinja2>=3.1",
+    "pydantic-settings>=2.7",
+    "itsdangerous>=2.2",
+    "python-multipart>=0.0.20",
+    "avalone-core",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["avalone_finance"]

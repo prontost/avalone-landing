@@ -1,0 +1,2069 @@
+{% extends "avalone_base.html" %}
+
+{% block title %}{{ t('app_title', lang=lang) }}{% endblock %}
+
+{% block extra_head %}
+<link rel="manifest" href="/finance/manifest.json?v={{ build_id }}">
+<style>
+/* ТЕМА: тёмные значения — переменные ниже. Светлая тема переопределяет их.
+   Режимы: авто (по системной prefers-color-scheme) | light | dark (через
+   атрибут data-theme на <html>, его ставит applyTheme). */
+:root{--bg:#0f1115;--card:#1a1d24;--line:#2a2f3a;--txt:#e6e8ec;--muted:#9aa3b2;
+      --green:#3fb950;--red:#f85149;--accent:#58a6ff;--amber:#d29922;
+      --btn-ghost-bg:#2d3543;--btn-ghost-txt:#eaf0f7;--btn-ghost-bd:#414b5c}
+/* СВЕТЛАЯ: применяется при ручном выборе light, либо в авто-режиме когда
+   система светлая (data-theme не равен dark). */
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#f4f6f9;--card:#ffffff;--line:#d6dbe3;--txt:#1a1d24;
+    --muted:#5b6573;--green:#1a7f37;--red:#cf222e;--accent:#0969da;--amber:#9a6700;
+    --btn-ghost-bg:#e7ebf2;--btn-ghost-txt:#1a1d24;--btn-ghost-bd:#b9c2cf}
+}
+:root[data-theme="light"]{--bg:#f4f6f9;--card:#ffffff;--line:#d6dbe3;--txt:#1a1d24;
+  --muted:#5b6573;--green:#1a7f37;--red:#cf222e;--accent:#0969da;--amber:#9a6700;
+  --btn-ghost-bg:#e7ebf2;--btn-ghost-txt:#1a1d24;--btn-ghost-bd:#b9c2cf}
+:root[data-theme="dark"]{--bg:#0f1115;--card:#1a1d24;--line:#2a2f3a;--txt:#e6e8ec;
+  --muted:#9aa3b2;--green:#3fb950;--red:#f85149;--accent:#58a6ff;--amber:#d29922;
+  --btn-ghost-bg:#2d3543;--btn-ghost-txt:#eaf0f7;--btn-ghost-bd:#414b5c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);
+     font:16px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(150px + env(safe-area-inset-bottom))}
+h1{font-size:22px;font-weight:700;margin:6px 0 18px;letter-spacing:-.3px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:16px;margin-bottom:14px}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 4px}
+select,input[type=number],input[type=text],input[type=password],input[type=email],textarea{width:100%;padding:12px;font-size:16px;
+  border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);box-sizing:border-box}
+.row{display:flex;gap:8px}
+.btn{padding:12px 16px;border-radius:10px;border:none;font-size:16px;cursor:pointer}
+.btn-primary{background:var(--accent);color:#fff;width:100%}
+.btn-ghost{background:var(--btn-ghost-bg);color:var(--btn-ghost-txt);border:1px solid var(--btn-ghost-bd);font-weight:500}
+.btn-ghost:active{filter:brightness(1.15)}
+.btn-mic{width:56px;height:56px;border-radius:50%;font-size:24px;background:var(--card);
+  border:1px solid var(--line);color:var(--txt)}
+.btn-mic.rec{background:var(--red);border-color:var(--red);color:#fff}
+/* канбан-индикатор проводки */
+.kanban{display:flex;gap:6px;margin:12px 0}
+.kstep{flex:1;text-align:center;font-size:12px;color:var(--muted);padding:7px 4px;
+  border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.kstep.active{border-color:var(--amber);color:var(--amber)}
+.kstep.done{border-color:var(--green);color:var(--green)}
+.num{font-variant-numeric:tabular-nums}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.list-row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;
+  border-bottom:1px solid var(--line);align-items:center}
+.list-row:last-child{border-bottom:none}
+.list-row .num{white-space:nowrap;flex-shrink:0}
+.list-row .small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-row button{margin-left:6px}
+.list-row > span:last-child{display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap}
+/* отменённая запись в журнале: блёкло + перечёркнутая сумма */
+.list-row.cancelled{opacity:.5}
+.list-row.cancelled .num{text-decoration:line-through}
+.small{font-size:13px;color:var(--muted)}
+.app-tabs{display:flex;gap:6px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;padding:6px;margin:12px 0}
+@media (min-width: 769px) {
+  .fab{right:calc(50% - 560px/2 + 18px)}
+}
+.tab{flex:1;padding:6px 0;min-height:48px;text-align:center;color:var(--muted);
+     font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;transition:color .15s,background .15s;border-radius:12px;margin:0 4px}
+.tab.active{color:var(--accent);background:rgba(124,92,255,.10)}
+.tab-icon{font-size:22px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--card);
+  border:1px solid var(--green);border-radius:10px;padding:10px 16px;display:none;z-index:9}
+.hidden{display:none}
+.del{color:var(--red);background:none;border:none;font-size:18px;cursor:pointer}
+.acc-switcher-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0}
+.acc-switcher-login{font-size:18px;font-weight:600}
+.acc-switcher-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.acc-switcher-item:last-child{border-bottom:none}
+.acc-switcher-item .login{font-weight:500}
+.acc-switcher-item .badge{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:1px 6px}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--muted);
+      border-radius:16px;padding:7px 12px;font-size:13px;cursor:pointer}
+.chip-on{background:var(--accent);border-color:var(--accent);color:#fff}
+/* модал-форма операции */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:110;display:none;
+         align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow:auto;
+       border-radius:18px 18px 0 0;padding:14px 14px calc(20px + env(safe-area-inset-bottom));
+       border:1px solid var(--line)}
+.sheet-footer{position:sticky;bottom:0;background:var(--bg);padding:8px 0;margin-top:8px;}
+.sheet-grip{width:40px;height:4px;background:var(--line);border-radius:2px;margin:2px auto 12px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sheet-head .x{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer}
+.open-form{font-size:17px;padding:16px;text-align:center}
+/* спиннер на кнопке */
+.btn[disabled]{opacity:.6;cursor:default}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* inline-ошибка поля */
+.field-err{border-color:var(--red)!important}
+.err-msg{color:var(--red);font-size:13px;margin:4px 0 0;display:none}
+.err-msg.show{display:block}
+/* FAB — плавающая кнопка добавления операции */
+.fab{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));
+  width:58px;height:58px;border-radius:50%;background:var(--accent);color:#fff;
+  border:none;font-size:30px;line-height:58px;text-align:center;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:15;display:none}
+.fab.show{display:block}
+/* аккордеон-секции на вкладке «Ещё» — разгружают простыню */
+.acc{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:16px;font-size:17px;font-weight:600;
+  display:flex;justify-content:space-between;align-items:center}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:'⌄';color:var(--muted);transition:transform .2s}
+.acc[open]>summary::after{transform:rotate(180deg)}
+.acc>summary .badge{font-size:12px;color:var(--amber);font-weight:400}
+.acc-body{padding:0 16px 16px}
+.opt-disabled{opacity:.55;font-style:italic;color:var(--muted)}
+/* на мобильном FAB не должен закрывать контент карточек */
+@media (max-width: 768px) {
+  #w-journal.card, #w-balances.card, #page-ai .card { padding-right: 74px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="toast" id="toast"></div>
+<div class="wrap">
+
+<!-- in-app section tabs (replaces the former fixed bottom nav) -->
+<div class="app-tabs">
+  <div class="tab tab-icon active" data-page="entry" onclick="go('entry')" data-i="tab_entry" data-i-title="tab_entry_t">🏠</div>
+  <div class="tab tab-icon" data-page="ai" onclick="go('ai')" data-i="tab_ai" data-i-title="tab_ai_t">📊</div>
+  <div class="tab tab-icon" data-page="balances" onclick="go('balances')" data-i="tab_bal" data-i-title="tab_bal_t">✏️</div>
+  <div class="tab" data-page="more" onclick="go('more')" data-i="tab_more">☰ {{ t('tab_more', lang=lang) }}</div>
+</div>
+
+<!-- БАННЕР ПОДТВЕРЖДЕНИЯ EMAIL -->
+<div id="verify-banner" class="card" style="display:none;background:var(--warning-bg,#fff7e6);border-left:4px solid var(--amber);margin:12px 16px 0">
+  <div class="row" style="align-items:flex-start;gap:10px">
+    <span style="font-size:20px">✉️</span>
+    <div style="flex:1">
+      <b data-i="verify_email_title">Подтвердите email</b>
+      <p style="margin:4px 0 0" id="verify-body" data-i="verify_email_body">Мы отправили код на вашу почту. Введите его ниже.</p>
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+        <input type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" id="verify-code" style="width:120px;text-align:center;letter-spacing:4px" data-i-ph="verify_email_placeholder" placeholder="000000">
+        <button class="btn btn-primary" onclick="submitVerifyCode()" data-i="verify_email_button">Подтвердить</button>
+        <button class="btn btn-ghost" id="verify-resend" onclick="resendVerifyCode()" data-i="verify_email_resend">Отправить повторно</button>
+      </div>
+      <p id="verify-status" style="margin:8px 0 0;font-size:13px;min-height:18px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ВВОД -->
+<div id="page-entry">
+
+<!-- ПОДСКАЗКА: быстрый доступ к мастеру начала работы -->
+<div class="card" style="margin:12px 16px 0;padding:10px 14px">
+  <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:nowrap">
+    <span style="font-size:18px">💡</span>
+    <button class="btn btn-primary" onclick="startWizard()" data-i="hint" style="padding:6px 12px;font-size:14px;white-space:nowrap">Открыть</button>
+  </div>
+</div>
+
+<div id="widgets">
+  <div class="card" id="w-balances">
+    <b data-i="balances">💰 Остатки</b>
+    <div id="mini-balances" style="margin-top:8px">…</div>
+  </div>
+  <div class="card" id="w-journal">
+    <b data-i="last_ops">🧾 Последние операции</b>
+    <div id="mini-journal" style="margin-top:8px">…</div>
+  </div>
+</div><!-- /widgets -->
+</div><!-- /page-entry -->
+
+
+<!-- МАСТЕР НАЧАЛА РАБОТЫ: пошаговый экскурс для нового пользователя -->
+<div class="overlay" id="wizard-overlay">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><b id="wz-title"></b>
+      <button class="x" onclick="closeWizard()">×</button></div>
+    <p id="wz-body" style="white-space:pre-line;line-height:1.5"></p>
+    <div class="row" style="margin-top:16px;gap:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeWizard()" data-i="wz_skip">Пропустить</button>
+      <button class="btn btn-primary" style="flex:2" id="wz-next" onclick="wizardNext()"></button>
+    </div>
+    <div id="wz-dots" style="text-align:center;margin-top:10px;opacity:.6"></div>
+  </div>
+</div>
+
+<!-- МОДАЛ-ФИЛЬТР журнала: карточка селекторов со скроллом + кнопка «Применить» -->
+<div class="overlay" id="filter-overlay">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><b data-i="flt_title">⚙️ Фильтры и сортировка</b>
+      <button class="x" onclick="closeFilter()">×</button></div>
+
+    <label data-i="flt_sort">Сортировка</label>
+    <select id="jf-sort">
+      <option value="occurred_desc" data-i="flt_sort_occ_desc">Дата транзакции ↓ (сначала новые)</option>
+      <option value="occurred_asc"  data-i="flt_sort_occ_asc">Дата транзакции ↑ (сначала старые)</option>
+      <option value="created_desc"  data-i="flt_sort_cre_desc">Дата внесения ↓</option>
+      <option value="created_asc"   data-i="flt_sort_cre_asc">Дата внесения ↑</option>
+      <option value="amount_desc"   data-i="flt_sort_amt_desc">Сумма ↓ (крупные сверху)</option>
+      <option value="amount_asc"    data-i="flt_sort_amt_asc">Сумма ↑ (мелкие сверху)</option>
+    </select>
+
+    <label style="margin-top:10px" data-i="flt_search">Поиск по описанию</label>
+    <input type="text" id="jf-q" autocomplete="off" data-i-ph="flt_search_ph" placeholder="слово в описании">
+
+    <label style="margin-top:10px" data-i="flt_account">Счёт</label>
+    <select id="jf-acc"></select>
+
+    <label style="margin-top:10px" data-i="flt_category">Категория</label>
+    <select id="jf-cat"></select>
+
+    <label style="margin-top:10px" data-i="flt_income">Источник дохода</label>
+    <select id="jf-inc"></select>
+
+    <label style="margin-top:10px" data-i="flt_op_type">Тип операции</label>
+    <select id="jf-op">
+      <option value="" data-i="flt_op_any">Любой</option>
+      <option value="expense" data-i="flt_op_expense">Расход</option>
+      <option value="income" data-i="flt_op_income">Доход</option>
+      <option value="transfer" data-i="flt_op_transfer">Перевод</option>
+    </select>
+
+    <label style="margin-top:10px" data-i="flt_currency">Валюта</label>
+    <select id="jf-cur"></select>
+
+    <label class="row" style="margin-top:10px;align-items:center;gap:8px">
+      <input type="checkbox" id="jf-uncat-cb" style="width:auto">
+      <span data-i="flt_only_uncat">Только «Укажу позже» / «Прочее»</span>
+    </label>
+
+    <label style="margin-top:10px" data-i="flt_occ_range">Дата возникновения транзакции</label>
+    <div class="row" style="gap:8px">
+      <input type="date" id="jf-date-from" style="flex:1" data-i-title="flt_from">
+      <input type="date" id="jf-date-to"   style="flex:1" data-i-title="flt_to">
+    </div>
+
+    <label style="margin-top:10px" data-i="flt_cre_range">Дата внесения записи</label>
+    <div class="row" style="gap:8px">
+      <input type="date" id="jf-cre-from" style="flex:1" data-i-title="flt_from">
+      <input type="date" id="jf-cre-to"   style="flex:1" data-i-title="flt_to">
+    </div>
+
+    <label style="margin-top:10px" data-i="flt_amt_range">Сумма, ₩</label>
+    <div class="row" style="gap:8px">
+      <input type="number" id="jf-amt-min" inputmode="decimal" style="flex:1" data-i-ph="flt_min" placeholder="от">
+      <input type="number" id="jf-amt-max" inputmode="decimal" style="flex:1" data-i-ph="flt_max" placeholder="до">
+    </div>
+
+    <div class="row" style="margin-top:16px;gap:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="resetFilter()" data-i="flt_reset">Сбросить</button>
+      <button class="btn btn-primary" style="flex:2" onclick="applyFilter()" data-i="flt_apply">Применить</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛ-ФОРМА (вызывается из любого места) -->
+<div class="overlay" id="form-overlay">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <b data-i="op_title">➕ Операция</b>
+      <button class="x" onclick="closeForm()">×</button>
+    </div>
+  <div class="card" style="border:none;padding:0">
+    <div class="kanban" id="kanban">
+      <div class="kstep" data-k="0" data-i="kstep1">1 · Ввод</div>
+      <div class="kstep" data-k="1" data-i="kstep2">2 · Проверка</div>
+      <div class="kstep" data-k="2" data-i="kstep3">3 · В книге</div>
+    </div>
+
+    <div id="step-input">
+      <!-- порядок полей: Тип → Счёт → Сумма → Категория → Комментарий -->
+      <label data-i="f_type">Тип</label>
+      <select id="op">
+        <option value="expense" data-i="op_expense">Расход</option>
+        <option value="income" data-i="op_income">Поступление средств</option>
+        <option value="transfer" data-i="op_transfer">Перевод между счетами</option>
+      </select>
+
+      <div id="money-block">
+        <label id="money-label" data-i="f_money_from">Откуда платил</label>
+        <select id="money" onchange="syncAccountCurrency()"></select>
+      </div>
+
+      <div id="income-block" class="hidden">
+        <label data-i="f_income_src">Источник поступления</label>
+        <select id="income"></select>
+      </div>
+
+      <div id="money2-block" class="hidden">
+        <label data-i="f_money_to">Куда</label>
+        <select id="money2"></select>
+      </div>
+
+      <div id="amount-block">
+        <label data-i="f_amount">Сумма</label>
+        <div class="row" style="gap:6px;align-items:stretch">
+          <textarea id="amount" inputmode="decimal" rows="1"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                    placeholder="0" style="flex:1;resize:none;overflow:hidden;white-space:nowrap;height:44px;"
+                    oninput="this.value=this.value.replace(/[^0-9.,]/g,'').replace(/([.,].*)[.,]/g,'$1')"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();}"></textarea>
+          <select id="amount-cur" style="flex:0 0 auto;width:auto" onchange="onAmountCurChange()"></select>
+          <button type="button" id="amount-cur-toggle" class="btn btn-ghost"
+                  style="flex:0 0 auto;padding:0 10px" onclick="toggleCurMode()"
+                  data-i-title="cur_toggle" title="Обычные / крипто">₿</button>
+        </div>
+        <p class="small" id="amount-conv-hint" style="opacity:.6;margin:4px 0 0;display:none"></p>
+      </div>
+
+      <div id="cat-block">
+        <label data-i="f_category">Категория</label>
+        <select id="category"></select>
+        <div class="row" style="margin-top:6px">
+          <button class="btn btn-ghost" style="flex:1" onclick="newCat()" data-i="new_cat">➕ Новая категория</button>
+        </div>
+      </div>
+
+      <label data-i="f_remark">Комментарий (необязательно)</label>
+      <textarea id="remark" autocomplete="off" data-i-ph="f_remark_ph" placeholder="за что / почему" rows="1" style="resize:vertical;min-height:44px;overflow:hidden"></textarea>
+
+      <details id="occurred-block" style="margin-top:8px">
+        <summary class="small" data-i="f_occurred_toggle">📅 Когда произошла транзакция</summary>
+        <input type="datetime-local" id="occurred" style="margin-top:6px">
+        <p class="small" style="opacity:.6;margin:4px 0 0"
+           data-i="f_occurred_hint">По умолчанию — сейчас. Это дата самой траты/прихода, а не момент внесения записи.</p>
+      </details>
+
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeForm()" data-i="hide_form">✕ Закрыть</button>
+      </div>
+
+      <div class="sheet-footer">
+        <div class="row" style="gap:8px;align-items:center">
+          <button class="btn btn-primary" style="flex:1" onclick="toReview()" data-i="next">Далее →</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="step-review" class="hidden">
+      <p id="review-text" style="font-size:18px"></p>
+      <div class="row">
+        <button class="btn btn-ghost" style="flex:1" onclick="backToInput()" data-i="back">← Назад</button>
+        <button class="btn btn-primary" style="flex:2" id="submit-btn" onclick="submitEntry(this)" data-i="submit">✅ Записать</button>
+      </div>
+    </div>
+
+    <div id="step-done" class="hidden">
+      <p id="done-text" style="font-size:17px"></p>
+      <div class="row">
+        <button class="btn btn-ghost" style="flex:1" onclick="undoLast()" data-i="undo_this">↩️ Передумали</button>
+        <button class="btn btn-primary" style="flex:2" onclick="startNewOperation()" data-i="new_op">Новая операция</button>
+      </div>
+    </div>
+  </div>
+  </div><!-- /sheet -->
+</div><!-- /form-overlay -->
+
+<!-- ХАБ ПРАВКИ (✏️) -->
+<div id="page-balances" class="hidden">
+  <!-- Дроплист выбирает раздел системы для правки; ниже в #edit-space — его
+       интерфейс. Журнал живёт ПРЯМО ЗДЕСЬ (единственный инстанс), видимостью
+       управляет editSelect. Отдельной вкладки/страницы журнала нет. -->
+  <label data-i="edit_what">Что редактировать</label>
+  <select id="edit-what" onchange="editSelect(this.value)">
+    <option value="accounts" data-i="edit_accounts">💳 Счета</option>
+    <option value="categories" data-i="edit_categories">🗂 Категории расхода</option>
+    <option value="incomes" data-i="edit_incomes">💰 Источники поступления</option>
+    <option value="journal" data-i="edit_journal">🧾 Журнал</option>
+    <option value="notifications" data-i="edit_notifications">🔔 Уведомления</option>
+  </select>
+  <div id="edit-space" style="margin-top:12px">
+    <!-- СЧЕТА: фильтр + список (имя редактируемо, валюта меняется, скрытие/возврат) + создание -->
+    <div id="accounts-block" class="hidden">
+      <input type="search" id="acc-filter" data-i-ph="flt_search" placeholder="поиск"
+             oninput="accFilter(this.value)" style="margin-bottom:8px">
+      <div id="accounts-list" class="card">…</div>
+      <details style="margin-top:10px">
+        <summary class="small" data-i="acc_new">➕ Новый счёт</summary>
+        <div style="margin-top:8px">
+          <input type="text" id="acc-new-name" autocomplete="off" data-i-ph="acc_name_ph" placeholder="название счёта">
+          <div class="row" style="gap:6px;margin-top:6px">
+            <select id="acc-new-cur" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost" style="flex:0 0 auto;padding:0 10px"
+                    onclick="toggleAccCurMode()" id="acc-cur-toggle">₿</button>
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px"
+                  onclick="createAccount()" data-i="acc_create">Создать счёт</button>
+        </div>
+      </details>
+    </div>
+    <!-- КАТЕГОРИИ РАСХОДА: фильтр + список (имя инлайн, скрытие/возврат) + создание -->
+    <div id="categories-block" class="hidden">
+      <input type="search" id="cat-filter" data-i-ph="flt_search" placeholder="поиск"
+             oninput="catFilter(this.value)" style="margin-bottom:8px">
+      <div id="cats-list" class="card">…</div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="newCat()" data-i="new_cat">➕ Новая категория расхода</button>
+    </div>
+    <!-- ИСТОЧНИКИ ПОСТУПЛЕНИЯ: фильтр + список (имя инлайн, скрытие/возврат) + создание -->
+    <div id="incomes-block" class="hidden">
+      <input type="search" id="inc-filter" data-i-ph="flt_search" placeholder="поиск"
+             oninput="incFilter(this.value)" style="margin-bottom:8px">
+      <div id="incomes-list" class="card">…</div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="newIncome()" data-i="inc_new">➕ Новый источник</button>
+    </div>
+    <!-- ЖУРНАЛ УВЕДОМЛЕНИЙ -->
+    <div id="notifications-block" class="hidden">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <select id="notif-filter" onchange="loadNotifications()" style="flex:1;min-width:140px">
+          <option value="all" data-i="notif_all">Все</option>
+          <option value="unread" data-i="notif_unread">Непрочитанные</option>
+          <option value="read" data-i="notif_read">Прочитанные</option>
+          <option value="dismissed" data-i="notif_dismissed">Скрытые</option>
+        </select>
+      </div>
+      <div class="card" id="notifications-list"><span class="small" data-i="notif_empty">пока пусто</span></div>
+    </div>
+
+    <div id="journal-block" class="hidden">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="openFilter()">
+          <span data-i="flt_open">⚙️ Фильтры и сортировка</span><span id="jf-count"></span></button>
+        <span class="chip" id="jf-clear" onclick="resetFilter(true)" data-i="flt_all" style="display:none">✕ Сбросить</span>
+      </div>
+      <label class="row" style="align-items:center;gap:10px;margin:2px 0 12px;cursor:pointer;padding:4px 0">
+        <input type="checkbox" id="jf-hide-cancelled" checked style="width:20px;height:20px;flex:0 0 auto" onchange="applyHideCancelled()">
+        <span data-i="flt_hide_cancelled" style="font-size:14px;color:var(--muted)">Не показывать отменённые транзакции</span>
+      </label>
+      <div class="card" id="journal-list">…</div>
+    </div>
+  </div>
+</div>
+
+<!-- АНАЛИТИКА -->
+<div id="page-ai" class="hidden" style="padding-bottom:130px">
+  <h1 data-i="scr_ai">📊 Аналитика</h1>
+
+  <!-- ОТЧЁТ: детерминированный — доход/расход/итог + топ категорий + графики -->
+  <div class="card">
+    <div class="row" style="gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <label class="small" data-i="rep_view">Вид:</label>
+      <select id="report-view" onchange="setReportView(this.value)" style="flex:1;min-width:140px">
+        <option value="overview" data-i="rep_view_overview">Обзор</option>
+        <option value="donut" data-i="rep_view_donut">Расходы по категориям</option>
+        <option value="trend" data-i="rep_view_trend">Динамика</option>
+        <option value="compare" data-i="rep_view_compare">Сравнение периодов</option>
+      </select>
+    </div>
+    <div class="row" id="rep-periods" style="gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
+
+    <!-- ИНСАЙТ: персонализированный совет по выбранному периоду -->
+    <div class="card" id="insight-card" style="display:none;border-left:4px solid var(--accent);margin:12px 0">
+      <div class="small" style="opacity:.7;margin-bottom:4px" data-i="ins_title">💡 Инсайт</div>
+      <div id="ins-title" style="font-weight:600"></div>
+      <div id="ins-body" class="small" style="margin:4px 0"></div>
+      <div id="ins-book" class="small" style="opacity:.7"></div>
+    </div>
+
+    <div id="report"></div>
+  </div>
+
+  <!-- БИБЛИОТЕКА СОВЕТОВ ПО ФИНАНСОВОЙ ГРАМОТНОСТИ -->
+  <details class="acc" id="acc-tips">
+    <summary data-i="sec_tips">📚 Остальные советы по финансовой грамотности</summary>
+    <div class="acc-body" id="tips-library"></div>
+  </details>
+</div>
+
+<!-- ЕЩЁ: уведомления + настройки -->
+<div id="page-more" class="hidden">
+  <h1 data-i="scr_more">{{ t('scr_more', lang=lang) }}</h1>
+
+  <div class="acc" style="padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div style="font-size:17px;font-weight:600" data-i="sec_account">{{ t('sec_account', lang=lang) }}</div>
+        <p class="small" style="margin:4px 0 0" data-i="acc_managed_in_avalone">{{ t('acc_managed_in_avalone', lang=lang) }}</p>
+      </div>
+      <a href="https://avalone.online/profile" class="btn btn-ghost" style="text-decoration:none;flex:0 0 auto" data-i="open_profile">{{ t('open_profile', lang=lang) }}</a>
+    </div>
+  </div>
+
+  <a id="admin-link" href="/finance/admin" class="btn btn-ghost" style="display:none;text-align:center;margin-top:12px;text-decoration:none" data-i="sec_admin">{{ t('sec_admin', lang=lang) }}</a>
+</div>
+
+</div>
+
+<button class="fab show" id="fab" onclick="openForm()" data-i-title="new_op" title="{{ t('new_op', lang=lang) }}">＋</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let FD = null;          // form-data c сервера
+let SHOW_HIDDEN = false; // показывать скрытые счета/категории в форме
+
+const $ = id => document.getElementById(id);
+// Версия данных на клиенте. После любой записи увеличиваем, чтобы service worker
+// не отдавал stale-ответ из кэша для GET-запросов к /finance/api/*.
+let DATA_VERSION = Date.now();
+const _origFetch = window.fetch;
+window.fetch = function(input, init) {
+  const method = (init && init.method) || 'GET';
+  if (typeof input === 'string' && input.startsWith('/finance/api/') && method === 'GET') {
+    const sep = input.includes('?') ? '&' : '?';
+    input = input + sep + '_v=' + DATA_VERSION;
+  }
+  return _origFetch(input, init);
+};
+
+const fmt = n => Number(n).toLocaleString('ru-RU');
+// сумма с кодом валюты (валюта у каждого счёта своя — единого символа нет)
+const fmtCur = (n, code) => `${fmt(n)} ${code||'KRW'}`;
+// локальное «сейчас» в формате datetime-local (YYYY-MM-DDTHH:MM), без UTC-сдвига
+function nowLocal(){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function resetOccurred(){ const el=$('occurred'); if(el){ el.value=nowLocal(); const b=$('occurred-block'); if(b) b.open=false; } }
+
+function toast(msg, ok=true){
+  const t = $('toast'); t.textContent = msg;
+  t.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+  t.style.display='block'; setTimeout(()=>t.style.display='none', 2600);
+}
+
+/* inline-ошибка под полем: подсветка границы + сообщение + автоскролл к полю.
+   Видна прямо у поля даже при открытой клавиатуре — в отличие от toast сверху. */
+function fieldError(inputId, msg){
+  const el = $(inputId); if(!el) { toast(msg, false); return; }
+  el.classList.add('field-err');
+  // ошибку вставляем после родительского блока, а не внутрь flex-ряда (иначе сжимает поле)
+  const anchor = el.parentElement.classList.contains('row') ? el.parentElement : el;
+  let m = (anchor.parentElement||anchor).querySelector(`.err-msg[data-for="${inputId}"]`);
+  if(!m){
+    m = document.createElement('p'); m.className='err-msg'; m.dataset.for=inputId;
+    anchor.insertAdjacentElement('afterend', m);
+  }
+  m.textContent = msg; m.classList.add('show');
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+  el.focus({preventScroll:true});
+}
+function clearFieldErrors(scope){
+  (scope||document).querySelectorAll('.field-err').forEach(e=>e.classList.remove('field-err'));
+  (scope||document).querySelectorAll('.err-msg.show').forEach(e=>e.classList.remove('show'));
+}
+
+function kanban(stage){ // 0 ввод, 1 проверка, 2 в книге
+  document.querySelectorAll('.kstep').forEach(el=>{
+    const k = +el.dataset.k;
+    el.className = 'kstep' + (k<stage?' done':k===stage?' active':'');
+  });
+}
+
+async function loadFormData(include_hidden){
+  if(include_hidden === undefined) include_hidden = SHOW_HIDDEN;
+  const hiddenParam = include_hidden ? '&include_disabled=1' : '';
+  // не сбрасываем выбор пользователя при перезагрузке справочника
+  const preserve = {
+    category: $('category')?.value,
+    money: $('money')?.value,
+    money2: $('money2')?.value,
+    income: $('income')?.value
+  };
+  FD = await (await fetch(`/finance/api/form-data?lang=${LANG}${hiddenParam}`)).json();
+  fillCats(); fill('money', FD.money); fill('money2', FD.money); fill('income', FD.incomes);
+  const restoreIfValid = (id, val)=>{
+    const sel = $(id); if(!sel || !val) return;
+    if(Array.from(sel.options).some(o=>o.value===val)) sel.value = val;
+  };
+  restoreIfValid('category', preserve.category);
+  restoreIfValid('money', preserve.money);
+  restoreIfValid('money2', preserve.money2);
+  restoreIfValid('income', preserve.income);
+  fillCurSelect();
+  syncAccountCurrency();
+}
+function toggleShowHidden(){
+  SHOW_HIDDEN = !SHOW_HIDDEN;
+  loadFormData(SHOW_HIDDEN);
+}
+
+/* ------------------- email verification banner ------------------- */
+let VERIFY_COOLDOWN = 0;
+async function loadVerifyBanner(){
+  try{
+    const u = await (await fetch('/finance/api/me')).json();
+    if(u.error || !u.email || u.email_verified){
+      $('verify-banner').style.display = 'none';
+      return;
+    }
+    $('verify-banner').style.display = 'block';
+    $('verify-body').textContent = T('verify_email_body') + ' ' + u.email;
+  }catch(e){}
+}
+async function submitVerifyCode(){
+  const code = $('verify-code').value.trim();
+  if(!/^\d{6}$/.test(code)){ toast(T('verify_email_invalid'), false); return; }
+  const r = await fetch('/finance/api/verify-email',{method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify({code})});
+  const d = await r.json();
+  if(d.verified){
+    toast(T('verify_email_success'));
+    $('verify-banner').style.display = 'none';
+    return;
+  }
+  toast(T('verify_email_invalid'), false);
+}
+async function resendVerifyCode(){
+  if(VERIFY_COOLDOWN > 0){
+    $('verify-status').textContent = T('verify_email_cooldown').replace('{s}', VERIFY_COOLDOWN);
+    return;
+  }
+  const r = await fetch('/finance/api/send-verify-code',{method:'POST'});
+  const d = await r.json();
+  if(d.sent){
+    $('verify-status').textContent = T('verify_email_sent');
+    VERIFY_COOLDOWN = 60;
+    const tick = setInterval(()=>{
+      VERIFY_COOLDOWN--;
+      if(VERIFY_COOLDOWN <= 0){
+        clearInterval(tick);
+        $('verify-status').textContent = '';
+      } else {
+        $('verify-status').textContent = T('verify_email_cooldown').replace('{s}', VERIFY_COOLDOWN);
+      }
+    }, 1000);
+  } else if(d.error === 'rate_limit'){
+    toast(T('verify_email_rate_limit'), false);
+  } else {
+    toast(T('verify_email_invalid'), false);
+  }
+}
+/* валюта счёта = валюта выбранного денежного счёта ($('money')) */
+function moneyCurrency(){
+  return accountCurrency($('money').value);
+}
+function accountCurrency(pk){
+  const m = (FD.money||[]).find(x=>x.name===pk);
+  return (m && m.currency) || 'KRW';
+}
+let curMode = 'fiat';   // тогл дроплиста валют: fiat | crypto
+function fillCurSelect(){
+  if(!FD || !FD.currencies) return;
+  const list = curMode==='crypto' ? FD.currencies.crypto : FD.currencies.fiat;
+  const sel = $('amount-cur'); const prev = sel.value;
+  sel.innerHTML = list.map(c=>`<option value="${c.code}">${c.code}</option>`).join('');
+  // сохраняем выбор, если он есть в текущем режиме
+  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+}
+function toggleCurMode(){
+  curMode = curMode==='crypto' ? 'fiat' : 'crypto';
+  $('amount-cur-toggle').textContent = curMode==='crypto' ? '$' : '₿';
+  fillCurSelect();
+}
+/* выставить дроплист валюты на валюту счёта (вызывается при смене счёта/формы) */
+function syncAccountCurrency(){
+  const cur = moneyCurrency();
+  // если валюта счёта — крипта, переключим режим тогла
+  const isCrypto = (FD.currencies?.crypto||[]).some(c=>c.code===cur);
+  if(isCrypto && curMode!=='crypto'){ curMode='crypto'; $('amount-cur-toggle').textContent='$'; }
+  if(!isCrypto && curMode!=='fiat'){ curMode='fiat'; $('amount-cur-toggle').textContent='₿'; }
+  fillCurSelect();
+  if([...$('amount-cur').options].some(o=>o.value===cur)) $('amount-cur').value = cur;
+  hideConvHint();
+}
+function hideConvHint(){ $('amount-conv-hint').style.display='none'; }
+/* пользователь выбрал валюту ОТЛИЧНУЮ от валюты счёта -> конвертируем сумму по
+   живому курсу в валюту счёта, дроплист возвращаем к валюте счёта, поле = результат
+   (его можно поправить руками). */
+async function onAmountCurChange(){
+  const acct = moneyCurrency();
+  const chosen = $('amount-cur').value;
+  if(chosen===acct){ hideConvHint(); return; }
+  const amount = parseFloat($('amount').value);
+  if(!(amount>0)){ hideConvHint(); return; }
+  $('amount-conv-hint').style.display='';
+  $('amount-conv-hint').textContent = T('cur_converting');
+  try{
+    const r = await fetch(`/finance/api/convert?amount=${amount}&frm=${chosen}&to=${acct}`);
+    const d = await r.json();
+    if(d.value==null){ $('amount-conv-hint').textContent = T('cur_no_rate'); return; }
+    const rounded = Math.round(d.value*100)/100;
+    $('amount').value = rounded;
+    $('amount-conv-hint').textContent =
+      `${fmt(amount)} ${chosen} → ${fmt(rounded)} ${acct}`;
+  }catch(e){ $('amount-conv-hint').textContent = T('cur_no_rate'); }
+  // дроплист возвращаем к валюте счёта (но в нужном режиме тогла)
+  syncAccountCurrency();
+}
+function _optLabel(i){
+  const prefix = i.disabled ? '[·] ' : '';
+  return `<option value="${i.name}" ${i.disabled?'class="opt-disabled"':''}>${prefix}${i.label}</option>`;
+}
+function fill(id, items){
+  $(id).innerHTML = items.map(_optLabel).join('');
+}
+function fillCats(){
+  const used = FD.categories_used, rest = FD.categories_all;
+  const roleName = {
+    need: '├ ' + T('role_need'),
+    want: '├ ' + T('role_want'),
+    goal: '├ ' + T('role_goal')
+  };
+  function _group(items){
+    const order = {need:0, want:1, goal:2, '':3};
+    items.sort((a,b)=>(order[a.role]??9)-(order[b.role]??9) || a.label.localeCompare(b.label));
+    let html = '', lastRole = null;
+    items.forEach(c=>{
+      if(c.role && c.role !== lastRole){
+        if(lastRole) html += '</optgroup>';
+        html += `<optgroup label="${roleName[c.role] || c.role}">`;
+        lastRole = c.role;
+      }
+      html += _optLabel(c);
+    });
+    if(lastRole) html += '</optgroup>';
+    return html;
+  }
+  let html = _group(used);
+  if(used.length && rest.length)
+    html += `<option disabled>──────────────</option>`;
+  html += _group(rest);
+  $('category').innerHTML = html;
+  // дефолт — «Укажу позже» (Uncategorized), только если она не скрыта
+  const all = used.concat(rest);
+  const def = all.find(c=>c.is_uncategorized && !c.disabled);
+  if(def) $('category').value = def.name;
+}
+
+async function newCat(){
+  const name = prompt(T('pr_new_cat'));
+  if(!name) return;
+  const r = await fetch('/finance/api/category', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})});
+  const d = await r.json();
+  if(d.error){ toast(T(d.error),false); return; }
+  await loadFormData();
+  $('category').value = d.name;
+  toast(T('t_cat_created'));
+}
+
+function opChanged(){
+  const op = $('op').value;
+  $('cat-block').classList.toggle('hidden', op!=='expense');
+  $('income-block').classList.toggle('hidden', op!=='income');
+  $('money2-block').classList.toggle('hidden', op!=='transfer');
+  $('money-label').textContent =
+      op==='expense' ? T('f_money_from')
+    : op==='income'  ? T('f_money_to_in')
+    : T('f_money_from_transfer');
+  // порядок поля «Сумма»: для дохода — сразу под «Куда пришли деньги»
+  // (Тип → Куда → Сумма → Источник); для расхода/перевода — после выбора счёта.
+  const si=$('step-input'), amt=$('amount-block');
+  if(op==='income') si.insertBefore(amt, $('income-block'));
+  else si.insertBefore(amt, $('cat-block'));
+}
+$('op').addEventListener('change', opChanged);
+
+let pending = null;
+function toReview(){
+  clearFieldErrors($('step-input'));
+  const op=$('op').value, amount=parseFloat($('amount').value);
+  if(!(amount>0)){ fieldError('amount',T('e_amount')); return; }
+  const cur = moneyCurrency();   // валюта счёта — в ней и записываем
+  const cum = (n)=>`${fmt(n)} ${cur}`;
+  let debit, credit, label;
+  const moneyL = $('money').selectedOptions[0].text;
+  if(op==='expense'){
+    debit=$('category').value; credit=$('money').value;
+    label=`${$('category').selectedOptions[0].text} · ${cum(amount)} · ${T('rv_from')} «${moneyL}»`;
+  }else if(op==='income'){
+    debit=$('money').value; credit=$('income').value;
+    label=`${T('rv_income')} (${$('income').selectedOptions[0].text}) · ${cum(amount)} · ${T('rv_to')} «${moneyL}»`;
+  }else{ // transfer
+    debit=$('money2').value; credit=$('money').value;
+    if(debit===credit){ fieldError('money2', T('e_same_account')); return; }
+    if(accountCurrency(debit) !== accountCurrency(credit)){
+      toast(T('e_transfer_currency'), false); return;
+    }
+    label=`${T('rv_transfer')} · ${cum(amount)} · «${moneyL}» → «${$('money2').selectedOptions[0].text}»`;
+  }
+  pending={op, debit, credit, amount, currency:cur, remark:$('remark').value,
+           occurred_at: $('occurred').value || nowLocal()};
+  $('review-text').textContent = label + ($('remark').value? `\n«${$('remark').value}»`:'');
+  $('step-input').classList.add('hidden');
+  $('step-review').classList.remove('hidden');
+  kanban(1);
+}
+function backToInput(){
+  $('step-review').classList.add('hidden');
+  $('step-input').classList.remove('hidden');
+  kanban(0);
+}
+
+/* МОДАЛЬНЫЙ СТЕК + Android back (history API):
+   открытие модалки пушит history-state; системная кнопка «назад» (popstate)
+   закрывает верхнюю модалку вместо выхода из приложения. */
+let modalStack = [];
+function openModal(id, onClose){
+  $(id).classList.add('show'); document.body.style.overflow='hidden';
+  modalStack.push({id, onClose});
+  history.pushState({modal:id}, '');
+}
+function closeTopModal(fromPop){
+  const m = modalStack.pop(); if(!m) return;
+  $(m.id).classList.remove('show');
+  if(!modalStack.length) document.body.style.overflow='';
+  if(m.onClose) m.onClose();
+  // закрыли сами (не системным back) — снимаем лишний history-state
+  if(!fromPop) history.back();
+}
+window.addEventListener('popstate', ()=>{
+  if(modalStack.length) closeTopModal(true);
+});
+
+/* МОДАЛ-ФОРМА */
+// Любое закрытие формы (Спрятать / тап мимо / Android-назад) гасит спавн правки.
+function clearEditState(){ replaceId = null; editingCancelled = false; isEditing = false; resetStep(); }
+
+// Кнопка ＋ (FAB) — ВСЕГДА чистая новая операция. Если форма уже открыта (висел
+// спавн правки) — переинициализируем на месте: спавн правки исчезает.
+function openForm(){
+  startNewOperation();
+  if(!(modalStack.length && modalStack[modalStack.length-1].id==='form-overlay'))
+    openModal('form-overlay', clearEditState);
+}
+function resetFormDefaults(){
+  clearFieldErrors($('step-input'));
+  ONESHOT_FIELDS.forEach(id=>{ const el=$(id); if(el) el.value=''; }); // сумма, коммент
+  replaceId = null; isEditing = false; editingCancelled = false;
+  $('op').value='expense'; opChanged();   // тип → Расход
+  fillCats();                              // категория → дефолт «Укажу позже»
+  $('money').selectedIndex=0;              // счёт → первый
+  $('money2').selectedIndex=0;
+  $('income').selectedIndex=0;
+  syncAccountCurrency();                   // валюта суммы = валюта выбранного счёта
+  resetOccurred();                         // дата транзакции → сейчас
+  resetStep();
+}
+function startNewOperation(){ resetFormDefaults(); }
+function closeForm(){
+  if(modalStack.length && modalStack[modalStack.length-1].id==='form-overlay'){
+    resetFormDefaults();
+    closeTopModal(false);           // onClose=clearEditState сбросит правку
+  }
+}
+// тап по затемнению — закрыть (но не по самой шторке)
+document.addEventListener('click', e=>{
+  if(e.target.id==='form-overlay') closeForm();
+  if(e.target.id==='filter-overlay') closeFilter();
+  if(e.target.id==='wizard-overlay') closeWizard();
+});
+
+let lastPostedId = null;   // для «↩️ Передумали» сразу после записи
+let replaceId = null;      // ✏️ из журнала: при записи сначала сторнируем эту
+let editingCancelled = false;  // правим отменённую запись → результат тоже отменён
+let isEditing = false;     // true пока открыта правка существующей записи
+
+let submitting = false;
+async function submitEntry(btn){
+  if(submitting) return;            // защита от двойного тапа
+  submitting = true;
+  const orig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span> '+T('submitting'); }
+  const wasEdit = !!replaceId;
+  try{
+    if(replaceId){
+      await fetch(`/finance/api/entry/${replaceId}/cancel`,{method:'POST'});
+      replaceId = null;
+    }
+    const r = await fetch('/finance/api/entry',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(pending)});
+    const d = await r.json();
+    if(d.error){ toast(T(d.error),false); backToInput(); return; }
+    // правили отменённую запись — новая исправленная тоже должна остаться
+    // отменённой (активной её делает только воскрешение ♻️, не правка)
+    if(editingCancelled && d.id){
+      await fetch(`/finance/api/entry/${d.id}/cancel`,{method:'POST'});
+    }
+    editingCancelled = false;
+    isEditing = false;
+    lastPostedId = d.id;
+    $('done-text').textContent = '✅ ' + d.summary;
+    $('step-review').classList.add('hidden');
+    $('step-done').classList.remove('hidden');
+    kanban(3);
+    document.querySelectorAll('.kstep').forEach(el=>el.classList.add('done'));
+    await refreshAfterWrite();
+  }catch(e){
+    toast(T('t_noconn_save'), false); backToInput();
+  }finally{
+    submitting = false;
+    if(btn){ btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+async function undoLast(){
+  if(!lastPostedId) return resetForm();
+  await fetch(`/finance/api/entry/${lastPostedId}/cancel`,{method:'POST'});
+  lastPostedId = null;
+  toast(T('t_undone'));
+  await refreshAfterWrite();
+  resetForm();
+}
+function resetForm(){
+  resetFormDefaults();
+  closeForm();   // записал/начал заново — шторка уходит, видна обновлённая главная
+}
+/* после любой записи — обновить всё видимое без действий пользователя */
+async function refreshAfterWrite(){
+  DATA_VERSION++;            // сбрасываем кэш service worker для следующих GET
+  await loadFormData();
+  await loadMiniBalances(); await loadMiniJournal();
+  // журнал может жить в своей зоне ИЛИ в хабе правки (edit-space) — обновим, если виден
+  const jb = $('journal-block');
+  if(jb && jb.offsetParent !== null) await loadJournal();
+  // если пользователь сейчас на другой вкладке — обновим и её
+  const activeTab = document.querySelector('.app-tabs .tab.active');
+  const page = activeTab && activeTab.dataset.page;
+  if(page==='balances'){ await loadAccounts(); editSelect($('edit-what').value); }
+  if(page==='ai'){ loadReport(); loadTipsLibrary(); }
+  if(page==='more') loadMore();
+}
+
+/* Форма НЕ запоминает состояние между открытиями — каждый раз чистые дефолты. */
+const ONESHOT_FIELDS = ['amount','remark'];
+
+/* СТРАНИЦЫ */
+function go(page){
+  clearEditState();   // уход со вкладки гасит висящий спавн формы правки
+  ['entry','balances','ai','more'].forEach(p=>{
+    $('page-'+p).classList.toggle('hidden', p!==page);
+    document.querySelector(`.app-tabs .tab[data-page=${p}]`).classList.toggle('active', p===page);
+  });
+  // хаб правки (✏️): по умолчанию открываем счета
+  if(page==='balances' && $('edit-what')){
+    const what = $('edit-what').value || 'accounts';
+    editSelect(what);
+  }
+  if(page==='more') loadMore();
+  // FAB виден везде
+  $('fab').classList.add('show');
+  if(page==='ai'){ loadReport(); loadTipsLibrary(); }
+}
+
+/* МАСТЕР НАЧАЛА РАБОТЫ: пошаговый экскурс. Шаги берутся из глоссария (переводимы).
+   Показывается автоматически новому юзеру (нет счетов) один раз; повторно — из
+   бургера «Справка». Флаг «видел» хранится в localStorage. */
+// шаги мастера: ключи title|body в I18N как wzN_t / wzN_b. Порядок:
+// приветствие → завести счёт → пополнить (отразить реальность) → долговой счёт
+// (расход без пополнения = минус = долг) → записать операцию → смотреть остатки.
+const WZ_STEPS = ['wz1','wz2','wz3','wz4','wz5','wz6'];
+let wzIdx = 0;
+let ME_LOGIN = '';   // логин текущего пользователя (для пер-юзерных флагов)
+let ME_ID = '';      // id текущего пользователя (для изоляции localStorage)
+let ME_IS_ADMIN = false;
+
+
+// флаг «видел мастер» — ПЕР-ЮЗЕРНЫЙ: иначе на одном браузере новый юзер не
+// увидит мастер, т.к. прежний уже его закрыл (баг общего localStorage-ключа).
+function wzSeenKey(){ return 'counta_wizard:' + (ME_LOGIN || '_'); }
+function markWizardSeen(){ localStorage.setItem(wzSeenKey(), '1'); }
+function startWizard(){ wzIdx = 0; openModal('wizard-overlay', markWizardSeen); renderWizard(); }
+function closeWizard(){
+  markWizardSeen();
+  if(modalStack.length && modalStack[modalStack.length-1].id==='wizard-overlay') closeTopModal(false);
+}
+function renderWizard(){
+  const k = WZ_STEPS[wzIdx];
+  $('wz-title').textContent = T(k+'_t');
+  $('wz-body').textContent = T(k+'_b');
+  $('wz-next').textContent = wzIdx < WZ_STEPS.length-1 ? T('wz_next') : T('wz_done');
+  $('wz-dots').textContent = WZ_STEPS.map((_,i)=> i===wzIdx ? '●' : '○').join(' ');
+}
+function wizardNext(){
+  if(wzIdx < WZ_STEPS.length-1){ wzIdx++; renderWizard(); }
+  else closeWizard();
+}
+/* автозапуск новому юзеру: нет счетов И мастер ещё не видели */
+function maybeAutoWizard(){
+  if(localStorage.getItem(wzSeenKey())) return;
+  const empty = !FD || (FD.money||[]).length===0;
+  if(empty) startWizard();
+}
+
+/* АККАУНТ: профиль, почта+подтверждение, смена пароля */
+async function loadAccountSection(){
+  if(!$('acc-who')) return;
+  const me = await (await fetch('/finance/api/account/me')).json();
+  if(!me || !me.login) return;
+  const vmark = me.email ? (me.email_verified ? ' ✓' : ' ' + T('acc_email_unverified_mark')) : '';
+  $('acc-who').textContent = `${me.login}${me.email ? ' · '+me.email+vmark : ''}`;
+  if(me.email) $('acc-email').value = me.email;
+  const vrow = $('acc-verify-row');
+  if(vrow) vrow.style.display = (me.email && !me.email_verified) ? '' : 'none';
+}
+async function saveEmail(){
+  const email = $('acc-email').value.trim();
+  const d = await (await fetch('/finance/api/account/email',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({email})})).json();
+  if(d.error){ toast(T(d.error),false); return; }
+  toast(T('t_saved')); loadAccountSection();
+}
+async function sendVerify(){
+  const d = await (await fetch('/finance/api/account/verify/send',{method:'POST'})).json();
+  if(d.error){ toast(T(d.error),false); return; }
+  toast(d.already ? T('acc_already_verified') : T('acc_code_sent'));
+}
+async function checkVerify(){
+  const code = $('acc-vcode').value.trim();
+  const d = await (await fetch('/finance/api/account/verify/check',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({code})})).json();
+  if(d.error){ toast(T(d.error),false); return; }
+  toast(T('acc_verified')); $('acc-vcode').value=''; loadAccountSection();
+}
+async function changePw(){
+  const old=$('acc-pw-old').value, nw=$('acc-pw-new').value, nw2=$('acc-pw-new2').value;
+  if(nw!==nw2){ toast(T('t_pw_mismatch'),false); return; }
+  const d = await (await fetch('/finance/api/account/password',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({old, new:nw})})).json();
+  if(d.error){ toast(T(d.error),false); return; }
+  $('acc-pw-old').value=''; $('acc-pw-new').value=''; $('acc-pw-new2').value=''; toast(T('acc_pw_changed'));
+}
+async function requestPwReset(){
+  const emailEl = $('acc-email');
+  const msg = $('acc-pw-reset-msg');
+  try{
+    const me = await (await fetch('/finance/api/account/me')).json();
+    if(!me.email || !me.email_verified){
+      emailEl.classList.add('field-err');
+      msg.textContent = T('acc_pw_reset_need_email');
+      msg.style.color = 'var(--red)';
+      return;
+    }
+    emailEl.classList.remove('field-err');
+    const r = await fetch('/finance/api/account/reset-password-request',{method:'POST'});
+    const d = await r.json().catch(()=>({}));
+    if(r.ok && d.ok){
+      msg.textContent = T('acc_pw_reset_sent');
+      msg.style.color = 'var(--green)';
+    }else{
+      msg.textContent = d.error ? T(d.error) : T('acc_pw_reset_fail');
+      msg.style.color = 'var(--red)';
+    }
+  }catch(e){
+    msg.textContent = T('acc_pw_reset_fail');
+    msg.style.color = 'var(--red)';
+  }
+}
+
+/* ПЕРЕКЛЮЧАТЕЛЬ АККАУНТОВ */
+let ACC_SWITCHER_OPEN = false;
+async function loadAccountSwitcher(){
+  if(!$('acc-current-login')) return;
+  try{
+    const d = await (await fetch('/finance/api/accounts/list')).json();
+    if(d.error) return;
+    const current = d.accounts.find(a => a.current) || d.accounts[0];
+    if(!current) return;
+    $('acc-current-login').textContent = current.login;
+    $('acc-switcher').style.display = '';
+    const list = d.accounts.map(a => {
+      const badge = a.current ? `<span class="badge" data-i="acc_current">${T('acc_current')}</span>` : '';
+      const switchBtn = a.current ? '' : `<button class="btn btn-ghost" style="padding:6px 10px;font-size:13px" onclick="switchAccount(${a.id},event)">${T('acc_switch')}</button>`;
+      const forgetBtn = `<button class="btn btn-ghost" style="padding:6px 10px;font-size:13px;color:var(--red)" onclick="forgetAccount(${a.id},event)">${T('acc_forget')}</button>`;
+      return `<div class="acc-switcher-item">
+        <div><span class="login">${escapeHtml(a.login)}</span> ${badge}</div>
+        <div class="row" style="gap:6px;flex-wrap:nowrap">${switchBtn}${forgetBtn}</div>
+      </div>`;
+    }).join('');
+    const addBtn = `<div class="acc-switcher-item" style="border-bottom:none;padding-bottom:4px">
+      <button class="btn btn-ghost" style="width:100%" onclick="toggleAddAccountForm(event)" data-i="acc_add">➕ ${T('acc_add')}</button>
+    </div>`;
+    $('acc-switcher-list').innerHTML = list + addBtn;
+  }catch(e){}
+}
+function toggleAccountList(){
+  ACC_SWITCHER_OPEN = !ACC_SWITCHER_OPEN;
+  $('acc-switcher-list').style.display = ACC_SWITCHER_OPEN ? 'block' : 'none';
+  $('acc-switcher-chevron').textContent = ACC_SWITCHER_OPEN ? '▲' : '▼';
+}
+function toggleAddAccountForm(e){
+  if(e) e.stopPropagation();
+  const f = $('acc-add-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+async function switchAccount(tid,e){
+  if(e) e.stopPropagation();
+  const r = await fetch('/finance/api/session/switch',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:tid})});
+  if(r.ok){ location.reload(); }
+  else { toast(T('acc_switch_fail'), false); }
+}
+async function addAccount(){
+  const login = $('acc-add-login').value.trim();
+  const password = $('acc-add-password').value;
+  if(!login || !password){ toast(T('acc_fill_both'), false); return; }
+  const r = await fetch('/finance/api/session/add',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({login, password})});
+  if(r.ok){ location.reload(); }
+  else {
+    const d = await r.json().catch(()=>({}));
+    toast(d.error === 'rate_limit' ? T('acc_rate_limit') : T('acc_invalid'), false);
+  }
+}
+async function forgetAccount(tid, e){
+  if(e) e.stopPropagation();
+  if(!confirm(T('cf_forget_account'))) return;
+  const r = await fetch('/finance/api/accounts/forget',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id: tid})});
+  if(r.ok){ loadAccountSwitcher(); }
+  else { toast(T('acc_forget_fail'), false); }
+}
+
+/* ХАБ ПРАВКИ (✏️): выбор раздела → показываем его интерфейс в #edit-space.
+   Журнал живёт прямо здесь — просто управляем видимостью, без релокации. */
+function editSelect(what){
+  $('notifications-block').classList.toggle('hidden', what!=='notifications');
+  $('journal-block').classList.toggle('hidden', what!=='journal');
+  $('accounts-block').classList.toggle('hidden', what!=='accounts');
+  $('categories-block').classList.toggle('hidden', what!=='categories');
+  $('incomes-block').classList.toggle('hidden', what!=='incomes');
+  if(what==='notifications') loadNotifications();
+  if(what==='journal'){ fillJournalFilterCats(); loadJournal(); }
+  if(what==='accounts'){ loadAccounts(); }
+  if(what==='categories'){ loadCats(); }
+  if(what==='incomes'){ loadIncomes(); }
+}
+
+/* ── Общий приём редактирования (как журнал): имя правится инлайн (ключ —
+   стабильный PK, не имя), «удаление» = скрытие (disabled, обратимо), скрытые
+   показываются блёкло с кнопкой возврата ↩️. Жёсткого удаления нет. ──────── */
+const _eid = name => btoa(unescape(encodeURIComponent(name)));  // безопасный id из PK
+// одна строка-редактор: поле имени + доп.контролы + ✕ скрыть / ↩️ вернуть
+function editRow(item, idPfx, renameFn, disableFn, enableFn, extraHtml='', purgeFn=''){
+  const enc = encodeURIComponent(item.name);
+  // скрытый: ↩️ вернуть + 🗑 удалить навсегда; активный: ✕ скрыть
+  const act = item.disabled
+    ? `<button class="del" style="color:var(--green)" onclick="${enableFn}('${enc}')" title="${T('trash_restore')}">↩️</button>`
+      + (purgeFn ? `<button class="del" style="color:var(--red)" onclick="${purgeFn}('${enc}')" title="${T('purge_forever')}">🗑</button>` : '')
+    : `<button class="del" onclick="${disableFn}('${enc}')" title="${T('t_delete')}">✕</button>`;
+  return `<div class="list-row${item.disabled?' cancelled':''}">
+     <input type="text" value="${escapeAttr(item.label)}" id="${idPfx}-${_eid(item.name)}" autocomplete="off"
+            style="flex:1;margin-right:6px" ${item.disabled?'disabled':''}
+            onchange="${renameFn}('${enc}')">
+     ${extraHtml}${act}
+   </div>`;
+}
+
+/* СЧЕТА */
+let ACC_CUR = null; let accCurMode='fiat'; let ACC_FILTER=''; let ACC_CACHE=[];
+async function loadAccounts(){
+  const d = await (await fetch(`/finance/api/accounts?lang=${LANG}`)).json();
+  ACC_CUR = d.currencies; ACC_CACHE = d.accounts;
+  renderAccounts();
+  accCurMode='fiat'; $('acc-cur-toggle').textContent='₿'; fillAccNewCur();
+}
+function accFilter(v){ ACC_FILTER=v; renderAccounts(); }
+function renderAccounts(){
+  const list = ACC_CACHE.filter(a=>!ACC_FILTER || a.label.toLowerCase().includes(ACC_FILTER.toLowerCase()));
+  $('accounts-list').innerHTML = list.map(a=>{
+    // валюта НЕИЗМЕНЯЕМА (B1) — показываем статичным бейджем, не дроплистом
+    const cur = `<span class="small" style="margin-right:6px;opacity:.7">${a.currency}</span>`;
+    return editRow(a,'acc','renameAccount','disableAccount','enableAccount',cur,'purgeAccount');
+  }).join('') || `<span class="small">${T('dash')}</span>`;
+}
+async function renameAccount(encName){
+  const name=decodeURIComponent(encName);
+  const label=document.getElementById('acc-'+_eid(name)).value.trim();
+  if(!label) return;
+  const d=await (await fetch(`/finance/api/account/${encName}/rename`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({label,lang:LANG})})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_renamed')); await loadFormData(); await loadAccounts(); await refreshAfterWrite();
+}
+async function disableAccount(encName){
+  if(!confirm(T('cf_hide'))) return;
+  const d=await (await fetch(`/finance/api/account/${encName}/disable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_hidden')); await loadFormData(); await loadAccounts(); await refreshAfterWrite();
+}
+async function enableAccount(encName){
+  const d=await (await fetch(`/finance/api/account/${encName}/enable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_restored')); await loadFormData(); await loadAccounts(); await refreshAfterWrite();
+}
+/* 🗑 ДЕНЕЖНЫЙ счёт навсегда: предупреждаем числом операций + трение «введите
+   УДАЛИТЬ». История по счёту гибнет безвозвратно. */
+async function purgeAccount(encName){
+  const u=await (await fetch(`/finance/api/account/${encName}/usage`)).json();
+  const msg = T('cf_purge_acc').replace('{n}', u.count);
+  const typed = prompt(msg);
+  if(typed===null) return;
+  if(typed.trim().toUpperCase()!==T('purge_word').toUpperCase()){ toast(T('t_purge_mismatch'),false); return; }
+  const d=await (await fetch(`/finance/api/account/${encName}/purge`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:typed.trim()})})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_purged')); await loadFormData(); await loadAccounts(); await refreshAfterWrite();
+}
+/* 🗑 КАТЕГОРИЯ/ИСТОЧНИК навсегда: каскадный перенос записей на другой ярлык,
+   выбираемый вручную; история цела. Удаляем из того же раздела, что открыт. */
+async function purgeCategory(encName){
+  const isInc = !$('incomes-block').classList.contains('hidden');
+  const list = isInc ? INC_CACHE : CAT_CACHE;
+  const me = decodeURIComponent(encName);
+  const targets = list.filter(x=>x.name!==me && !x.disabled);
+  if(!targets.length){ toast(T('t_purge_no_target'),false); return; }
+  // простой выбор: пронумерованный prompt (выбор вручную, без дефолта)
+  const menu = targets.map((t,i)=>`${i+1}. ${t.label}`).join('\n');
+  const pick = prompt(T('cf_purge_cat')+'\n\n'+menu);
+  if(pick===null) return;
+  const idx = parseInt(pick,10)-1;
+  if(!(idx>=0 && idx<targets.length)){ toast(T('t_purge_badpick'),false); return; }
+  const d=await (await fetch(`/finance/api/account/${encName}/purge-category`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({move_to:targets[idx].name})})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_purged')); await loadFormData();
+  if(isInc) await loadIncomes(); else await loadCats();
+  await refreshAfterWrite();
+}
+function curOptions(selected){
+  const all = (ACC_CUR.fiat||[]).concat(ACC_CUR.crypto||[]);
+  return all.map(c=>`<option value="${c.code}"${c.code===selected?' selected':''}>${c.code}</option>`).join('');
+}
+function fillAccNewCur(){
+  const list = accCurMode==='crypto' ? ACC_CUR.crypto : ACC_CUR.fiat;
+  $('acc-new-cur').innerHTML = list.map(c=>`<option value="${c.code}">${c.code}</option>`).join('');
+}
+function toggleAccCurMode(){
+  accCurMode = accCurMode==='crypto' ? 'fiat' : 'crypto';
+  $('acc-cur-toggle').textContent = accCurMode==='crypto' ? '$' : '₿';
+  fillAccNewCur();
+}
+async function createAccount(){
+  const name = $('acc-new-name').value.trim();
+  if(!name){ toast(T('e_acc_name'), false); return; }
+  const d = await (await fetch('/finance/api/account',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name, currency:$('acc-new-cur').value})})).json();
+  if(d.error){ toast(T(d.error),false); return; }
+  $('acc-new-name').value=''; toast(T('t_acc_created'));
+  await loadAccounts(); await loadFormData(); await refreshAfterWrite();
+}
+/* ИСТОЧНИКИ ПОСТУПЛЕНИЯ (та же механика) */
+let INC_FILTER=''; let INC_CACHE=[];
+async function loadIncomes(){
+  const d = await (await fetch(`/finance/api/edit/incomes?lang=${LANG}`)).json();
+  INC_CACHE = d.items; renderIncomes();
+}
+function incFilter(v){ INC_FILTER=v; renderIncomes(); }
+function renderIncomes(){
+  const list = INC_CACHE.filter(i=>!INC_FILTER || i.label.toLowerCase().includes(INC_FILTER.toLowerCase()));
+  $('incomes-list').innerHTML = list.map(i=>
+    editRow(i,'inc','renameInc','disableInc','enableInc','','purgeCategory')).join('') || `<span class="small">${T('dash')}</span>`;
+}
+async function renameInc(encName){
+  const name=decodeURIComponent(encName);
+  const label=document.getElementById('inc-'+_eid(name)).value.trim();
+  if(!label) return;
+  const d=await (await fetch(`/finance/api/category/${encName}/rename`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({label,lang:LANG})})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_renamed')); await loadFormData(); loadIncomes();
+}
+async function disableInc(encName){
+  if(!confirm(T('cf_hide'))) return;
+  const d=await (await fetch(`/finance/api/account/${encName}/disable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_hidden')); await loadFormData(); loadIncomes();
+}
+async function enableInc(encName){
+  const d=await (await fetch(`/finance/api/account/${encName}/enable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_restored')); await loadFormData(); loadIncomes();
+}
+async function newIncome(){
+  const name = prompt(T('pr_new_inc')); if(!name) return;
+  const d=await (await fetch('/finance/api/income',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,lang:LANG})})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_inc_created')); await loadFormData(); loadIncomes();
+}
+
+/* ОТЧЁТ — детерминированный, без ИИ. Период и вид переключаются чипами/селектом. */
+let REP_PERIOD = 'month';
+let REP_VIEW = 'overview';
+const REP_PERIODS = ['last7','week','prev_week','month','prev_month','last30','last90','year','all'];
+const CHART_COLORS = ['#0a84ff','#30d158','#ff9f0a','#ff375f','#a05cff','#5ac8fa','#bf5af2','#ffcc00','#64d2ff','#8e8e93'];
+function setReportPeriod(p){ REP_PERIOD=p; loadReport(); }
+function setReportView(v){ REP_VIEW=v; loadReport(); }
+async function loadReport(){
+  // чипы периодов
+  $('rep-periods').innerHTML = REP_PERIODS.map(p=>
+    `<span class="chip${p===REP_PERIOD?' chip-on':''}" onclick="setReportPeriod('${p}')">${T('rep_'+p)}</span>`).join('');
+  $('report-view').value = REP_VIEW;
+  $('report').innerHTML = `<span class="small">${T('rep_loading')}</span>`;
+  let d;
+  try{
+    const summary = await (await fetch(`/finance/api/analytics/summary?period=${REP_PERIOD}&lang=${LANG}`)).json();
+    if(REP_VIEW==='overview'){ renderReportOverview(summary); loadInsight(); return; }
+    if(REP_VIEW==='donut'){ renderReportDonut(summary); loadInsight(); return; }
+    if(REP_VIEW==='trend'){
+      d = await (await fetch(`/finance/api/analytics/trend?period=${REP_PERIOD}&group_by=day&lang=${LANG}`)).json();
+      renderReportTrend(d); loadInsight(); return;
+    }
+    d = await (await fetch(`/finance/api/analytics/compare?period=${REP_PERIOD}&lang=${LANG}`)).json();
+    renderReportCompare(d); loadInsight();
+  }catch(e){ $('report').innerHTML = `<span class="small">${T('rep_error')}</span>`; $('insight-card').style.display='none'; }
+}
+function renderReportOverview(d){
+  if(!d.groups || !d.groups.length){ $('report').innerHTML = `<span class="small">${T('rep_empty')}</span>`; return; }
+  $('report').innerHTML = d.groups.map(g=>{
+    const bars = (g.top_expenses||[]).map(e=>
+      `<div style="margin-top:8px">
+         <div class="list-row" style="border:none;padding:2px 0">
+           <span class="small">${escapeHtml(e.label)}</span>
+           <span class="num">${fmtCur(e.amount,g.currency)} · ${e.pct}%</span>
+         </div>
+         <div style="height:6px;background:var(--line);border-radius:3px;overflow:hidden">
+           <div style="height:100%;width:${e.pct}%;background:var(--accent)"></div>
+         </div>
+       </div>`).join('') || `<p class="small" style="margin:8px 0 0">${T('rep_no_exp')}</p>`;
+    const inc = (g.incomes||[]).map(i=>
+      `<div class="list-row" style="padding:4px 0"><span class="small">${escapeHtml(i.label)}</span>
+       <span class="num pos">${fmtCur(i.amount,g.currency)}</span></div>`).join('');
+    const debt = (d.debts||[]).find(x=>x.currency===g.currency);
+    const debtBlock = debt ? `<div class="small" style="margin-top:12px;text-transform:uppercase;letter-spacing:.04em">${T('debt_title')}</div>
+      <div class="row" style="gap:8px;text-align:center;margin-top:4px">
+        <div style="flex:1"><div class="small">${T('debt_assets')}</div><div class="num pos">${fmtCur(debt.assets,g.currency)}</div></div>
+        <div style="flex:1"><div class="small">${T('debt_debts')}</div><div class="num neg">−${fmtCur(debt.debts,g.currency)}</div></div>
+        <div style="flex:1"><div class="small">${T('debt_net')}</div><div class="num ${debt.net>=0?'pos':'neg'}">${debt.net<0?'−':''}${fmtCur(Math.abs(debt.net),g.currency)}</div></div>
+      </div>` : '';
+    return `<div style="margin-bottom:16px">
+      <div style="font-weight:600;margin-bottom:6px">${g.currency} · ${g.count} ${T('rep_ops')}</div>
+      <div class="row" style="gap:8px;text-align:center">
+        <div style="flex:1"><div class="small">${T('rep_income')}</div><div class="num pos">${fmtCur(g.income,g.currency)}</div></div>
+        <div style="flex:1"><div class="small">${T('rep_expense')}</div><div class="num neg">${fmtCur(g.expense,g.currency)}</div></div>
+        <div style="flex:1"><div class="small">${T('rep_net')}</div><div class="num ${g.net>=0?'pos':'neg'}">${g.net<0?'−':''}${fmtCur(Math.abs(g.net),g.currency)}</div></div>
+      </div>
+      <div class="small" style="margin-top:12px;text-transform:uppercase;letter-spacing:.04em">${T('rep_top_exp')}</div>
+      ${bars}
+      ${inc ? `<div class="small" style="margin-top:12px;text-transform:uppercase;letter-spacing:.04em">${T('rep_by_income')}</div>${inc}` : ''}
+      ${debtBlock}
+    </div>`;
+  }).join('');
+}
+function renderReportDonut(d){
+  if(!d.groups || !d.groups.length){ $('report').innerHTML = `<span class="small">${T('rep_empty')}</span>`; return; }
+  $('report').innerHTML = d.groups.map(g=>{
+    const items = g.top_expenses || [];
+    const total = g.expense || 0;
+    if(!total || !items.length) return `<div class="small" style="margin:8px 0">${g.currency}: ${T('rep_no_exp')}</div>`;
+    const known = items.reduce((s,e)=>s+e.amount,0);
+    const slices = known < total ? items.concat([{key:'_other',label:T('rep_other'),amount:total-known,pct:Math.round((total-known)/total*100)}])
+                                 : items.slice();
+    let acc=0;
+    const grads = slices.map((s,i)=>{
+      const start=acc, end=acc+(s.amount/total)*360; acc=end;
+      return `${CHART_COLORS[i%CHART_COLORS.length]} ${start}deg ${end}deg`;
+    }).join(',');
+    const legend = slices.map((s,i)=>`<div class="list-row" style="padding:3px 0;border:none">
+        <span class="small"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${CHART_COLORS[i%CHART_COLORS.length]};margin-right:6px"></span>${escapeHtml(s.label)}</span>
+        <span class="num">${fmtCur(s.amount,g.currency)} · ${s.pct}%</span>
+      </div>`).join('');
+    return `<div style="margin-bottom:18px">
+      <div style="font-weight:600;margin-bottom:10px">${g.currency}: ${T('rep_exp_by_cat')}</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="width:150px;height:150px;border-radius:50%;background:conic-gradient(${grads})"></div>
+        <div style="flex:1;min-width:140px">${legend}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderReportTrend(d){
+  if(!d.series || !d.series.length){ $('report').innerHTML = `<span class="small">${T('rep_empty')}</span>`; return; }
+  $('report').innerHTML = d.series.map(s=>{
+    const pts = s.points; if(!pts.length) return '';
+    const w=320,h=140,p=10;
+    const maxV = Math.max(...pts.map(p=>Math.max(p.income,p.expense,p.net,0)))||1;
+    const minV = Math.min(...pts.map(p=>Math.min(p.income,p.expense,p.net,0)));
+    const range = Math.max(maxV, Math.abs(minV)) * 1.1 || 1;
+    const x=i=>(i/(pts.length-1||1))*(w-2*p)+p;
+    const y=v=>h/2 - (v/range)*(h/2-p);
+    const line=(arr)=>arr.map((v,i)=>`${i? 'L':'M'} ${x(i)} ${y(v)}`).join(' ');
+    const grid = [0.5,0,-0.5].map(r=>{
+      const yy = h/2 - r*(h/2-p);
+      return `<line x1="${p}" y1="${yy}" x2="${w-p}" y2="${yy}" stroke="var(--line)" stroke-dasharray="2"/>`;
+    }).join('');
+    const area = (arr,col)=>{
+      const path = line(arr);
+      return `<path d="${path}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`+
+        `<circle cx="${x(arr.length-1)}" cy="${y(arr[arr.length-1])}" r="3" fill="${col}"/>`;
+    };
+    const labels = `<text x="${p}" y="${h-2}" font-size="9" fill="var(--muted)">${escapeHtml(pts[0].label)}</text>`+
+      `<text x="${w-p}" y="${h-2}" text-anchor="end" font-size="9" fill="var(--muted)">${escapeHtml(pts[pts.length-1].label)}</text>`;
+    const legend = `<div style="display:flex;gap:12px;justify-content:center;margin-top:6px">
+      <span class="small"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#30d158"></span> ${T('rep_income')}</span>
+      <span class="small"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff375f"></span> ${T('rep_expense')}</span>
+      <span class="small"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0a84ff"></span> ${T('rep_net')}</span>
+    </div>`;
+    return `<div style="margin-bottom:18px">
+      <div style="font-weight:600;margin-bottom:6px">${s.currency}: ${T('rep_trend_title')}</div>
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;overflow:visible">${grid}${area(pts.map(p=>p.income),'#30d158')}${area(pts.map(p=>p.expense),'#ff375f')}${area(pts.map(p=>p.net),'#0a84ff')}${labels}</svg>
+      ${legend}
+    </div>`;
+  }).join('');
+}
+function renderReportCompare(d){
+  if(!d.comparisons || !d.comparisons.length){ $('report').innerHTML = `<span class="small">${T('rep_empty')}</span>`; return; }
+  const mkBar=(label,a,b,currency)=>{
+    const max = Math.max(Math.abs(a),Math.abs(b))||1;
+    const pos=(v)=>Math.max(0,v)/max*100, neg=(v)=>Math.min(0,v)/max*100;
+    const pad=Math.abs(neg(a)-neg(b))/2;
+    return `<div style="margin:10px 0">
+      <div class="row small" style="justify-content:space-between"><span>${label}</span><span>${fmtCur(a,currency)} / ${fmtCur(b,currency)}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;height:22px;margin-top:4px">
+        <div style="flex:1;background:var(--line);border-radius:4px;overflow:hidden;position:relative;height:100%">
+          <div style="position:absolute;left:${50+neg(a)}%;width:${pos(a)}%;height:100%;background:#30d158"></div>
+        </div>
+        <div style="flex:1;background:var(--line);border-radius:4px;overflow:hidden;position:relative;height:100%">
+          <div style="position:absolute;left:${50+neg(b)}%;width:${pos(b)}%;height:100%;background:#ff375f"></div>
+        </div>
+      </div>
+    </div>`;
+  };
+  $('report').innerHTML = d.comparisons.map(c=>`<div style="margin-bottom:18px">
+    <div style="font-weight:600;margin-bottom:6px">${c.currency}: ${T('rep_compare_title')}</div>
+    <div class="row small" style="justify-content:space-around;margin-bottom:6px">
+      <span>▣ ${escapeHtml(c.current_label)}</span><span>□ ${escapeHtml(c.previous_label)}</span>
+    </div>
+    ${mkBar(T('rep_income'),c.current.income,c.previous.income,c.currency)}
+    ${mkBar(T('rep_expense'),c.current.expense,c.previous.expense,c.currency)}
+    ${mkBar(T('rep_net'),c.current.net,c.previous.net,c.currency)}
+    <div class="small" style="margin-top:8px">${T('rep_growth')}: ${c.growth.income_pct>=0?'+':''}${c.growth.income_pct}% ${T('rep_income').toLowerCase()}, ${c.growth.expense_pct>=0?'+':''}${c.growth.expense_pct}% ${T('rep_expense').toLowerCase()}, ${T('rep_net')} ${c.growth.net_pct>=0?'+':''}${c.growth.net_pct}%</div>
+  </div>`).join('');
+}
+
+/* ИНСАЙТЫ: персонализированный совет по выбранному периоду */
+async function loadInsight(){
+  if(!$('insight-card')) return;
+  try{
+    const t = await (await fetch(`/finance/api/analytics/tip?period=${REP_PERIOD}&lang=${LANG}`)).json();
+    if(!t.title){ $('insight-card').style.display='none'; return; }
+    $('ins-title').textContent = t.title;
+    $('ins-body').textContent = t.body;
+    $('ins-book').textContent = '→ ' + t.book;
+    $('insight-card').style.display = 'block';
+  }catch(e){ $('insight-card').style.display='none'; }
+}
+
+/* КАТЕГОРИИ РАСХОДА (хаб правки): та же механика, что у счетов/источников —
+   имя инлайн (ключ — стабильный PK, лейбл в catalog_i18n), скрытие/возврат. */
+let CAT_FILTER = ''; let CAT_CACHE = [];
+async function loadCats(){
+  const d = await (await fetch(`/finance/api/edit/categories?lang=${LANG}`)).json();
+  CAT_CACHE = d.items; renderCats();
+}
+function catFilter(v){ CAT_FILTER=v; renderCats(); }
+function renderCats(){
+  const list = CAT_CACHE.filter(c=>!CAT_FILTER || c.label.toLowerCase().includes(CAT_FILTER.toLowerCase()));
+  $('cats-list').innerHTML = list.map(c=>
+    editRow(c,'cat','renameCat','disableCat','enableCat','','purgeCategory')).join('') || `<span class="small">${T('dash')}</span>`;
+}
+async function renameCat(encName){
+  const name=decodeURIComponent(encName);
+  const label=document.getElementById('cat-'+_eid(name)).value.trim();
+  if(!label) return;
+  const r=await fetch(`/finance/api/category/${encName}/rename`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({label, lang:LANG})});
+  if((await r.json()).error){toast(T('t_rename_fail'),false);return;}
+  toast(T('t_renamed')); await loadFormData(); await loadCats(); await refreshAfterWrite();
+}
+async function disableCat(encName){
+  if(!confirm(T('cf_hide'))) return;
+  const d=await (await fetch(`/finance/api/account/${encName}/disable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_hidden')); await loadFormData(); await loadCats(); await refreshAfterWrite();
+}
+async function enableCat(encName){
+  const d=await (await fetch(`/finance/api/account/${encName}/enable`,{method:'POST'})).json();
+  if(d.error){toast(T(d.error),false);return;}
+  toast(T('t_restored')); await loadFormData(); await loadCats(); await refreshAfterWrite();
+}
+function escapeAttr(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+
+/* ТЕМА: unified with Avalone shell — uses avalone_theme key. */
+function applyTheme(theme){
+  if(theme==='light'||theme==='dark'){
+    document.documentElement.dataset.theme=theme;
+    try{localStorage.setItem('avalone_theme',theme);}catch(e){}
+  } else {
+    delete document.documentElement.dataset.theme;
+    try{localStorage.removeItem('avalone_theme');}catch(e){}
+  }
+}
+
+async function loadDailyTip(){
+  try{
+    const t = await (await fetch('/finance/api/analytics/tip?period=month&lang='+LANG)).json();
+    if(!t.title) return;
+    $('daily-tip-card').style.display = 'block';
+    $('daily-tip-title').textContent = t.title;
+    $('daily-tip-body').textContent = t.body;
+    $('daily-tip-book').textContent = '→ ' + t.book;
+  }catch(e){}
+}
+async function loadTipsLibrary(){
+  try{
+    const data = await (await fetch('/finance/api/analytics/tips?lang='+LANG)).json();
+    const html = (data.tips||[]).map(t=>
+      `<div style="margin-bottom:12px;padding:10px;background:var(--card);border-radius:8px">
+        <div style="font-weight:600">${escapeHtml(t.title)}</div>
+        <div class="small" style="margin:4px 0">${escapeHtml(t.body)}</div>
+        <div class="small" style="opacity:.7">→ ${escapeHtml(t.book)}</div>
+      </div>`).join('');
+    $('tips-library').innerHTML = html || '<p class="small">...</p>';
+  }catch(e){}
+}
+function journalRow(e){
+  // объект записи кладём в data-атрибут через encodeURIComponent — кавычки/
+  // апострофы в remark не ломают HTML (баг старого inline-onclick). Действия
+  // ловит общий делегат-слушатель (см. ниже attachEntryActions).
+  const enc = encodeURIComponent(JSON.stringify(e));
+  // отменённая: ↩️ вернуть, ✏️ править, 🗑 удалить навсегда.
+  // активная: ✏️ править, ✕ отменить.
+  const actions = e.cancelled
+    ? Avalone.button({label:'↩️', variant:'ghost', size:'sm', attrs:{'data-act':'restore','data-entry':enc,'title':T('trash_restore')}}) +
+      Avalone.button({label:'✏️', variant:'ghost', size:'sm', attrs:{'data-act':'edit','data-entry':enc}}) +
+      Avalone.button({label:'🗑', variant:'ghost', size:'sm', attrs:{'data-act':'purge','data-entry':enc,'title':T('purge_forever')}})
+    : Avalone.button({label:'✏️', variant:'ghost', size:'sm', attrs:{'data-act':'edit','data-entry':enc}}) +
+      Avalone.button({label:'✕', variant:'ghost', size:'sm', attrs:{'data-act':'cancel','data-entry':enc}});
+  const opMark = e.op==='income' ? `<span class="pos">+ ${T('op_income')}</span>`
+               : e.op==='transfer' ? `<span>⇄ ${T('op_transfer')}</span>`
+               : `<span class="neg">− ${T('op_expense')}</span>`;
+  return `<div class="list-row${e.cancelled?' cancelled':''}">
+       <div style="flex:1 1 auto;min-width:0;overflow:hidden">
+            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(entryTitle(e))}</div>
+            <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fmtWhen(e)} · ${opMark} · ${escapeHtml(e.to)} ← ${escapeHtml(e.from)}</div></div>
+       <div style="text-align:right;flex:0 0 auto"><span class="num">${fmtCur(e.amount, e.currency)}</span><br>
+            ${actions}</div>
+     </div>`;
+}
+// Дата возникновения транзакции; если задано точное время — показываем и его.
+function fmtWhen(e){
+  const o = e.occurred_at || e.date || '';
+  if(o.includes('T')){ const [d,t] = o.split('T'); return `${d} ${t.slice(0,5)}`; }
+  return o;
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>(
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// Если пользователь не ввёл комментарий, бэкенд раньше сохранял сырой ключ
+// счёта (например, cat_uncategorized). Показываем в журнале локализованную
+// метку счёта вместо технического ключа.
+function entryTitle(e){
+  const r = String(e.remark||'');
+  if(!r) return e.op==='income' ? e.from : e.to;
+  if(r===e.to_name || r===e.from_name) return e.op==='income' ? e.from : e.to;
+  if(/^cat_[a-z0-9_]+$/.test(r) || /\s-\s[A-Z]{2,4}$/.test(r)) return e.op==='income' ? e.from : e.to;
+  return r;
+}
+/* Активный фильтр журнала. Пустые поля = не фильтруем. sort всегда задан. */
+let jFilter = {category:'', income:'', account:'', q:'', currency:'', op_type:'', only:'',
+               date_from:'', date_to:'', created_from:'', created_to:'', amount_min:'', amount_max:'',
+               sort:'occurred_desc', hide_cancelled:true};
+function openFilter(){
+  // переносим активное состояние в контролы карточки перед показом
+  fillJournalFilterCats();
+  $('jf-sort').value      = jFilter.sort;
+  $('jf-cat').value       = jFilter.category;
+  $('jf-inc').value       = jFilter.income;
+  $('jf-acc').value       = jFilter.account;
+  $('jf-op').value        = jFilter.op_type;
+  $('jf-cur').value       = jFilter.currency;
+  $('jf-q').value         = jFilter.q;
+  $('jf-uncat-cb').checked = jFilter.only==='uncategorized';
+  $('jf-date-from').value = jFilter.date_from;
+  $('jf-date-to').value   = jFilter.date_to;
+  $('jf-cre-from').value  = jFilter.created_from;
+  $('jf-cre-to').value    = jFilter.created_to;
+  $('jf-amt-min').value   = jFilter.amount_min;
+  $('jf-amt-max').value   = jFilter.amount_max;
+  openModal('filter-overlay');
+}
+function closeFilter(){
+  if(modalStack.length && modalStack[modalStack.length-1].id==='filter-overlay')
+    closeTopModal(false);
+}
+function applyFilter(){
+  jFilter = {
+    sort:        $('jf-sort').value,
+    category:    $('jf-cat').value,
+    income:      $('jf-inc').value,
+    account:     $('jf-acc').value,
+    op_type:     $('jf-op').value,
+    currency:    $('jf-cur').value,
+    q:           $('jf-q').value.trim(),
+    only:        $('jf-uncat-cb').checked ? 'uncategorized' : '',
+    date_from:   $('jf-date-from').value,
+    date_to:     $('jf-date-to').value,
+    created_from:$('jf-cre-from').value,
+    created_to:  $('jf-cre-to').value,
+    amount_min:  $('jf-amt-min').value,
+    amount_max:  $('jf-amt-max').value,
+    hide_cancelled: !!jFilter.hide_cancelled,   // чекбокс журнала — отдельно
+  };
+  updateFilterBadge();
+  closeFilter();
+  loadJournal();
+}
+function resetFilter(apply){
+  jFilter = {category:'', income:'', account:'', q:'', currency:'', op_type:'', only:'',
+             date_from:'', date_to:'', created_from:'', created_to:'', amount_min:'', amount_max:'',
+             sort:'occurred_desc', hide_cancelled: jFilter.hide_cancelled};
+  ['jf-cat','jf-inc','jf-acc','jf-op','jf-cur','jf-q','jf-date-from','jf-date-to','jf-cre-from','jf-cre-to',
+   'jf-amt-min','jf-amt-max'].forEach(id=>{ if($(id)) $(id).value=''; });
+  if($('jf-sort')) $('jf-sort').value='occurred_desc';
+  if($('jf-uncat-cb')) $('jf-uncat-cb').checked=false;
+  updateFilterBadge();
+  if(apply){ closeFilter(); loadJournal(); }
+}
+/* чекбокс «Не показывать отменённые транзакции» под фильтром журнала */
+function applyHideCancelled(){
+  jFilter.hide_cancelled = $('jf-hide-cancelled').checked;
+  loadJournal();
+}
+/* сколько фильтров активно (сортировка по умолчанию не считается) */
+function activeFilterCount(){
+  let n=0;
+  if(jFilter.category) n++;
+  if(jFilter.income) n++;
+  if(jFilter.account) n++;
+  if(jFilter.op_type) n++;
+  if(jFilter.currency) n++;
+  if(jFilter.q) n++;
+  if(jFilter.only) n++;
+  if(jFilter.date_from||jFilter.date_to) n++;
+  if(jFilter.created_from||jFilter.created_to) n++;
+  if(jFilter.amount_min||jFilter.amount_max) n++;
+  if(jFilter.sort && jFilter.sort!=='occurred_desc') n++;
+  return n;
+}
+function updateFilterBadge(){
+  const n = activeFilterCount();
+  if($('jf-count')) $('jf-count').textContent = n ? ` · ${n}` : '';
+  if($('jf-clear')) $('jf-clear').style.display = n ? '' : 'none';
+}
+function fillJournalFilterCats(){
+  if(!FD) return;
+  const cats = FD.categories_used.concat(FD.categories_all);
+  const cur = $('jf-cat').value;
+  $('jf-cat').innerHTML = `<option value="">${T('jf_bycat')}</option>` +
+    cats.map(c=>`<option value="${c.name}">${c.label}</option>`).join('');
+  $('jf-cat').value = cur;
+  // источники дохода — кредитовая сторона проводки
+  if($('jf-inc')){
+    const inc = $('jf-inc').value;
+    const incs = FD.incomes || [];
+    $('jf-inc').innerHTML = `<option value="">${T('flt_inc_any')}</option>` +
+      incs.map(i=>`<option value="${i.name}">${escapeHtml(i.label)}</option>`).join('');
+    $('jf-inc').value = inc;
+  }
+  // счета (денежные) — фильтр по любой стороне проводки
+  if($('jf-acc')){
+    const a = $('jf-acc').value;
+    $('jf-acc').innerHTML = `<option value="">${T('flt_acc_any')}</option>` +
+      (FD.money||[]).map(m=>`<option value="${m.name}">${escapeHtml(m.label)}</option>`).join('');
+    $('jf-acc').value = a;
+  }
+  // валюты — уникальные среди денежных счетов
+  if($('jf-cur')){
+    const c = $('jf-cur').value;
+    const curs = [...new Set((FD.money||[]).map(m=>m.currency).filter(Boolean))];
+    $('jf-cur').innerHTML = `<option value="">${T('flt_cur_any')}</option>` +
+      curs.map(x=>`<option value="${x}">${x}</option>`).join('');
+    $('jf-cur').value = c;
+  }
+}
+const JPAGE = 20;           // размер страницы журнала
+let jOffset = 0, jLoading = false, jHasMore = true, jObserver = null;
+function jUrl(off){
+  let u = `/finance/api/entries?lang=${LANG}&limit=${JPAGE}&offset=${off}&sort=${jFilter.sort}`;
+  const add=(k,v)=>{ if(v) u+=`&${k}=${encodeURIComponent(v)}`; };
+  add('category', jFilter.category);
+  add('income', jFilter.income);
+  add('account', jFilter.account);
+  add('op_type', jFilter.op_type);
+  add('currency', jFilter.currency);
+  add('q', jFilter.q);
+  add('only', jFilter.only);
+  add('date_from', jFilter.date_from);
+  add('date_to', jFilter.date_to);
+  add('created_from', jFilter.created_from);
+  add('created_to', jFilter.created_to);
+  add('amount_min', jFilter.amount_min);
+  add('amount_max', jFilter.amount_max);
+  if(jFilter.hide_cancelled) u += '&hide_cancelled=1';
+  return u;
+}
+async function loadJournal(){
+  // первая страница — сбрасываем пагинацию и автодогрузку
+  jOffset = 0; jHasMore = true;
+  const d = await (await fetch(jUrl(0))).json();
+  $('journal-list').innerHTML = d.entries.map(journalRow).join('') ||
+    `<span class="small">${T('j_empty')}</span>`;
+  attachEntryActions($('journal-list'));
+  jOffset = d.entries.length; jHasMore = !!d.has_more;
+  setupJournalAutoload();
+}
+async function loadMoreJournal(){
+  if(jLoading || !jHasMore) return;
+  jLoading = true;
+  try{
+    const d = await (await fetch(jUrl(jOffset))).json();
+    $('journal-list').insertAdjacentHTML('beforeend', d.entries.map(journalRow).join(''));
+    attachEntryActions($('journal-list'));
+    jOffset += d.entries.length; jHasMore = !!d.has_more;
+  } finally { jLoading = false; }
+}
+/* автодогрузка при скролле: наблюдаем «сентинел» в конце списка */
+function setupJournalAutoload(){
+  let sentinel = $('j-sentinel');
+  if(!sentinel){
+    sentinel = document.createElement('div'); sentinel.id='j-sentinel'; sentinel.style.height='1px';
+  }
+  $('journal-list').after(sentinel);   // всегда сразу за списком — устойчиво к релокации блока
+  if(jObserver) jObserver.disconnect();
+  jObserver = new IntersectionObserver(es=>{ if(es[0].isIntersecting) loadMoreJournal(); },
+    {rootMargin:'200px'});
+  jObserver.observe(sentinel);
+}
+async function delEntry(e){
+  // подтверждение с суммой — чтобы не отменить не ту проводку вслепую
+  const sum = e.amount!=null ? `${fmt(e.amount)} ₩` : T('cf_this');
+  const what = e.remark ? `\n«${e.remark}»` : '';
+  if(!confirm(`${T('cf_cancel')} ${sum}?${what}`)) return;
+  await fetch(`/finance/api/entry/${e.id}/cancel`,{method:'POST'});
+  toast(T('t_cancelled')); await refreshAfterWrite(); await loadJournal();
+}
+/* ♻️ вернуть отменённую запись (инлайн из журнала) */
+async function restoreEntry(e){
+  if(!confirm(`${T('cf_restore')} ${fmt(e.amount)} ₩?`)) return;
+  const r = await fetch(`/finance/api/entry/${e.id}/restore`,{method:'POST'});
+  const d = await r.json();
+  if(d.error){ toast(T(d.error),false); return; }
+  toast(T('t_restored')); await refreshAfterWrite(); await loadJournal();
+}
+/* делегат: одна обработка кликов по кнопкам ✏️/↩️ в любом журнале.
+   Объект записи берём из data-entry (encodeURIComponent-safe). */
+function attachEntryActions(container){
+  if(!container || container._actBound) return;
+  container._actBound = true;
+  container.addEventListener('click', ev=>{
+    const btn = ev.target.closest('[data-act]'); if(!btn) return;
+    const e = JSON.parse(decodeURIComponent(btn.dataset.entry));
+    if(btn.dataset.act==='cancel') delEntry(e);
+    else if(btn.dataset.act==='edit') editEntry(e);
+    else if(btn.dataset.act==='restore') restoreEntry(e);
+    else if(btn.dataset.act==='purge') purgeJournalEntry(e);
+  });
+}
+/* ── ЖУРНАЛ УВЕДОМЛЕНИЙ ───────────────────────────────────────────── */
+let notifOffset = 0, notifHasMore = false, notifLoading = false;
+function notifUrl(offset){
+  const f = $('notif-filter')?.value || 'all';
+  return `/finance/api/notifications?app=${CURRENT_APP}&filter=${f}&limit=50&offset=${offset}`;
+}
+function notifRow(n){
+  const unread = !n.read_at;
+  const dismissed = !!n.dismissed_at;
+  return `<div class="card" style="margin-bottom:8px;padding:10px 12px;opacity:${dismissed?'.6':'1'};border-left:3px solid ${unread?'var(--accent)':'transparent'}">
+    <div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:15px">${escapeHtml(n.title)}</div>
+        <div class="small" style="margin:4px 0">${escapeHtml(n.body)}</div>
+        <div class="small" style="opacity:.6">${n.created_at?.replace('T',' ').slice(0,16) || ''}</div>
+      </div>
+      <div class="row" style="gap:6px;flex-wrap:nowrap">
+        ${unread && !dismissed ? `<button class="btn btn-ghost" style="padding:4px 8px;font-size:13px" onclick="notifMarkRead(${n.id})">✓</button>` : ''}
+        ${!dismissed ? `<button class="btn btn-ghost" style="padding:4px 8px;font-size:13px;color:var(--red)" onclick="notifDismiss(${n.id})">✕</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+async function loadNotifications(){
+  notifOffset = 0; notifHasMore = true;
+  const d = await (await fetch(notifUrl(0))).json();
+  $('notifications-list').innerHTML = d.entries.map(notifRow).join('') || `<span class="small">${T('notif_empty')}</span>`;
+  notifOffset = d.entries.length; notifHasMore = !!d.has_more;
+}
+async function loadMoreNotifications(){
+  if(notifLoading || !notifHasMore) return;
+  notifLoading = true;
+  try{
+    const d = await (await fetch(notifUrl(notifOffset))).json();
+    $('notifications-list').insertAdjacentHTML('beforeend', d.entries.map(notifRow).join(''));
+    notifOffset += d.entries.length; notifHasMore = !!d.has_more;
+  } finally { notifLoading = false; }
+}
+async function notifMarkRead(id){
+  await fetch('/finance/api/notifications/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[id]})});
+  loadNotifications();
+}
+async function notifDismiss(id){
+  await fetch('/finance/api/notifications/dismiss',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[id]})});
+  loadNotifications();
+}
+
+/* 🗑 удалить отменённую запись НАВСЕГДА (без призраков). Трение: ввести «УДАЛИТЬ». */
+async function purgeJournalEntry(e){
+  const typed = prompt(T('cf_purge_entry'));
+  if(typed===null) return;
+  if(typed.trim().toUpperCase()!==T('purge_word').toUpperCase()){ toast(T('t_purge_mismatch'),false); return; }
+  const r = await fetch(`/finance/api/entry/${encodeURIComponent(e.id)}/purge`,{method:'POST'});
+  const d = await r.json();
+  if(d.error){ toast(T(d.error),false); return; }
+  toast(T('t_purged')); await refreshAfterWrite(); if(typeof loadJournal==='function') await loadJournal();
+}
+/* ✏️ из любого журнала: префилл формы, старая сторнируется при записи.
+   Отменённую (cancelled) НЕ сторнируем повторно (она уже отменена) — но правка
+   ДОЛЖНА оставить запись отменённой: создаём исправленную и снова отменяем её.
+   Сделать активной можно ТОЛЬКО кнопкой воскрешения (♻️), не правкой.
+   Спрашиваем подтверждение — чтобы случайный тап по ✏️ не открывал форму. */
+async function editEntry(e){
+  if(!confirm(T('cf_edit'))) return;
+  replaceId = e.cancelled ? null : e.id;
+  editingCancelled = !!e.cancelled;   // правим отменённую → результат тоже отменён
+  isEditing = true;                   // блокируем запись липких дефолтов в localStorage
+  // При правке загружаем и скрытые счета/категории, чтобы старая запись
+  // корректно отобразилась даже если её счёт сейчас скрыт.
+  await loadFormData(true);
+  $('amount').value = e.amount;
+  $('remark').value = e.remark;
+  // дата возникновения: берём сохранённую (с временем, если было), иначе posting_date
+  const occ = e.occurred_at || e.date || '';
+  $('occurred').value = occ.includes('T') ? occ.slice(0,16) : (occ ? occ+'T00:00' : nowLocal());
+  // тип операции и счета зависят от реальной структуры проводки
+  const op = e.op || 'expense';
+  $('op').value = op; opChanged();
+  const setByValue = (selId, pk)=>{
+    const sel = $(selId); if(!pk || !sel) return;
+    sel.value = pk;
+    if(sel.value !== pk){
+      // PK нет в списке (например, скрытый счёт) — пробуем подобрать по тексту
+      [...sel.options].forEach(o=>{ if(o.text===pk) sel.value=o.value; });
+    }
+  };
+  if(op==='expense'){
+    setByValue('category', e.to_name);
+    setByValue('money', e.from_name);
+  }else if(op==='income'){
+    setByValue('money', e.to_name);
+    setByValue('income', e.from_name);
+  }else{ // transfer
+    setByValue('money2', e.to_name);
+    setByValue('money', e.from_name);
+  }
+  syncAccountCurrency();
+  // Открываем форму правки ПОВЕРХ текущей страницы (без go() — он бы сбросил
+  // replaceId; без saveFormState — значения правки не должны стать дефолтами новой
+  // операции). onClose=clearEditState гасит правку при любом закрытии.
+  resetStep(); openModal('form-overlay', clearEditState);
+  toast(T('t_edit_hint'));
+}
+function resetStep(){
+  $('step-done').classList.add('hidden');
+  $('step-review').classList.add('hidden');
+  $('step-input').classList.remove('hidden');
+  kanban(0);
+}
+
+
+/* МУЛЬТИЯЗЫК — единый словарь. Любая видимая строка (статика через data-i/
+   data-i-ph/data-i-title, динамика через T('ключ')) живёт здесь на ru/en/ko.
+   Линтер scripts/check_i18n.py падает, если строка в разметке без data-i или
+   ключ отсутствует в каком-то языке. */
+/* МУЛЬТИЯЗЫК — единый словарь. Источник истины — unified glossary в БД.
+   Сервер рендерит авторитетную копию; при сбое сети остаётся эта копия. */
+let I18N = {{ i18n_js() | tojson }};
+let LANG='ru';
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateTopBar();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateTopBar();
+});
+/* T('key') — строка на текущем языке (для динамики). Фолбэк ru→ключ. */
+function T(k){ return (I18N[LANG] && I18N[LANG][k]) || (I18N.ru && I18N.ru[k]) || k; }
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.matchMedia('(display-mode: minimal-ui)').matches ||
+         window.matchMedia('(display-mode: fullscreen)').matches ||
+         navigator.standalone === true;
+}
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function isIOSSafari(){
+  return isIOS() && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS/.test(navigator.userAgent);
+}
+function updateTopBar(){
+  const topBar = $('top-bar');
+  const installBtn = $('install-btn');
+  const iosBtn = $('ios-install-btn');
+  if(!topBar) return;
+
+  // Always show top-bar with back button when not in standalone.
+  if(isStandalone()){
+    topBar.style.display = 'none';
+    return;
+  }
+  topBar.style.display = 'block';
+
+  if(isIOSSafari()){
+    if(installBtn) installBtn.style.display = 'none';
+    if(iosBtn){ iosBtn.style.display = 'flex'; iosBtn.onclick = () => alert(T('install_ios_safari_hint')); }
+  } else if(isIOS()){
+    if(installBtn) installBtn.style.display = 'none';
+    if(iosBtn){ iosBtn.style.display = 'flex'; iosBtn.onclick = () => alert(T('install_ios_other_hint')); }
+  } else {
+    if(installBtn){ installBtn.style.display = 'flex'; }
+    if(iosBtn) iosBtn.style.display = 'none';
+    if(installBtn) installBtn.onclick = async () => {
+      if(!deferredInstallPrompt){
+        alert(T('install_android_hint'));
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if(outcome === 'accepted') updateTopBar();
+      deferredInstallPrompt = null;
+    };
+  }
+}
+function showInstallBanner(){
+  // Replaced by updateTopBar(). Kept for compatibility.
+  updateTopBar();
+}
+function detectSystemLang(){
+  const sys = navigator.language || navigator.userLanguage || 'ru';
+  if(sys.toLowerCase().startsWith('ko')) return 'ko';
+  if(sys.toLowerCase().startsWith('en')) return 'en';
+  return 'ru';
+}
+function resolveLang(l){ return l==='auto' ? detectSystemLang() : (I18N[l]?l:'ru'); }
+function applyLang(l){
+  LANG = resolveLang(l); const t=I18N[LANG];
+  document.documentElement.lang = LANG;               // <html lang> для a11y/браузера
+  document.querySelectorAll('[data-i]').forEach(el=>{ if(t[el.dataset.i]) el.textContent=t[el.dataset.i]; });
+  document.querySelectorAll('[data-i-ph]').forEach(el=>{ if(t[el.dataset.iPh]) el.placeholder=t[el.dataset.iPh]; });
+  document.querySelectorAll('[data-i-title]').forEach(el=>{ if(t[el.dataset.iTitle]) el.title=t[el.dataset.iTitle]; });
+  document.querySelector('.app-tabs .tab[data-page=more]').textContent=t.tab_more;
+  // зависимые от языка динамические подписи
+  if(typeof opChanged==='function') opChanged();
+}
+
+/* ГЛАВНАЯ: порядок/видимость виджетов */
+// 'form'- и 'quick'-виджеты убраны: операцию открывает плавающая FAB-кнопка.
+// имена берём из словаря (widget_*), чтобы переводились
+const WIDGET_KEYS={balances:'widget_balances',journal:'widget_journal'};
+const WIDGET_NAMES=new Proxy({},{get:(_,k)=>WIDGET_KEYS[k]?T(WIDGET_KEYS[k]):''});
+let LAYOUT=[['balances',1],['journal',1]];
+function parseLayout(s){
+  try{ return s.split(',').map(p=>{const [k,v]=p.split(':');return [k,+v];})
+        .filter(([k])=>WIDGET_NAMES[k]); }catch(e){ return LAYOUT; }
+}
+function applyLayout(){
+  const box=$('widgets');
+  LAYOUT.forEach(([k,vis])=>{
+    const el=$('w-'+k); if(!el) return;
+    box.appendChild(el); el.classList.toggle('hidden', !vis);
+  });
+  if(LAYOUT.find(l=>l[0]==='balances'&&l[1])) loadMiniBalances();
+  if(LAYOUT.find(l=>l[0]==='journal'&&l[1])) loadMiniJournal();
+}
+async function loadMiniBalances(){
+  const d = await (await fetch(`/finance/api/balances?lang=${LANG}`)).json();
+  const groups = d.groups || [];
+  if(!groups.length){ $('mini-balances').innerHTML = `<span class="small">${T('dash')}</span>`; return; }
+  // повалютно: только счета по каждой валюте (итог «Чистыми» убран по просьбе Дэна —
+  // смешивать валюты в один net бессмысленно, а счета и так видны)
+  $('mini-balances').innerHTML = groups.map(g=>
+    g.items.map(b=>
+      `<div class="list-row"><span class="small">${escapeHtml(b.label)}</span>
+       <span class="num ${b.debt?'neg':'pos'}">${b.debt?'−':''}${fmtCur(b.amount, g.currency)}</span></div>`).join('')
+  ).join('<div style="height:8px"></div>');
+}
+async function loadMiniJournal(){
+  // на главной отменённые НЕ показываем — сбивают с толку (hide_cancelled=1)
+  const d = await (await fetch(`/finance/api/entries?limit=5&lang=${LANG}&hide_cancelled=1`)).json();
+  $('mini-journal').innerHTML = d.entries.map(e=>{
+    const enc = encodeURIComponent(JSON.stringify(e));
+    const actions = Avalone.button({label:'✏️', variant:'ghost', size:'sm', attrs:{'data-act':'edit','data-entry':enc}}) +
+                    Avalone.button({label:'✕', variant:'ghost', size:'sm', attrs:{'data-act':'cancel','data-entry':enc}});
+    return `<div class="list-row"><span class="small">${escapeHtml(entryTitle(e).slice(0,26))}</span>
+     <span><span class="num">${fmtCur(e.amount, e.currency)}</span>${actions}</span></div>`;
+  }).join('')||'—';
+  attachEntryActions($('mini-journal'));
+}
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/finance/sw.js');
+/* Автообновление клиента при деплое: сравниваем build_id с сервером и
+   принудительно перезагружаем страницу, чтобы пользователь всегда работал
+   на актуальной версии ПО. */
+let __appBuild = null;
+async function checkVersion(){
+  try{
+    const r = await fetch('/finance/api/version',{cache:'no-store'});
+    const d = await r.json();
+    if(!__appBuild){ __appBuild = d.build; return; }
+    if(d.build !== __appBuild) forceAppReload();
+  }catch(e){}
+}
+function forceAppReload(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(regs=>{
+      regs.forEach(reg=>reg.unregister());
+      caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>location.reload());
+    });
+  } else { location.reload(true); }
+}
+setInterval(checkVersion, 30000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkVersion(); });
+/* Глоссарий: единый источник истины. Сидим таблицу встроенным словарём (один
+   раз, идемпотентно), затем грузим authoritative-копию из БД и кладём поверх.
+   При сбое сети остаёмся на встроенном словаре — UI не ломается. */
+async function bootGlossary(){
+  try{
+    await fetch('/finance/api/glossary/seed',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(I18N)});
+    const db = await (await fetch('/finance/api/glossary')).json();
+    for(const l of ['ru','en','ko']) if(db[l]) I18N[l] = {...I18N[l], ...db[l]};
+  }catch(e){ /* офлайн/ошибка — встроенный словарь как фолбэк */ }
+}
+(async ()=>{
+  await bootGlossary();
+  LAYOUT = parseLayout('quick:1,balances:1,journal:1');
+  const storedLang = localStorage.getItem('avalone_lang') || 'auto';
+  applyLang(storedLang);
+  updateTopBar();
+  // сначала узнаём текущего пользователя — ключи localStorage привязываем к id
+  try{
+    const me = await (await fetch('/finance/api/account/me')).json();
+    ME_LOGIN = me.login || '';
+    ME_ID = String(me.id || '');
+    ME_IS_ADMIN = !!me.is_admin;
+  }catch(e){}
+  await loadFormData(); kanban(0); opChanged(); applyLayout();
+  loadVerifyBanner();  // показать баннер подтверждения email, если нужно
+  maybeAutoWizard();   // новому пользователю — экскурс (один раз, пер-юзерно)
+})();
+</script>
+{% endblock %}

@@ -44,6 +44,12 @@ EXACT: dict[str, str] = {
     "work_trip_passenger":  "Role label: the user is a passenger in someone else's trip.",
     "work_trip_not_going":  "Status label: the user is not joining the trip.",
 
+    # Portal admin role labels.
+    "admin_role_user":            "Admin panel badge/label for the baseline 'user' RBAC role.",
+    "admin_role_finance_manager": "Admin panel badge/label for the 'finance_manager' RBAC role.",
+    "admin_role_admin":           "Admin panel badge/label for the 'admin' RBAC role.",
+    "admin_role_owner":           "Admin panel badge/label for the 'owner' RBAC role.",
+
     # Portal brand / shared shell.
     "brand":                "Product brand name. Keep as 'Avalone' unless the target script requires transliteration.",
     "brand_tagline":        "Marketing tagline shown under the logo: short phrase describing Avalone as a unified toolset.",

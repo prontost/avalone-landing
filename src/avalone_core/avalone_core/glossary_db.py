@@ -256,8 +256,10 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "admin_btn_save",                "ru": "Сохранить",                                           "en": "Save",                                       "ko": "저장", "kind": "ui", "module": "portal"},
     {"key": "admin_btn_search",              "ru": "Поиск",                                               "en": "Search",                                     "ko": "검색", "kind": "ui", "module": "portal"},
     {"key": "admin_btn_test_email",          "ru": "Отправить тестовое письмо",                           "en": "Send test email",                            "ko": "테스트 이메일 본내기", "kind": "ui", "module": "portal"},
-    {"key": "admin_role_platform",           "ru": "Портал",                                              "en": "Portal",                                     "ko": "포털", "kind": "ui", "module": "portal"},
-    {"key": "admin_role_money",              "ru": "Финансы",                                             "en": "Finance",                                    "ko": "재정", "kind": "ui", "module": "portal"},
+    {"key": "admin_role_user",               "ru": "Пользователь",                                        "en": "User",                                       "ko": "사용자", "kind": "ui", "module": "portal"},
+    {"key": "admin_role_finance_manager",    "ru": "Финансовый менеджер",                                 "en": "Finance manager",                            "ko": "재정 관리자", "kind": "ui", "module": "portal"},
+    {"key": "admin_role_admin",              "ru": "Администратор",                                       "en": "Admin",                                      "ko": "관리자", "kind": "ui", "module": "portal"},
+    {"key": "admin_role_owner",              "ru": "Владелец",                                            "en": "Owner",                                      "ko": "소유자", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_host",               "ru": "SMTP сервер",                                         "en": "SMTP host",                                  "ko": "SMTP 호스트", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_port",               "ru": "SMTP порт",                                           "en": "SMTP port",                                  "ko": "SMTP 포트", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_user",               "ru": "SMTP пользователь",                                   "en": "SMTP user",                                  "ko": "SMTP 사용자", "kind": "ui", "module": "portal"},
@@ -551,12 +553,11 @@ def _merge_legacy(con: sqlite3.Connection, table: str, module: str) -> int:
 
 
 def migrate_legacy() -> dict[str, int]:
-    """Migrate money_glossary and work_glossary into avalone_glossary.
+    """Migrate money_glossary into avalone_glossary.
     Safe to call multiple times; idempotent merge."""
     with connection() as con:
         n_money = _merge_legacy(con, "money_glossary", "money")
-        n_work = _merge_legacy(con, "work_glossary", "work")
-    return {"money": n_money, "work": n_work}
+    return {"money": n_money}
 
 
 def seed_portal() -> int:
@@ -603,6 +604,6 @@ def audit() -> dict[str, Any]:
         "missing_desc": missing_desc(),
         "by_module": {
             module: count(module=module)
-            for module in ("portal", "money", "work")
+            for module in ("portal", "money")
         },
     }

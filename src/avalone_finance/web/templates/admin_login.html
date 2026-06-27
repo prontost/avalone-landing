@@ -1,0 +1,10 @@
+{% extends "avalone_base.html" %}
+
+{% block title %}{{ t('title_admin_money', lang=lang) }}{% endblock %}
+
+{% block content %}
+<h1>{{ t('title_admin_money', lang=lang) }}</h1>
+<p class="muted">{{ t('label_admin_login_subtitle', lang=lang) }}</p>
+<p>{{ t('admin_use_portal_login', lang=lang) }}</p>
+<a class="avalone-btn avalone-btn-primary" href="/login?next=/finance/admin">{{ t('btn_login', lang=lang) }}</a>
+{% endblock %}

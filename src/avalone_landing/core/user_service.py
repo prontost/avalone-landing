@@ -9,6 +9,7 @@ from avalone_core.database import Service
 from avalone_core.referral_service import ReferralService
 
 from avalone_landing.core.models import User
+from avalone_landing.core.role_service import RoleService
 from avalone_landing.core.user_repository import UserRepository
 
 
@@ -20,6 +21,7 @@ class UserService(Service):
 
     def __init__(self, repository: UserRepository | None = None) -> None:
         self._repo = repository or UserRepository()
+        self._role_service = RoleService()
 
     def authenticate(self, login: str, password: str) -> User | None:
         login = login.strip().lower()
@@ -89,29 +91,18 @@ class UserService(Service):
         self._repo.clear_reset_token(user.id)
         return self._repo.get_by_id(user.id)
 
-    def is_admin(self, user_id: int | None) -> bool:
-        return self._repo.is_admin(user_id)
+    def get_roles(self, user_id: int) -> list[str]:
+        return self._repo.get_roles(user_id)
+
+    def has_permission(self, user_id: int | None, permission: str) -> bool:
+        return self._role_service.has_permission(user_id, permission)
+
+    def set_roles(self, user_id: int, role_names: list[str]) -> None:
+        self._role_service.assign_roles(user_id, role_names)
 
     def list_users(self) -> list[User]:
         with self._repo._conn() as con:
             rows = con.execute(
                 "SELECT id, login, email, email_verified, created_at FROM users ORDER BY login"
             ).fetchall()
-        users = []
-        for row in rows:
-            user = User(
-                id=row["id"],
-                login=row["login"],
-                email=row["email"] or "",
-                created_at=row["created_at"],
-                email_verified=bool(row["email_verified"]),
-            )
-            user.is_admin = self._repo.is_admin(user.id)
-            users.append(user)
-        return users
-
-    def list_admins(self) -> list[User]:
-        return self._repo.list_admins()
-
-    def ensure_admin(self, user_id: int) -> None:
-        self._repo.add_admin(user_id)
+        return [self._repo.get_by_id(row["id"]) for row in rows if row["id"]]

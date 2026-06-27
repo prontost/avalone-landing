@@ -30,7 +30,7 @@ class AvaloneRegistry:
             icon="🪙",
             description_key="app_money_desc",
             status="active",
-            url="https://counta.avalone.online",
+            url="/finance",
             module="money",
         ),
         AppBranch(

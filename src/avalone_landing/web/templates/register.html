@@ -1,6 +1,6 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('auth_register_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('auth_register_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-auth-layout">
@@ -8,38 +8,38 @@
     <div class="avalone-auth-brand">
       <div class="avalone-auth-logo" aria-hidden="true">◈</div>
       <div>
-        <div class="avalone-auth-brand__title">{{ t('brand') }}</div>
-        <div class="avalone-auth-hint">{{ t('brand_tagline') }}</div>
+        <div class="avalone-auth-brand__title">{{ t('brand', lang=lang) }}</div>
+        <div class="avalone-auth-hint">{{ t('brand_tagline', lang=lang) }}</div>
       </div>
     </div>
 
-    <h1 class="avalone-auth-heading">{{ t('auth_register_title') }}</h1>
+    <h1 class="avalone-auth-heading">{{ t('auth_register_title', lang=lang) }}</h1>
 
     {% if error %}<div class="avalone-alert avalone-alert-danger">{{ error }}</div>{% endif %}
 
     <form method="post" action="/register">
       <div class="avalone-form-group">
-        <label class="avalone-label" for="login">{{ t('auth_label_login') }}</label>
-        <input class="avalone-input" id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
+        <label class="avalone-label" for="login">{{ t('auth_label_login', lang=lang) }}</label>
+        <input class="avalone-input" id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login', lang=lang) }}">
       </div>
       <div class="avalone-form-group">
-        <label class="avalone-label" for="password">{{ t('auth_label_password') }}</label>
-        <input class="avalone-input" id="password" name="password" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password') }}">
-        <div class="avalone-auth-hint">{{ t('auth_hint_password_min') }}</div>
+        <label class="avalone-label" for="password">{{ t('auth_label_password', lang=lang) }}</label>
+        <input class="avalone-input" id="password" name="password" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password', lang=lang) }}">
+        <div class="avalone-auth-hint">{{ t('auth_hint_password_min', lang=lang) }}</div>
       </div>
       <div class="avalone-form-group">
-        <label class="avalone-label" for="password2">{{ t('auth_label_password2') }}</label>
-        <input class="avalone-input" id="password2" name="password2" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password2') }}">
+        <label class="avalone-label" for="password2">{{ t('auth_label_password2', lang=lang) }}</label>
+        <input class="avalone-input" id="password2" name="password2" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password2', lang=lang) }}">
       </div>
       <div class="avalone-form-group">
-        <label class="avalone-label" for="invite">{{ t('auth_label_invite') }}</label>
-        <input class="avalone-input" id="invite" name="invite" type="text" autocomplete="off" placeholder="{{ t('auth_placeholder_invite') }}" value="{{ prefilled_ref }}">
+        <label class="avalone-label" for="invite">{{ t('auth_label_invite', lang=lang) }}</label>
+        <input class="avalone-input" id="invite" name="invite" type="text" autocomplete="off" placeholder="{{ t('auth_placeholder_invite', lang=lang) }}" value="{{ prefilled_ref }}">
       </div>
-      <button class="avalone-btn avalone-btn-primary avalone-btn-block" type="submit">{{ t('auth_btn_register') }}</button>
+      <button class="avalone-btn avalone-btn-primary avalone-btn-block" type="submit">{{ t('auth_btn_register', lang=lang) }}</button>
     </form>
 
     <div class="avalone-auth-footer">
-      {{ t('auth_has_account') }} <a href="/login">{{ t('auth_login_link') }}</a>
+      {{ t('auth_has_account', lang=lang) }} <a href="/login">{{ t('auth_login_link', lang=lang) }}</a>
     </div>
   </div>
 </div>

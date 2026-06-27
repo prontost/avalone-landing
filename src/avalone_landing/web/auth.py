@@ -336,7 +336,7 @@ async def profile_page(
     ctx = _shell_context(
         request,
         {"id": u.id, "login": u.login, "email": u.email, "created_at": u.created_at,
-         "is_admin": u.is_admin, "is_platform_admin": getattr(u, "is_platform_admin", False)},
+         "is_admin": u.is_admin},
     )
     ctx["referral"] = referral
     ctx["screen_time"] = screen_time
@@ -361,7 +361,7 @@ async def change_password(
         ctx = _shell_context(
             request,
             {"id": u.id, "login": u.login, "email": u.email, "created_at": u.created_at,
-             "is_admin": u.is_admin, "is_platform_admin": getattr(u, "is_platform_admin", False)} if u else None,
+             "is_admin": u.is_admin} if u else None,
         )
         ctx.update(extra)
         return ctx

@@ -1,11 +1,10 @@
-"""User and admin data access for the Avalone portal."""
+"""User data access for the Avalone portal."""
 
 from __future__ import annotations
 
 import hashlib
 import hmac
 import os
-import secrets
 import sqlite3
 from datetime import datetime, timezone
 
@@ -15,7 +14,7 @@ from avalone_landing.core.models import User
 
 
 class UserRepository(Repository):
-    """SQL access for the portal `users` and `admins` tables."""
+    """SQL access for the portal `users`, `roles` and `user_roles` tables."""
 
     def __init__(self, db: Database | None = None) -> None:
         super().__init__(db or Database.shared())
@@ -42,14 +41,49 @@ class UserRepository(Repository):
         except Exception:
             return False
 
+    def _roles_for(self, user_id: int) -> list[str]:
+        with self._conn() as con:
+            rows = con.execute(
+                "SELECT r.name FROM roles r "
+                "JOIN user_roles ur ON ur.role_id = r.id "
+                "WHERE ur.user_id = ? ORDER BY r.name",
+                (user_id,),
+            ).fetchall()
+        return [r["name"] for r in rows]
+
+    def _permissions_for(self, user_id: int) -> set[str]:
+        import json
+
+        with self._conn() as con:
+            rows = con.execute(
+                "SELECT r.permissions FROM roles r "
+                "JOIN user_roles ur ON ur.role_id = r.id "
+                "WHERE ur.user_id = ?",
+                (user_id,),
+            ).fetchall()
+        perms: set[str] = set()
+        for row in rows:
+            perms.update(json.loads(row["permissions"]))
+        return perms
+
     def _row_to_user(self, row: sqlite3.Row) -> User:
-        return User(
+        user = User(
             id=row["id"],
             login=row["login"],
             email=row["email"] or "",
             created_at=row["created_at"],
             email_verified=bool(row["email_verified"]),
         )
+        user.roles = self._roles_for(user.id)
+        user.permissions = sorted(self._permissions_for(user.id))
+        user.is_admin = "admin:full" in user.permissions or "users:manage" in user.permissions
+        return user
+
+    def get_roles(self, user_id: int) -> list[str]:
+        return self._roles_for(user_id)
+
+    def get_permissions(self, user_id: int) -> list[str]:
+        return sorted(self._permissions_for(user_id))
 
     def get_by_id(self, user_id: int) -> User | None:
         with self._conn() as con:
@@ -60,9 +94,7 @@ class UserRepository(Repository):
             ).fetchone()
         if not row:
             return None
-        user = self._row_to_user(row)
-        user.is_admin = self.is_admin(user_id)
-        return user
+        return self._row_to_user(row)
 
     def get_by_login_or_email(self, value: str) -> User | None:
         value = value.strip().lower()
@@ -74,9 +106,7 @@ class UserRepository(Repository):
             ).fetchone()
         if not row:
             return None
-        user = self._row_to_user(row)
-        user.is_admin = self.is_admin(user.id)
-        return user
+        return self._row_to_user(row)
 
     def create(self, login: str, password: str, email: str = "") -> int:
         login = login.strip().lower()
@@ -130,59 +160,11 @@ class UserRepository(Repository):
                 return None
         except Exception:
             return None
-        user = self._row_to_user(row)
-        user.is_admin = self.is_admin(user.id)
-        return user
+        return self._row_to_user(row)
 
     def clear_reset_token(self, user_id: int) -> None:
         with self._conn() as con:
             con.execute(
                 "UPDATE users SET reset_token = '', reset_expires = '' WHERE id = ?",
-                (user_id,),
-            )
-
-    def _ensure_admin_table(self) -> None:
-        with self._conn() as con:
-            con.execute(
-                "CREATE TABLE IF NOT EXISTS admins ("
-                "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
-                "module TEXT NOT NULL DEFAULT 'portal', "
-                "PRIMARY KEY (user_id, module))"
-            )
-
-    def is_admin(self, user_id: int | None) -> bool:
-        if not user_id:
-            return False
-        with self._conn() as con:
-            row = con.execute(
-                "SELECT 1 FROM admins WHERE user_id = ? AND module = 'portal'",
-                (user_id,),
-            ).fetchone()
-        return bool(row)
-
-    def list_admins(self) -> list[User]:
-        with self._conn() as con:
-            rows = con.execute(
-                "SELECT u.id, u.login, u.email, u.email_verified, u.created_at "
-                "FROM admins a JOIN users u ON u.id = a.user_id "
-                "WHERE a.module = 'portal' ORDER BY u.login"
-            ).fetchall()
-        users = [self._row_to_user(r) for r in rows]
-        for user in users:
-            user.is_admin = True
-        return users
-
-    def add_admin(self, user_id: int) -> None:
-        self._ensure_admin_table()
-        with self._conn() as con:
-            con.execute(
-                "INSERT OR IGNORE INTO admins (user_id, module) VALUES (?, 'portal')",
-                (user_id,),
-            )
-
-    def remove_admin(self, user_id: int) -> None:
-        with self._conn() as con:
-            con.execute(
-                "DELETE FROM admins WHERE user_id = ? AND module = 'portal'",
                 (user_id,),
             )

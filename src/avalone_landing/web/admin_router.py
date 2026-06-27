@@ -16,7 +16,8 @@ from avalone_core.ui import Button, Card, PageHeader
 import avalone_core.ui
 from avalone_landing.core.admin_service import AdminService
 from avalone_landing.core.models import User
-from avalone_landing.web.dependencies import get_admin_service, require_admin
+from avalone_landing.core.role_service import RoleService
+from avalone_landing.web.dependencies import get_admin_service, require_permission
 from avalone_landing.web.shell_context import render_shell_context
 
 router = APIRouter()
@@ -81,8 +82,7 @@ def _user_dict(user) -> dict[str, Any]:
         "created_at": user.created_at,
         "is_admin": user.is_admin,
         "roles": user.roles,
-        "is_platform_admin": getattr(user, "is_platform_admin", False),
-        "is_money_admin": getattr(user, "is_money_admin", False),
+        "permissions": user.permissions,
         "module_counts": getattr(user, "module_counts", {}),
     }
 
@@ -91,7 +91,7 @@ def _user_dict(user) -> dict[str, Any]:
 async def admin_dashboard(
     request: Request,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     ctx = _admin_shell_context(request, {"id": admin.id, "login": admin.login}, active_path="/admin")
     ctx["user_count"] = admin_service._repo.count_users()
@@ -111,7 +111,7 @@ async def admin_users(
     request: Request,
     q: str = "",
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     ctx = _admin_shell_context(request, {"id": admin.id, "login": admin.login}, active_path="/admin/users")
     users = admin_service.list_users()
@@ -120,6 +120,7 @@ async def admin_users(
         users = [u for u in users if query in u.login.lower() or query in u.email.lower()]
     ctx["users"] = [_user_dict(u) for u in users]
     ctx["query"] = q
+    ctx["all_roles"] = [r["name"] for r in RoleService().list_roles()]
     ctx["header"] = PageHeader(
         title=glossary.t("admin_users_title"),
         actions=[Button(label=glossary.t("admin_menu_settings"), href="/admin/settings", variant="secondary").render(templates.env, request)],
@@ -132,13 +133,14 @@ async def admin_user_detail(
     request: Request,
     user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     ctx = _admin_shell_context(request, {"id": admin.id, "login": admin.login}, active_path="/admin/users")
     user = admin_service.get_user(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     ctx["target"] = _user_dict(user)
+    ctx["all_roles"] = [r["name"] for r in RoleService().list_roles()]
     ctx["header"] = PageHeader(
         title=glossary.t("admin_user_detail_title"),
         actions=[Button(label=glossary.t("admin_users_title"), href="/admin/users", variant="secondary").render(templates.env, request)],
@@ -150,7 +152,7 @@ async def admin_user_detail(
 async def admin_settings(
     request: Request,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("server:settings")),
 ):
     ctx = _admin_shell_context(request, {"id": admin.id, "login": admin.login}, active_path="/admin/settings")
     ctx["settings"] = admin_service.list_server_settings()

@@ -10,7 +10,8 @@ dependencies = [
     "pydantic-settings>=2.7",
     "itsdangerous>=2.2",
     "python-multipart>=0.0.20",
-    "avalone-core @ file:///Users/lucifer/github-work/avalone.online/src/avalone_core",
+    "avalone-core",
+    "avalone-finance",
 ]
 
 [project.optional-dependencies]
@@ -28,8 +29,17 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/avalone_landing"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
     "pillow>=12.2.0",
     "pytest>=8.3",
+    "pytest-asyncio>=0.23",
 ]
+
+[tool.uv.sources]
+avalone-core = { path = "src/avalone_core", editable = true }
+avalone-finance = { path = "src/avalone_finance", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

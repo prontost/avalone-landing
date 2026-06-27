@@ -22,15 +22,16 @@ from avalone_landing.web.api.admin import router as admin_api_router
 from avalone_landing.web.api.misc import router as misc_api_router
 from avalone_landing.web.auth import router as auth_router
 from avalone_landing.web.shell_context import render_shell_context
+from avalone_finance.web.app import finance_app
 
 t = glossary.t
 migrate_db()
 
-# Ensure the platform owner account always has portal admin rights.
+# Ensure the platform owner account always has the owner role.
 try:
     _user_service = UserService()
     if _user_service.get_user(1):
-        _user_service.ensure_admin(1)
+        _user_service.set_roles(1, ["owner"])
 except Exception:
     pass
 
@@ -39,6 +40,7 @@ app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(admin_api_router)
 app.include_router(misc_api_router)
+app.mount("/finance", finance_app)
 BASE = Path(__file__).parent
 _templates_dir = BASE / "templates"
 _static_dir = BASE / "static"

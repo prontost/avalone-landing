@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from avalone_landing.core.admin_service import AdminService
 from avalone_landing.core.models import User
-from avalone_landing.web.dependencies import get_admin_service, require_admin
+from avalone_landing.web.dependencies import get_admin_service, require_permission
 
 router = APIRouter(prefix="/api/admin")
 
@@ -51,8 +51,7 @@ def _user_to_dict(user) -> dict[str, Any]:
         "created_at": user.created_at,
         "is_admin": user.is_admin,
         "roles": user.roles,
-        "is_platform_admin": getattr(user, "is_platform_admin", False),
-        "is_money_admin": getattr(user, "is_money_admin", False),
+        "permissions": user.permissions,
         "module_counts": getattr(user, "module_counts", {}),
     }
 
@@ -60,7 +59,7 @@ def _user_to_dict(user) -> dict[str, Any]:
 @router.get("/users")
 async def list_users(
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     return {"users": [_user_to_dict(u) for u in admin_service.list_users()]}
 
@@ -69,7 +68,7 @@ async def list_users(
 async def get_user(
     user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     user = admin_service.get_user(user_id)
     if not user:
@@ -82,7 +81,7 @@ async def update_user(
     request: Request,
     user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     body = await request.json()
     user = admin_service.update_user(
@@ -100,7 +99,7 @@ async def reset_password(
     user_id: int,
     temp: bool = Query(False),
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     url = admin_service.reset_password_link(user_id)
     result: dict[str, Any] = {"url": url}
@@ -115,7 +114,7 @@ async def reset_password(
 async def wipe_data(
     user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     deleted = admin_service.wipe_user_data(user_id)
     return {"deleted": deleted}
@@ -125,7 +124,7 @@ async def wipe_data(
 async def export_user_data(
     user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     data = admin_service.export_user_data(user_id)
     return JSONResponse(
@@ -139,7 +138,7 @@ async def transfer_user_data(
     request: Request,
     from_user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     body = await request.json()
     to_user_id = body.get("to_user_id")
@@ -154,7 +153,7 @@ async def copy_user_data(
     request: Request,
     from_user_id: int,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("users:manage")),
 ):
     body = await request.json()
     to_user_id = body.get("to_user_id")
@@ -168,7 +167,7 @@ async def copy_user_data(
 @router.get("/settings")
 async def list_settings(
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("server:settings")),
 ):
     return {"settings": admin_service.list_server_settings()}
 
@@ -177,7 +176,7 @@ async def list_settings(
 async def update_settings(
     request: Request,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("server:settings")),
 ):
     body = await request.json()
     settings = body.get("settings", {})
@@ -189,7 +188,7 @@ async def update_settings(
 async def test_email(
     request: Request,
     admin_service: AdminService = Depends(get_admin_service),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_permission("server:settings")),
 ):
     body = await request.json()
     to = body.get("to", "").strip()

@@ -1,48 +1,48 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('admin_settings_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('admin_settings_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-container">
   {{ header|safe }}
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('admin_settings_smtp') }}</h3>
+    <h3 class="mt-0">{{ t('admin_settings_smtp', lang=lang) }}</h3>
     <form class="avalone-stack" id="settings-form">
-      <label class="avalone-label">{{ t('admin_smtp_host') }}
+      <label class="avalone-label">{{ t('admin_smtp_host', lang=lang) }}
         <input class="avalone-input" type="text" name="smtp_host" value="{{ settings.smtp_host }}" autocomplete="off">
       </label>
-      <label class="avalone-label">{{ t('admin_smtp_port') }}
+      <label class="avalone-label">{{ t('admin_smtp_port', lang=lang) }}
         <input class="avalone-input" type="number" name="smtp_port" value="{{ settings.smtp_port }}" autocomplete="off">
       </label>
-      <label class="avalone-label">{{ t('admin_smtp_user') }}
+      <label class="avalone-label">{{ t('admin_smtp_user', lang=lang) }}
         <input class="avalone-input" type="text" name="smtp_user" value="{{ settings.smtp_user }}" autocomplete="off">
       </label>
-      <label class="avalone-label">{{ t('admin_smtp_password') }}
+      <label class="avalone-label">{{ t('admin_smtp_password', lang=lang) }}
         <input class="avalone-input" type="password" name="smtp_password" value="{{ settings.smtp_password }}" autocomplete="off">
       </label>
       <label class="avalone-label avalone-checkbox">
         <input type="checkbox" name="smtp_use_tls" value="true" {% if settings.smtp_use_tls %}checked{% endif %}>
-        {{ t('admin_smtp_use_tls') }}
+        {{ t('admin_smtp_use_tls', lang=lang) }}
       </label>
-      <label class="avalone-label">{{ t('admin_mail_from') }}
+      <label class="avalone-label">{{ t('admin_mail_from', lang=lang) }}
         <input class="avalone-input" type="email" name="mail_from" value="{{ settings.mail_from }}" autocomplete="off">
       </label>
-      <label class="avalone-label">{{ t('admin_mail_from_name') }}
+      <label class="avalone-label">{{ t('admin_mail_from_name', lang=lang) }}
         <input class="avalone-input" type="text" name="mail_from_name" value="{{ settings.mail_from_name }}" autocomplete="off">
       </label>
-      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save') }}</button>
+      <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save', lang=lang) }}</button>
     </form>
     <div id="settings-message"></div>
   </div>
 
   <div class="avalone-card">
-    <h3 class="mt-0">{{ t('admin_settings_test_email') }}</h3>
+    <h3 class="mt-0">{{ t('admin_settings_test_email', lang=lang) }}</h3>
     <form class="avalone-stack" id="test-email-form">
-      <label class="avalone-label">{{ t('admin_test_email_to') }}
+      <label class="avalone-label">{{ t('admin_test_email_to', lang=lang) }}
         <input class="avalone-input" type="email" name="to" required autocomplete="email">
       </label>
-      <button class="avalone-btn avalone-btn-secondary" type="submit">{{ t('admin_btn_test_email') }}</button>
+      <button class="avalone-btn avalone-btn-secondary" type="submit">{{ t('admin_btn_test_email', lang=lang) }}</button>
     </form>
     <div id="test-email-message"></div>
   </div>
@@ -73,9 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       const msg = document.getElementById('settings-message');
       if (res.ok) {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_saved') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_saved', lang=lang) }}</div>';
       } else {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_save_failed') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_save_failed', lang=lang) }}</div>';
       }
     } catch (err) {
       document.getElementById('settings-message').innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';
@@ -94,9 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       const msg = document.getElementById('test-email-message');
       if (res.ok) {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_test_email_sent') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-success mt-3">{{ t('admin_test_email_sent', lang=lang) }}</div>';
       } else {
-        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_test_email_failed') }}</div>';
+        msg.innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">{{ t('admin_test_email_failed', lang=lang) }}</div>';
       }
     } catch (err) {
       document.getElementById('test-email-message').innerHTML = '<div class="avalone-alert avalone-alert-danger mt-3">' + err + '</div>';

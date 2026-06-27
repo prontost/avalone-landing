@@ -25,7 +25,7 @@ def main() -> int:
     missing = glossary_db.missing_desc()
     by_module = {
         module: glossary_db.count(module=module)
-        for module in ("portal", "money", "work")
+        for module in ("portal", "money")
     }
     by_kind = {
         kind: glossary_db.count(kind=kind)

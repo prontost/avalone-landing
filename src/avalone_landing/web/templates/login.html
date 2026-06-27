@@ -1,6 +1,6 @@
 {% extends "avalone_base.html" %}
 
-{% block title %}{{ t('auth_login_title') }} — {{ t('brand') }}{% endblock %}
+{% block title %}{{ t('auth_login_title', lang=lang) }} — {{ t('brand', lang=lang) }}{% endblock %}
 
 {% block content %}
 <div class="avalone-auth-layout">
@@ -8,12 +8,12 @@
     <div class="avalone-auth-brand">
       <div class="avalone-auth-logo" aria-hidden="true">◈</div>
       <div>
-        <div class="avalone-auth-brand__title">{{ t('brand') }}</div>
-        <div class="avalone-auth-hint">{{ t('brand_tagline') }}</div>
+        <div class="avalone-auth-brand__title">{{ t('brand', lang=lang) }}</div>
+        <div class="avalone-auth-hint">{{ t('brand_tagline', lang=lang) }}</div>
       </div>
     </div>
 
-    <h1 class="avalone-auth-heading">{{ t('auth_login_title') }}</h1>
+    <h1 class="avalone-auth-heading">{{ t('auth_login_title', lang=lang) }}</h1>
 
     {% if error %}<div class="avalone-alert avalone-alert-danger">{{ error }}</div>{% endif %}
     {% if success %}<div class="avalone-alert avalone-alert-success">{{ success }}</div>{% endif %}
@@ -21,21 +21,21 @@
     <form method="post" action="/login">
       <input type="hidden" name="next" value="{{ request.query_params.get('next', '') }}">
       <div class="avalone-form-group">
-        <label class="avalone-label" for="login">{{ t('auth_label_login') }}</label>
-        <input class="avalone-input" id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login') }}">
+        <label class="avalone-label" for="login">{{ t('auth_label_login', lang=lang) }}</label>
+        <input class="avalone-input" id="login" name="login" type="text" required autocomplete="username" autofocus placeholder="{{ t('auth_placeholder_login', lang=lang) }}">
       </div>
       <div class="avalone-form-group">
-        <label class="avalone-label" for="password">{{ t('auth_label_password') }}</label>
-        <input class="avalone-input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password') }}">
+        <label class="avalone-label" for="password">{{ t('auth_label_password', lang=lang) }}</label>
+        <input class="avalone-input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password', lang=lang) }}">
       </div>
       <div class="avalone-auth-forgot">
-        <a href="/forgot-password">{{ t('reset_forgot_link') }}</a>
+        <a href="/forgot-password">{{ t('reset_forgot_link', lang=lang) }}</a>
       </div>
-      <button class="avalone-btn avalone-btn-primary avalone-btn-block" type="submit">{{ t('auth_btn_login') }}</button>
+      <button class="avalone-btn avalone-btn-primary avalone-btn-block" type="submit">{{ t('auth_btn_login', lang=lang) }}</button>
     </form>
 
     <div class="avalone-auth-footer">
-      {{ t('auth_no_account') }} <a href="/register">{{ t('auth_register_link') }}</a>
+      {{ t('auth_no_account', lang=lang) }} <a href="/register">{{ t('auth_register_link', lang=lang) }}</a>
     </div>
   </div>
 </div>

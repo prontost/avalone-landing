@@ -10,6 +10,7 @@ from contextvars import ContextVar
 from datetime import datetime, timezone
 
 from avalone_landing.core.models import User
+from avalone_landing.core.role_service import RoleService
 from avalone_landing.core.user_repository import UserRepository
 from avalone_landing.core.user_service import UserService
 
@@ -122,19 +123,25 @@ def reset_password(user_id: int, new_password: str) -> None:
     _default_repo.clear_reset_token(user_id)
 
 
-# --- admin helpers ---
+# --- admin helpers (role-based) ---
 
 def is_admin(user_id: int | None) -> bool:
-    return _default_service.is_admin(user_id)
+    return _default_service.has_permission(user_id, "users:manage")
 
 
 def list_admins() -> list[dict]:
-    return [_user_to_dict(u) for u in _default_service.list_admins() if u]
+    return [
+        _user_to_dict(u) for u in _default_service.list_users()
+        if u and ("admin:full" in u.permissions or "users:manage" in u.permissions)
+    ]
 
 
 def add_admin(user_id: int) -> None:
-    _default_service.ensure_admin(user_id)
+    current = set(_default_service.get_roles(user_id))
+    current.add("admin")
+    _default_service.set_roles(user_id, list(current))
 
 
 def remove_admin(user_id: int) -> None:
-    _default_service._repo.remove_admin(user_id)
+    current = [r for r in _default_service.get_roles(user_id) if r != "admin"]
+    _default_service.set_roles(user_id, current)

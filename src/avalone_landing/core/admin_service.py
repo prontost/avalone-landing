@@ -14,15 +14,14 @@ from avalone_landing.core.admin_repository import AdminRepository
 from avalone_landing.core.auth_service import AuthService
 from avalone_landing.core.mail_service import MailService
 from avalone_landing.core.models import User
+from avalone_landing.core.role_service import RoleService
 from avalone_landing.core.user_repository import UserRepository
 
 
 @dataclass
 class AdminUser(User):
-    """User enriched with admin role flags and module data counts."""
+    """User enriched with module data counts for the admin panel."""
 
-    is_platform_admin: bool = False
-    is_money_admin: bool = False
     module_counts: dict[str, int] = field(default_factory=dict)
 
 
@@ -55,6 +54,7 @@ class AdminService(Service):
         self._user_repo = user_repository or UserRepository()
         self._mail = mail_service or MailService()
         self._auth = auth_service
+        self._role_service = RoleService()
 
     # ------------------------------------------------------------------
     # Users
@@ -78,19 +78,18 @@ class AdminService(Service):
         return user
 
     def _admin_user_from_row(self, row: Any) -> AdminUser:
-        roles = self._repo.get_roles(row["id"])
-        user = AdminUser(
+        roles = self._role_service.roles_for(row["id"])
+        permissions = sorted(self._role_service.permissions_for(row["id"]))
+        return AdminUser(
             id=row["id"],
             login=row["login"],
             email=row["email"] or "",
             created_at=row["created_at"],
             email_verified=bool(row["email_verified"]),
-            is_admin="portal" in roles,
+            is_admin="admin:full" in permissions or "users:manage" in permissions,
             roles=roles,
-            is_platform_admin="portal" in roles,
-            is_money_admin="money" in roles,
+            permissions=permissions,
         )
-        return user
 
     def update_user(self, user_id: int, email: str | None = None, roles: list[str] | None = None) -> AdminUser | None:
         if not self._repo.user_exists(user_id):
@@ -98,7 +97,7 @@ class AdminService(Service):
         if email is not None:
             self._repo.update_email(user_id, email)
         if roles is not None:
-            self._repo.set_roles(user_id, roles)
+            self._role_service.assign_roles(user_id, roles)
         return self.get_user(user_id)
 
     # ------------------------------------------------------------------
@@ -130,7 +129,7 @@ class AdminService(Service):
             return {"user": None, "roles": [], "modules": {"money": {}}}
         return {
             "user": dict(user_row),
-            "roles": self._repo.get_roles(user_id),
+            "roles": self._role_service.roles_for(user_id),
             "modules": {"money": self._repo.export_user_data(user_id).get("money", {})},
         }
 

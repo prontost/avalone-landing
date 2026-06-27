@@ -43,37 +43,6 @@ class AdminRepository(Repository):
         return bool(row)
 
     # ------------------------------------------------------------------
-    # Roles
-    # ------------------------------------------------------------------
-
-    def get_roles(self, user_id: int) -> list[str]:
-        with self._conn() as con:
-            rows = con.execute(
-                "SELECT module FROM admins WHERE user_id = ? ORDER BY module", (user_id,)
-            ).fetchall()
-        return [r["module"] for r in rows]
-
-    def set_roles(self, user_id: int, roles: list[str]) -> None:
-        """Replace the user's admin rows with the requested module roles."""
-        with self._conn() as con:
-            con.execute("DELETE FROM admins WHERE user_id = ?", (user_id,))
-            for module in roles:
-                module = (module or "").strip().lower()
-                if module:
-                    con.execute(
-                        "INSERT OR IGNORE INTO admins (user_id, module) VALUES (?, ?)",
-                        (user_id, module),
-                    )
-
-    def is_admin_module(self, user_id: int, module: str) -> bool:
-        with self._conn() as con:
-            row = con.execute(
-                "SELECT 1 FROM admins WHERE user_id = ? AND module = ?",
-                (user_id, module),
-            ).fetchone()
-        return bool(row)
-
-    # ------------------------------------------------------------------
     # Email
     # ------------------------------------------------------------------
 
@@ -284,6 +253,11 @@ class AdminRepository(Repository):
         return row[0] if row else 0
 
     def count_admins(self) -> int:
+        """Count users with a platform-admin role (admin or owner)."""
         with self._conn() as con:
-            row = con.execute("SELECT COUNT(DISTINCT user_id) FROM admins").fetchone()
+            row = con.execute(
+                "SELECT COUNT(DISTINCT ur.user_id) FROM user_roles ur "
+                "JOIN roles r ON r.id = ur.role_id "
+                "WHERE r.name IN ('admin', 'owner')"
+            ).fetchone()
         return row[0] if row else 0
