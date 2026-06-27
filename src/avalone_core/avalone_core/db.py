@@ -11,26 +11,22 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from avalone_core.database import Database
+
 DEFAULT_DB_PATH = Path.home() / ".avalone" / "avalone.db"
 DB_PATH: Path = DEFAULT_DB_PATH
 
 
 def configure(path: str | Path | None = None) -> None:
+    """Backward-compatible path configuration. Prefer `Database.configure()`."""
     global DB_PATH
-    if path:
-        DB_PATH = Path(path)
-    elif os.environ.get("AVALONE_DB_PATH"):
-        DB_PATH = Path(os.environ["AVALONE_DB_PATH"])
-    else:
-        DB_PATH = DEFAULT_DB_PATH
+    Database.configure(path)
+    DB_PATH = Database.shared().path
 
 
 def connection() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-    con.row_factory = sqlite3.Row
-    con.execute("PRAGMA foreign_keys = ON")
-    return con
+    """Backward-compatible connection factory. Prefer `Database.shared().connection()`."""
+    return Database.shared().connection()
 
 
 def _execute_script(con: sqlite3.Connection, sql: str) -> None:
@@ -332,16 +328,10 @@ CREATE TABLE IF NOT EXISTS work_slept_entries (
 
 
 def migrate() -> None:
-    with connection() as con:
-        _execute_script(con, SCHEMA)
-    # Migrate legacy per-app glossaries into the unified table and seed portal keys.
-    from avalone_core import glossary_db
-    glossary_db.migrate()
+    """Backward-compatible migration. Prefer `Database.shared().migrate()`."""
+    Database.shared().migrate()
 
 
 def table_exists(name: str) -> bool:
-    with connection() as con:
-        r = con.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
-        ).fetchone()
-    return r is not None
+    """Backward-compatible helper. Prefer `Database.shared().table_exists()`."""
+    return Database.shared().table_exists(name)
