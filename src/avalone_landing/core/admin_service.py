@@ -23,7 +23,6 @@ class AdminUser(User):
 
     is_platform_admin: bool = False
     is_money_admin: bool = False
-    is_work_admin: bool = False
     module_counts: dict[str, int] = field(default_factory=dict)
 
 
@@ -90,7 +89,6 @@ class AdminService(Service):
             roles=roles,
             is_platform_admin="portal" in roles,
             is_money_admin="money" in roles,
-            is_work_admin="work" in roles,
         )
         return user
 
@@ -129,11 +127,11 @@ class AdminService(Service):
     def export_user_data(self, user_id: int) -> dict[str, Any]:
         user_row = self._repo.get_user(user_id)
         if not user_row:
-            return {"user": None, "roles": [], "modules": {"money": {}, "work": {}}}
+            return {"user": None, "roles": [], "modules": {"money": {}}}
         return {
             "user": dict(user_row),
             "roles": self._repo.get_roles(user_id),
-            "modules": self._repo.export_user_data(user_id),
+            "modules": {"money": self._repo.export_user_data(user_id).get("money", {})},
         }
 
     def transfer_user_data(self, from_user_id: int, to_user_id: int) -> dict[str, int]:

@@ -148,7 +148,7 @@ def _migrate_mail_settings() -> None:
         existing = {
             r["key"] for r in con.execute("SELECT key FROM avalone_global_settings").fetchall()
         }
-        for source_table in ("money_global_settings", "work_global_settings"):
+        for source_table in ("money_global_settings",):
             if not con.execute(
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (source_table,)
             ).fetchone():

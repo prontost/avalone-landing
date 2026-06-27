@@ -12,7 +12,7 @@ class AdminRepository(Repository):
     """Raw SQL access across portal users and module tables for admin operations."""
 
     # Module prefixes that contain tenant-isolated data.
-    MODULE_PREFIXES = ("money_", "work_")
+    MODULE_PREFIXES = ("money_",)
 
     def __init__(self, db: Database | None = None) -> None:
         super().__init__(db or Database.shared())
@@ -187,11 +187,11 @@ class AdminRepository(Repository):
 
     def export_user_data(self, user_id: int) -> dict[str, Any]:
         """Return a JSON-serializable dump of all module rows for user_id."""
-        data: dict[str, Any] = {"money": {}, "work": {}}
+        data: dict[str, Any] = {"money": {}}
         for table in self._module_tables():
             prefix = table.split("_")[0]
             tenant_col = self._tenant_column(table)
-            if not tenant_col or prefix not in ("money", "work"):
+            if not tenant_col or prefix != "money":
                 continue
             with self._conn() as con:
                 rows = con.execute(

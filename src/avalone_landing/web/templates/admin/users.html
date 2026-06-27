@@ -34,7 +34,6 @@
             <td>
               {% if u.is_platform_admin %}<span class="avalone-badge avalone-badge-blue">{{ t('admin_role_platform') }}</span>{% endif %}
               {% if u.is_money_admin %}<span class="avalone-badge avalone-badge-green">{{ t('admin_role_money') }}</span>{% endif %}
-              {% if u.is_work_admin %}<span class="avalone-badge avalone-badge-gray">{{ t('admin_role_work') }}</span>{% endif %}
             </td>
             <td class="text-right">
               <a class="avalone-btn avalone-btn-sm avalone-btn-secondary" href="/admin/users/{{ u.id }}">{{ t('admin_action_view') }}</a>

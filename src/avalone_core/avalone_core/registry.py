@@ -14,25 +14,16 @@ from typing import Literal
 @dataclass(frozen=True, slots=True)
 class AppBranch:
     id: str
-    name_key: str       # ключ в глоссарии (app_work, app_money, ...)
+    name_key: str       # ключ в глоссарии (app_money, ...)
     icon: str
     description_key: str
     status: Literal["active", "in_dev", "planned"]
     url: str | None
-    module: Literal["portal", "money", "work", None]
+    module: Literal["portal", "money", None]
 
 
 class AvaloneRegistry:
     _BRANCHES: tuple[AppBranch, ...] = (
-        AppBranch(
-            id="work",
-            name_key="app_work",
-            icon="🛠️",
-            description_key="app_work_desc",
-            status="active",
-            url="https://work.avalone.online",
-            module="work",
-        ),
         AppBranch(
             id="money",
             name_key="app_money",
@@ -115,13 +106,6 @@ class AvaloneRegistry:
     def app_nav(cls, current_module: str, lang: str = "ru") -> list[dict]:
         """Нижняя/боковая навигация внутри модуля."""
         from avalone_core.glossary import t
-        if current_module == "work":
-            return [
-                {"label": t("nav_trips", lang), "icon": "🚗", "href": "/#trips"},
-                {"label": t("nav_stats", lang), "icon": "📊", "href": "/#stats"},
-                {"label": t("nav_notifications", lang), "icon": "🔔", "href": "/#notifications"},
-                {"label": t("nav_settings", lang), "icon": "⚙️", "href": "/#settings"},
-            ]
         if current_module == "money":
             return [
                 {"label": t("nav_balances", lang), "icon": "💰", "href": "/#balances"},

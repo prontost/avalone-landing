@@ -37,7 +37,6 @@ CREATE INDEX IF NOT EXISTS idx_avalone_glossary_module ON avalone_glossary(modul
 # currencies, etc.) are migrated from legacy tables or seeded by the apps.
 _PORTAL_SEED: list[dict[str, Any]] = [
     # Apps
-    {"key": "app_work",       "ru": "Работа",     "en": "Work",      "ko": "업무",      "kind": "ui", "module": "portal"},
     {"key": "app_money",      "ru": "Финансы",    "en": "Finance",   "ko": "재정",      "kind": "ui", "module": "portal"},
     {"key": "app_education",  "ru": "Обучение",   "en": "Education", "ko": "교육",      "kind": "ui", "module": "portal"},
     {"key": "app_living",     "ru": "Жильё",      "en": "Living",    "ko": "주거",      "kind": "ui", "module": "portal"},
@@ -45,7 +44,6 @@ _PORTAL_SEED: list[dict[str, Any]] = [
     {"key": "app_health",     "ru": "Здоровье",   "en": "Health",    "ko": "건강",      "kind": "ui", "module": "portal"},
 
     # App descriptions
-    {"key": "app_work_desc",      "ru": "Арбайт, смены, поездки, фриланс, карьера.",                       "en": "Part-time, shifts, rides, freelance, career.",            "ko": "아륰바이트, 교대, 출퇴근, 프리랜스, 경력.",              "kind": "ui", "module": "portal"},
     {"key": "app_money_desc",     "ru": "Учёт, бюджет, аналитика, советы.",                                "en": "Tracking, budget, analytics, tips.",                        "ko": "가계부, 예산, 분석, 팁.",                                "kind": "ui", "module": "portal"},
     {"key": "app_education_desc", "ru": "Курсы, языки, переподготовка, адаптация.",                        "en": "Courses, languages, retraining, adaptation.",               "ko": "강좌, 언어, 재교육, 적응.",                              "kind": "ui", "module": "portal"},
     {"key": "app_living_desc",    "ru": "Аренда, соседи, бытовые вопросы.",                                "en": "Rent, neighbors, household issues.",                        "ko": "임대, 이웃, 가사 문제.",                                "kind": "ui", "module": "portal"},
@@ -64,16 +62,14 @@ _PORTAL_SEED: list[dict[str, Any]] = [
 
     # Status card
     {"key": "status_title",   "ru": "Работает",   "en": "Live",      "ko": "실행 중",   "kind": "ui", "module": "portal"},
-    {"key": "status_text",    "ru": "Работа и Финансы уже работают. Создавайте поездки, ведите учёт и управляйте бюджетом.",
-                                   "en": "Work and Finance are live. Create rides, keep records and manage your budget.",
-                                   "ko": "업무와 재정이 실행 중입니다. 출퇴근을 만들고, 기록을 관리하며 예산을 관리하세요.", "kind": "ui", "module": "portal"},
+    {"key": "status_text",    "ru": "Финансы уже работают. Ведите учёт и управляйте бюджетом.",
+                                   "en": "Finance is live. Keep records and manage your budget.",
+                                   "ko": "재정이 실행 중입니다. 기록을 관리하며 예산을 관리하세요.", "kind": "ui", "module": "portal"},
     {"key": "btn_open_money", "ru": "Открыть Финансы", "en": "Open Finance", "ko": "재정 열기", "kind": "ui", "module": "portal"},
-    {"key": "btn_open_work",  "ru": "Открыть Работу",  "en": "Open Work",    "ko": "업무 열기", "kind": "ui", "module": "portal"},
 
     # Quick actions
     {"key": "quick_title",     "ru": "Быстрые действия", "en": "Quick actions", "ko": "빠른 작업", "kind": "ui", "module": "portal"},
     {"key": "quick_budget",    "ru": "Бюджет",     "en": "Budget",    "ko": "예산",      "kind": "ui", "module": "portal"},
-    {"key": "quick_work",      "ru": "Работа",     "en": "Work",      "ko": "업무",      "kind": "ui", "module": "portal"},
     {"key": "quick_profile",   "ru": "Профиль",    "en": "Profile",   "ko": "프로필",    "kind": "ui", "module": "portal"},
     {"key": "quick_community", "ru": "Сообщества", "en": "Community", "ko": "커뮤니티",  "kind": "ui", "module": "portal"},
 
@@ -262,7 +258,6 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "admin_btn_test_email",          "ru": "Отправить тестовое письмо",                           "en": "Send test email",                            "ko": "테스트 이메일 본내기", "kind": "ui", "module": "portal"},
     {"key": "admin_role_platform",           "ru": "Портал",                                              "en": "Portal",                                     "ko": "포털", "kind": "ui", "module": "portal"},
     {"key": "admin_role_money",              "ru": "Финансы",                                             "en": "Finance",                                    "ko": "재정", "kind": "ui", "module": "portal"},
-    {"key": "admin_role_work",               "ru": "Работа",                                              "en": "Work",                                       "ko": "업무", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_host",               "ru": "SMTP сервер",                                         "en": "SMTP host",                                  "ko": "SMTP 호스트", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_port",               "ru": "SMTP порт",                                           "en": "SMTP port",                                  "ko": "SMTP 포트", "kind": "ui", "module": "portal"},
     {"key": "admin_smtp_user",               "ru": "SMTP пользователь",                                   "en": "SMTP user",                                  "ko": "SMTP 사용자", "kind": "ui", "module": "portal"},
@@ -285,7 +280,6 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "admin_stat_users",              "ru": "Пользователей",                                       "en": "Users",                                      "ko": "사용자", "kind": "ui", "module": "portal"},
     {"key": "admin_stat_admins",             "ru": "Администраторов",                                     "en": "Admins",                                     "ko": "관리자", "kind": "ui", "module": "portal"},
     {"key": "admin_stat_money_rows",         "ru": "Строк финансов",                                      "en": "Finance rows",                               "ko": "재정 행", "kind": "ui", "module": "portal"},
-    {"key": "admin_stat_work_rows",          "ru": "Строк работы",                                        "en": "Work rows",                                  "ko": "업무 행", "kind": "ui", "module": "portal"},
     {"key": "admin_dashboard_welcome",       "ru": "Центральная панель управления платформой Avalone.",   "en": "Central management panel for the Avalone platform.",
                                                        "ko": "Avalone 플랫폼 중앙 관리 패널입니다.", "kind": "ui", "module": "portal"},
     {"key": "admin_section_edit",            "ru": "Редактирование",                                      "en": "Edit",                                       "ko": "편집", "kind": "ui", "module": "portal"},

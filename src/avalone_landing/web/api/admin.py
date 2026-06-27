@@ -53,7 +53,6 @@ def _user_to_dict(user) -> dict[str, Any]:
         "roles": user.roles,
         "is_platform_admin": getattr(user, "is_platform_admin", False),
         "is_money_admin": getattr(user, "is_money_admin", False),
-        "is_work_admin": getattr(user, "is_work_admin", False),
         "module_counts": getattr(user, "module_counts", {}),
     }
 

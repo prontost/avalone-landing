@@ -14,7 +14,6 @@
       <div><span class="text-muted">{{ t('admin_col_roles') }}:</span>
         {% if target.is_platform_admin %}<span class="avalone-badge avalone-badge-blue">{{ t('admin_role_platform') }}</span>{% endif %}
         {% if target.is_money_admin %}<span class="avalone-badge avalone-badge-green">{{ t('admin_role_money') }}</span>{% endif %}
-        {% if target.is_work_admin %}<span class="avalone-badge avalone-badge-gray">{{ t('admin_role_work') }}</span>{% endif %}
       </div>
     </div>
   </div>
@@ -34,10 +33,6 @@
         <label class="avalone-checkbox">
           <input type="checkbox" name="roles" value="money" {% if target.is_money_admin %}checked{% endif %}>
           {{ t('admin_role_money') }}
-        </label>
-        <label class="avalone-checkbox">
-          <input type="checkbox" name="roles" value="work" {% if target.is_work_admin %}checked{% endif %}>
-          {{ t('admin_role_work') }}
         </label>
       </div>
       <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('admin_btn_save') }}</button>

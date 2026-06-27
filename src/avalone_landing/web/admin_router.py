@@ -83,7 +83,6 @@ def _user_dict(user) -> dict[str, Any]:
         "roles": user.roles,
         "is_platform_admin": getattr(user, "is_platform_admin", False),
         "is_money_admin": getattr(user, "is_money_admin", False),
-        "is_work_admin": getattr(user, "is_work_admin", False),
         "module_counts": getattr(user, "module_counts", {}),
     }
 
@@ -99,7 +98,6 @@ async def admin_dashboard(
     ctx["admin_count"] = admin_service._repo.count_admins()
     module_counts = admin_service._repo.module_counts(admin.id)
     ctx["money_count"] = sum(c for t, c in module_counts.items() if t.startswith("money_"))
-    ctx["work_count"] = sum(c for t, c in module_counts.items() if t.startswith("work_"))
     ctx["header"] = PageHeader(title=glossary.t("admin_title")).render(templates.env, request)
     ctx["dashboard_card"] = Card(
         title=glossary.t("admin_title"),
