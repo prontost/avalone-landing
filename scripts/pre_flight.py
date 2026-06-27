@@ -32,6 +32,8 @@ def main() -> None:
     else:
         print(">>> no tests")
 
+    run([sys.executable, str(ROOT / "scripts" / "check_glossary.py")])
+
     # Start server briefly and hit healthz
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "avalone_landing.web.app:app",
