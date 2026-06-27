@@ -74,8 +74,13 @@ class Shell(Widget):
     notifications_count: int = 0
 
     def __post_init__(self):
+        def _branch_id(b):
+            if isinstance(b, dict):
+                return b.get("id")
+            return getattr(b, "id", None)
+
         self.active_branch = next(
-            (b for b in self.branches if getattr(b, "id", None) == self.current_app),
+            (b for b in self.branches if _branch_id(b) == self.current_app),
             None,
         )
         if not self.active_branch:
