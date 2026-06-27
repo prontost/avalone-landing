@@ -142,6 +142,10 @@ class RoleService(Service):
     def ensure_defaults(self) -> None:
         self._repo.ensure_defaults()
 
+    def list_roles(self) -> list[dict[str, Any]]:
+        self.ensure_defaults()
+        return self._repo.list_roles()
+
     def permissions_for(self, user_id: int) -> set[str]:
         self.ensure_defaults()
         return self._repo.get_permissions_for_user(user_id)
