@@ -25,9 +25,10 @@ from avalone_landing.web.dependencies import (
     get_auth_service,
     get_device_service,
     get_mail_service,
+    get_shell_context,
     get_user_service,
 )
-from avalone_landing.web.shell_context import render_shell_context
+from avalone_landing.web.shell_context import ShellContext
 
 router = APIRouter()
 BASE = Path(__file__).parent
@@ -41,6 +42,7 @@ templates.env.globals["registry"] = AvaloneRegistry
 
 def _profile_context(
     request: Request,
+    shell_context: ShellContext,
     user_service: UserService,
     device_service: DeviceService,
     user: User,
@@ -49,6 +51,7 @@ def _profile_context(
     u = user_service.get_user(user.id)
     ctx = _shell_context(
         request,
+        shell_context,
         {"id": u.id, "login": u.login, "name": u.name, "email": u.email, "created_at": u.created_at,
          "is_admin": u.is_admin, "email_verified": u.email_verified} if u else None,
     )
@@ -76,27 +79,30 @@ def _user_shell_dict(user: User | None) -> dict | None:
     }
 
 
-def _shell_context(request: Request, user: dict | None, **extra: object) -> dict:
-    from avalone_core.language_service import LanguageService
-
-    lang = LanguageService().detect(request)
-    ctx = render_shell_context(
+def _shell_context(
+    request: Request,
+    shell_context: ShellContext,
+    user: dict | None,
+    **extra: object,
+) -> dict:
+    ctx = shell_context.build(
         templates,
         request,
         user,
         current_app="portal",
         app_nav=[],
         build_id=ui_build_id(),
-        lang=lang,
     )
     for key, value in extra.items():
         ctx.setdefault(key, value)
     return ctx
 
 
-def _anon_shell_context(request: Request, **extra: object) -> dict:
+def _anon_shell_context(
+    request: Request, shell_context: ShellContext, **extra: object
+) -> dict:
     """Shell context for anonymous portal pages (login/register/reset)."""
-    ctx = _shell_context(request, None)
+    ctx = _shell_context(request, shell_context, None)
     ctx.update(extra)
     return ctx
 
@@ -105,13 +111,14 @@ def _anon_shell_context(request: Request, **extra: object) -> dict:
 async def login_page(
     request: Request,
     user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     ctx: dict = {}
     if user is not None:
         ctx["already_user"] = {"id": user.id, "login": user.login, "name": user.name, "email": user.email}
     if request.query_params.get("reset") == "ok":
         ctx["success"] = t("reset_password_success")
-    return templates.TemplateResponse(request, "login.html", _shell_context(request, _user_shell_dict(user), **ctx))
+    return templates.TemplateResponse(request, "login.html", _shell_context(request, shell_context, _user_shell_dict(user), **ctx))
 
 
 @router.post("/login")
@@ -119,6 +126,7 @@ async def login(
     request: Request,
     auth_controller: AuthController = Depends(get_auth_controller),
     active_user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     form = await request.form()
     login_field = str(form.get("login", "")).strip()
@@ -138,13 +146,13 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            _shell_context(request, _user_shell_dict(active_user), info=t("auth_already_active"), **base_ctx),
+            _shell_context(request, shell_context, _user_shell_dict(active_user), info=t("auth_already_active"), **base_ctx),
             status_code=200,
         )
     return templates.TemplateResponse(
         request,
         "login.html",
-        _shell_context(request, _user_shell_dict(active_user), error=t(result.error), **base_ctx),
+        _shell_context(request, shell_context, _user_shell_dict(active_user), error=t(result.error), **base_ctx),
         status_code=result.error_code,
     )
 
@@ -201,8 +209,9 @@ async def api_reset_password(
 async def forgot_password_page(
     request: Request,
     user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
-    return templates.TemplateResponse(request, "forgot_password.html", _shell_context(request, _user_shell_dict(user)))
+    return templates.TemplateResponse(request, "forgot_password.html", _shell_context(request, shell_context, _user_shell_dict(user)))
 
 
 @router.post("/forgot-password")
@@ -210,6 +219,7 @@ async def forgot_password(
     request: Request,
     auth_controller: AuthController = Depends(get_auth_controller),
     active_user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     form = await request.form()
     login_or_email = str(form.get("login_or_email", "")).strip()
@@ -223,7 +233,7 @@ async def forgot_password(
             ctx["reset_url"] = result.reset_url
     else:
         ctx["success"] = t("reset_email_sent_generic")
-    return templates.TemplateResponse(request, "forgot_password.html", _shell_context(request, _user_shell_dict(active_user), **ctx))
+    return templates.TemplateResponse(request, "forgot_password.html", _shell_context(request, shell_context, _user_shell_dict(active_user), **ctx))
 
 
 @router.get("/reset-password", response_class=HTMLResponse)
@@ -231,14 +241,15 @@ async def reset_password_page(
     request: Request,
     auth_controller: AuthController = Depends(get_auth_controller),
     active_user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     token = request.query_params.get("token", "")
     result = auth_controller.reset_password(token, "", "")
     if not result.success:
         return templates.TemplateResponse(
-            request, "reset_password.html", _shell_context(request, _user_shell_dict(active_user), error=t(result.error)), status_code=400
+            request, "reset_password.html", _shell_context(request, shell_context, _user_shell_dict(active_user), error=t(result.error)), status_code=400
         )
-    return templates.TemplateResponse(request, "reset_password.html", _shell_context(request, _user_shell_dict(active_user), token=token))
+    return templates.TemplateResponse(request, "reset_password.html", _shell_context(request, shell_context, _user_shell_dict(active_user), token=token))
 
 
 @router.post("/reset-password")
@@ -246,6 +257,7 @@ async def reset_password_submit(
     request: Request,
     auth_controller: AuthController = Depends(get_auth_controller),
     active_user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     form = await request.form()
     token = str(form.get("token", ""))
@@ -257,7 +269,7 @@ async def reset_password_submit(
         return templates.TemplateResponse(
             request,
             "reset_password.html",
-            _shell_context(request, _user_shell_dict(active_user), token=token, error=t(result.error)),
+            _shell_context(request, shell_context, _user_shell_dict(active_user), token=token, error=t(result.error)),
             status_code=result.error_code,
         )
 
@@ -271,10 +283,11 @@ async def reset_password_submit(
 async def register_page(
     request: Request,
     user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     prefilled_ref = request.query_params.get("ref", "").strip()
     return templates.TemplateResponse(
-        request, "register.html", _shell_context(request, _user_shell_dict(user), prefilled_ref=prefilled_ref)
+        request, "register.html", _shell_context(request, shell_context, _user_shell_dict(user), prefilled_ref=prefilled_ref)
     )
 
 
@@ -283,6 +296,7 @@ async def register(
     request: Request,
     auth_controller: AuthController = Depends(get_auth_controller),
     active_user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     form = await request.form()
     login_field = str(form.get("login", "")).strip()
@@ -297,7 +311,7 @@ async def register(
         return templates.TemplateResponse(
             request,
             "register.html",
-            _shell_context(request, _user_shell_dict(active_user), error=t(result.error)),
+            _shell_context(request, shell_context, _user_shell_dict(active_user), error=t(result.error)),
             status_code=result.error_code,
         )
 
@@ -398,13 +412,14 @@ async def profile_page(
     user: User = Depends(current_user),
     user_service: UserService = Depends(get_user_service),
     device_service: DeviceService = Depends(get_device_service),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     if user is None:
         return RedirectResponse("/login?next=/profile", status_code=303)
     u = user_service.get_user(user.id)
     if not u:
         return RedirectResponse("/login", status_code=303)
-    ctx = _profile_context(request, user_service, device_service, u)
+    ctx = _profile_context(request, shell_context, user_service, device_service, u)
     return templates.TemplateResponse(request, "profile.html", ctx)
 
 
@@ -429,6 +444,7 @@ async def update_profile_email(
     user_service: UserService = Depends(get_user_service),
     mail_service: MailService = Depends(get_mail_service),
     device_service: DeviceService = Depends(get_device_service),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     if user is None:
         return JSONResponse({"error": t("error_unauthorized")}, status_code=401)
@@ -437,7 +453,7 @@ async def update_profile_email(
     if not email or "@" not in email:
         return templates.TemplateResponse(
             request, "profile.html",
-            _profile_context(request, user_service, device_service, user, error=t("profile_email_invalid")), status_code=400
+            _profile_context(request, shell_context, user_service, device_service, user, error=t("profile_email_invalid")), status_code=400
         )
     user_service.update_email(user.id, email)
     code = user_service.generate_email_verification_code(user.id)
@@ -448,12 +464,12 @@ async def update_profile_email(
     except Exception as exc:
         return templates.TemplateResponse(
             request, "profile.html",
-            _profile_context(request, user_service, device_service, user, error=t("profile_verify_email_send_failed").format(error=str(exc))),
+            _profile_context(request, shell_context, user_service, device_service, user, error=t("profile_verify_email_send_failed").format(error=str(exc))),
             status_code=500,
         )
     return templates.TemplateResponse(
         request, "profile.html",
-        _profile_context(request, user_service, device_service, user, success=t("profile_verify_email_sent"), pending_email_verification=True)
+        _profile_context(request, shell_context, user_service, device_service, user, success=t("profile_verify_email_sent"), pending_email_verification=True)
     )
 
 
@@ -463,6 +479,7 @@ async def verify_profile_email(
     user: User = Depends(current_user),
     user_service: UserService = Depends(get_user_service),
     device_service: DeviceService = Depends(get_device_service),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
     if user is None:
         return JSONResponse({"error": t("error_unauthorized")}, status_code=401)
@@ -470,9 +487,9 @@ async def verify_profile_email(
     code = str(form.get("code", "")).strip()
     if user_service.verify_email_code(user.id, code):
         return templates.TemplateResponse(
-            request, "profile.html", _profile_context(request, user_service, device_service, user, success=t("profile_email_verified_success"))
+            request, "profile.html", _profile_context(request, shell_context, user_service, device_service, user, success=t("profile_email_verified_success"))
         )
     return templates.TemplateResponse(
         request, "profile.html",
-        _profile_context(request, user_service, device_service, user, error=t("profile_verify_email_invalid")), status_code=400
+        _profile_context(request, shell_context, user_service, device_service, user, error=t("profile_verify_email_invalid")), status_code=400
     )

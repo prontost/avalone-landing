@@ -10,7 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from avalone_core import glossary_db as glossary
-from avalone_core.language_service import LanguageService
 from avalone_core.registry import AvaloneRegistry
 import avalone_core.ui
 from avalone_landing.config import settings
@@ -22,8 +21,8 @@ from avalone_landing.web.admin_router import router as admin_router
 from avalone_landing.web.api.admin import router as admin_api_router
 from avalone_landing.web.api.misc import router as misc_api_router
 from avalone_landing.web.auth import router as auth_router
-from avalone_landing.web.dependencies import current_user
-from avalone_landing.web.shell_context import render_shell_context
+from avalone_landing.web.dependencies import current_user, get_shell_context
+from avalone_landing.web.shell_context import ShellContext
 from avalone_finance.web.app import finance_app
 
 t = glossary.t
@@ -108,16 +107,21 @@ def _no_cache(resp: Response) -> Response:
     return resp
 
 
-def _render_shell(request: Request, user: User | None, current_app: str = "portal", app_nav=None, **extra):
-    lang = LanguageService().detect(request)
-    return render_shell_context(
+def _render_shell(
+    shell_context: ShellContext,
+    request: Request,
+    user: User | None,
+    current_app: str = "portal",
+    app_nav=None,
+    **extra,
+):
+    return shell_context.build(
         templates,
         request,
         _user_dict(user),
         current_app=current_app,
         app_nav=app_nav or [],
         build_id=BUILD_ID,
-        lang=lang,
         **extra,
     )
 
@@ -126,8 +130,9 @@ def _render_shell(request: Request, user: User | None, current_app: str = "porta
 async def landing(
     request: Request,
     user: User | None = Depends(current_user),
+    shell_context: ShellContext = Depends(get_shell_context),
 ):
-    ctx = _render_shell(request, user, current_app="portal")
+    ctx = _render_shell(shell_context, request, user, current_app="portal")
     ctx["branch_list"] = AvaloneRegistry.for_shell(ctx.get("lang", "ru"))
     return _no_cache(
         templates.TemplateResponse(

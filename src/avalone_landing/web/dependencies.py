@@ -16,6 +16,7 @@ from avalone_landing.core.models import User
 from avalone_landing.core.role_service import RoleService
 from avalone_landing.core.user_service import UserService
 from avalone_landing.web.auth_controller import AuthController
+from avalone_landing.web.shell_context import ShellContext
 
 
 def get_role_service() -> RoleService:
@@ -50,6 +51,18 @@ def get_admin_service() -> AdminService:
 
 def get_feedback_service() -> FeedbackService:
     return FeedbackService()
+
+
+def get_shell_context(
+    auth_service: AuthService = Depends(get_auth_service),
+    user_service: UserService = Depends(get_user_service),
+) -> ShellContext:
+    return ShellContext(
+        auth_service=auth_service,
+        user_service=user_service,
+        language_service=get_language_service(),
+        cfg=settings(),
+    )
 
 
 def get_device_service() -> DeviceService:
