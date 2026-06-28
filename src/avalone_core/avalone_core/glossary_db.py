@@ -219,7 +219,7 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "profile_email_invalid",         "ru": "Укажите корректный email",                            "en": "Please enter a valid email",                 "ko": "올바른 이메일을 입력하세요", "kind": "ui", "module": "portal"},
     {"key": "profile_password_label",        "ru": "Пароль",                                              "en": "Password",                                   "ko": "비밀번호", "kind": "ui", "module": "portal"},
     {"key": "profile_password_masked",       "ru": "••••••",                                              "en": "••••••",                                     "ko": "••••••", "kind": "ui", "module": "portal"},
-    {"key": "profile_btn_reset_password",    "ru": "Сбросить",                                            "en": "Reset",                                      "ko": "재설정", "kind": "ui", "module": "portal"},
+    {"key": "profile_btn_reset_password",    "ru": "Сбросить пароль",                                     "en": "Reset password",                             "ko": "비밀번호 재설정", "kind": "ui", "module": "portal"},
     {"key": "profile_reset_title",           "ru": "Сброс пароля",                                        "en": "Reset password",                             "ko": "비밀번호 재설정", "kind": "ui", "module": "portal"},
     {"key": "profile_reset_text",            "ru": "Мы вышлем ссылку для сброса на {email}. Перейдите по ней и задайте новый пароль.",
                                                        "en": "We will send a reset link to {email}. Follow it to set a new password.",
