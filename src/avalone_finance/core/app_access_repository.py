@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 from avalone_core.database import Database, Repository
 
-import avalone_finance.core.db as _counta_db  # resolve DB_PATH dynamically (tests patch it)
+import avalone_finance.core.db as _finance_db  # resolve DB_PATH dynamically (tests patch it)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS money_user_apps (
@@ -32,7 +32,7 @@ class AppAccessRepository(Repository):
     """SQL access to `money_user_apps`."""
 
     def __init__(self, db: Database | None = None) -> None:
-        super().__init__(db or Database(_counta_db.DB_PATH))
+        super().__init__(db or Database(_finance_db.DB_PATH))
 
     def _conn(self) -> sqlite3.Connection:
         con = self._db.connection()

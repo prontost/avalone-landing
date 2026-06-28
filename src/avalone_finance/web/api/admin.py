@@ -356,7 +356,7 @@ async def admin_set_user_app(
 async def admin_logs(lines: int = 200, admin_id: int = Depends(require_admin)):
     """Admins: tail of application log file."""
     del admin_id
-    log_path = (db.DB_PATH.parent if db.DB_PATH else Path.home() / ".counta") / "counta.log"
+    log_path = (db.DB_PATH.parent if db.DB_PATH else Path.home() / ".avalone") / "avalone.log"
     if not log_path.exists():
         return {"lines": [], "path": str(log_path)}
     lines = max(1, min(int(lines), 2000))

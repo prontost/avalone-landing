@@ -1,4 +1,4 @@
-"""Counta-facing facade for the unified Avalone glossary.
+"""Avalone Finance-facing facade for the unified Avalone glossary.
 
 The actual storage is `avalone_core.glossary_db` (table `avalone_glossary`).
 This module keeps the old import path working for existing code.

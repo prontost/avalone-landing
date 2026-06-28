@@ -11,7 +11,7 @@ import sqlite3
 
 from avalone_core.database import Database, Repository
 
-import avalone_finance.core.db as _counta_db  # resolve DB_PATH dynamically (tests patch it)
+import avalone_finance.core.db as _finance_db  # resolve DB_PATH dynamically (tests patch it)
 
 _OCCURRED_KEY = "occurred_at"
 
@@ -34,13 +34,13 @@ class EntryMetaRepository(Repository):
     """SQL access to entry metadata and slept entries."""
 
     def __init__(self, db: Database | None = None) -> None:
-        super().__init__(db or Database(_counta_db.DB_PATH))
+        super().__init__(db or Database(_finance_db.DB_PATH))
 
     def _conn(self) -> sqlite3.Connection:
         con = self._db.connection()
         con.executescript(_SCHEMA)
         # унифицированная БД могла создать money_slept_entries только с (tenant, name);
-        # добиваем нужные Counta-колонки, если их ещё нет
+        # добиваем нужные Avalone Finance-колонки, если их ещё нет
         wanted = {
             "account": "TEXT NOT NULL",
             "debit": "TEXT NOT NULL",

@@ -1,4 +1,4 @@
-"""Собственный двойной леджер в counta.db (SQLite) — замена ERPNext-движка.
+"""Собственный двойной леджер в avalone.db (SQLite) — замена ERPNext-движка.
 
 Цель переезда (Дэн, 2026-06-16): зависеть от ERPNext по минимуму, в итоге уйти
 совсем. ERPNext делал для нас 3 вещи — план счетов, проводки (двойная запись),
@@ -8,7 +8,7 @@
 за единым фасадом с минимальными правками вызовов (см. шаг 3 переезда).
 
 (Отдельный модуль от заброшенного core/ledger.py — тот на SQLAlchemy/Postgres и
-Telegram-тенантах, мёртвый. Здесь — SQLite, single-user, в нашей counta.db.)
+Telegram-тенантах, мёртвый. Здесь — SQLite, single-user, в нашей avalone.db.)
 
 Модель:
 - money_led_accounts: name(PK, "Имя - DP"), account_name, root_type

@@ -1,4 +1,4 @@
-"""User data access for Counta.
+"""User data access for Avalone Finance.
 
 This repository owns the `users` table in the unified Avalone DB.
 Finance features are available to every user by default; admin checks are delegated to the portal `admin` role.
@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from avalone_core.database import Database, Repository
 from avalone_core import glossary_db as glossary
-import avalone_finance.core.db as _counta_db  # resolve DB_PATH dynamically (tests patch it)
+import avalone_finance.core.db as _finance_db  # resolve DB_PATH dynamically (tests patch it)
 
 _OWNER_TENANT_ID = 1
 
@@ -40,7 +40,7 @@ class UserRepository(Repository):
     """Data access for users and instance admins."""
 
     def __init__(self, db: Database | None = None) -> None:
-        super().__init__(db or Database(_counta_db.DB_PATH))
+        super().__init__(db or Database(_finance_db.DB_PATH))
 
     def _conn(self) -> sqlite3.Connection:
         con = self._db.connection()

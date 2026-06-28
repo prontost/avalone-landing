@@ -2,15 +2,15 @@
 
 Source:
   ~/.avalone/avalone.db   -> users
-  ~/.counta/counta.db     -> money_* module
-  ~/.routa/routa.db       -> work_* module
+  ~/.finance/finance.db     -> money_* module
+  ~/.work/work.db       -> work_* module
 
 Target:
   ~/.avalone/avalone.db (modified in place after backup)
 
 Tenant remapping:
   Avalone user lucifer currently has id=1.
-  Counta tenant 3 and Work tenant 3 belong to lucifer.
+  Avalone Finance tenant 3 and Work tenant 3 belong to lucifer.
   After migration tenant_id == user_id == 1.
 """
 
@@ -23,8 +23,8 @@ from avalone_core.db import configure, connection, migrate
 
 HOME = Path.home()
 AVALONE_DB = HOME / ".avalone" / "avalone.db"
-COUNTA_DB = HOME / ".counta" / "counta.db"
-WORK_DB = HOME / ".routa" / "routa.db"
+COUNTA_DB = HOME / ".finance" / "finance.db"
+WORK_DB = HOME / ".work" / "work.db"
 BACKUP_DIR = HOME / ".avalone" / "backups"
 
 # Tenant remapping: old module tenant_id -> new unified user_id.
@@ -99,7 +99,7 @@ def _attach_and_copy(
 
 
 def _ensure_user_columns(con: sqlite3.Connection) -> None:
-    """Add columns that Avalone source may lack but Counta/Work need."""
+    """Add columns that Avalone source may lack but Avalone Finance/Work need."""
     existing = {row[1] for row in con.execute("PRAGMA table_info(users)")}
     for col, dtype in (
         ("email_verified", "INTEGER DEFAULT 0"),
@@ -124,8 +124,8 @@ def _copy_users(con: sqlite3.Connection) -> None:
     con.executemany(f"INSERT INTO users ({col_names}) VALUES ({placeholders})", src_users)
 
 
-def _migrate_counta(con: sqlite3.Connection) -> None:
-    print("migrating Counta module")
+def _migrate_finance(con: sqlite3.Connection) -> None:
+    print("migrating Avalone Finance module")
     table_mapping = {
         "global_settings": "money_global_settings",
         "led_accounts": "money_led_accounts",
@@ -140,7 +140,7 @@ def _migrate_counta(con: sqlite3.Connection) -> None:
         "entry_meta": "money_entry_meta",
         "slept_entries": "money_slept_entries",
     }
-    _attach_and_copy(con, COUNTA_DB, "counta", table_mapping, TENANT_MAP)
+    _attach_and_copy(con, COUNTA_DB, "finance", table_mapping, TENANT_MAP)
 
 
 def _migrate_work_trips(con: sqlite3.Connection) -> None:
@@ -225,8 +225,8 @@ def _verify_emails(con: sqlite3.Connection) -> None:
     con.execute("UPDATE users SET email_verified = 1 WHERE email != ''")
 
 
-def _fix_counta_glossary(con: sqlite3.Connection) -> None:
-    """Update Counta UI glossary keys that changed after unified platform migration."""
+def _fix_finance_glossary(con: sqlite3.Connection) -> None:
+    """Update Avalone Finance UI glossary keys that changed after unified platform migration."""
     updates = {
         "tab_more": "⚙️ Настройки",
         "tab_bal": "💰",
@@ -258,12 +258,12 @@ def main() -> None:
     with connection() as con:
         _copy_users(con)
         _ensure_user_columns(con)
-        _migrate_counta(con)
+        _migrate_finance(con)
         _migrate_work(con)
         _fix_sequences(con)
         _make_lucifer_admin(con)
         _verify_emails(con)
-        _fix_counta_glossary(con)
+        _fix_finance_glossary(con)
         con.commit()
 
     print("migration complete")

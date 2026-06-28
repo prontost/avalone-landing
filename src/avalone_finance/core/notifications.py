@@ -1,7 +1,7 @@
 """Журнал уведомлений пользователя в разрезе приложений.
 
 Каждое уведомление привязано к пользователю (tenant_id) и к приложению (app).
-Таблица в единой БД — `money_notifications`; Counta добавляет свои колонки
+Таблица в единой БД — `money_notifications`; Avalone Finance добавляет свои колонки
 `app`, `read_at`, `dismissed_at`, если их ещё нет.
 
 Backward-compatible facade: module-level functions delegate to the default

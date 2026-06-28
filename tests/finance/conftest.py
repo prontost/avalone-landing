@@ -1,4 +1,4 @@
-"""Shared test fixtures and helpers for Counta.
+"""Shared test fixtures and helpers for the Avalone Finance module.
 
 Since production auth uses Avalone SSO, tests monkeypatch external_auth.user_id_of
 to return the locally-set tenant id. This lets tests keep using the existing

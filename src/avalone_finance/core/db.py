@@ -1,6 +1,6 @@
-"""Counta DB connector: uses the unified Avalone SQLite database.
+"""Avalone Finance DB connector: uses the unified Avalone SQLite database.
 
-All Counta tables live in the unified DB and use the `money_` prefix. Modules
+All Avalone Finance tables live in the unified DB and use the `money_` prefix. Modules
 continue importing `DB_PATH` from here; the actual connection comes from
 `avalone_core.db`.
 """

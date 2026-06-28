@@ -970,7 +970,7 @@ let ME_IS_ADMIN = false;
 
 // флаг «видел мастер» — ПЕР-ЮЗЕРНЫЙ: иначе на одном браузере новый юзер не
 // увидит мастер, т.к. прежний уже его закрыл (баг общего localStorage-ключа).
-function wzSeenKey(){ return 'counta_wizard:' + (ME_LOGIN || '_'); }
+function wzSeenKey(){ return 'avalone_wizard:' + (ME_LOGIN || '_'); }
 function markWizardSeen(){ localStorage.setItem(wzSeenKey(), '1'); }
 function startWizard(){ wzIdx = 0; openModal('wizard-overlay', markWizardSeen); renderWizard(); }
 function closeWizard(){

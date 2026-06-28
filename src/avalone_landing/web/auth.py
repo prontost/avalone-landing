@@ -273,7 +273,7 @@ async def reset_password_submit(
             status_code=result.error_code,
         )
 
-    # Log the user in immediately so the SSO cookie is available for Counta/Routa.
+    # Log the user in immediately so the SSO cookie is available for Avalone Finance/Avalone Work.
     resp = RedirectResponse("/", status_code=303)
     auth_controller.issue_session(request, resp, result.user_id)
     return resp

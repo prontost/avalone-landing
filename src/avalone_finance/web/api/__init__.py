@@ -1,4 +1,4 @@
-"""Counta API routers aggregator.
+"""Avalone Finance API routers aggregator.
 
 Domain routers are registered here under the /api prefix. External code should
 import `router` from this package (e.g. `from avalone_finance.web.api import router`).

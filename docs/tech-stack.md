@@ -97,7 +97,7 @@ Svelte компилирует компоненты в оптимизирован
 
 ### Почему Python FastAPI
 
-- Уже используется в Counta — оператор и команда знакомы.
+- Уже используется в Avalone — оператор и команда знакомы.
 - Async из коробки (ASGI + uvicorn).
 - Автоматическая OpenAPI документация.
 - Отличная интеграция с ML/AI (PyTorch, scikit-learn, pandas).
@@ -144,7 +144,7 @@ avalone/
 - JSONB для гибких полу-структурированных данных.
 - Full-text search.
 - PostGIS для гео-данных.
-- Знакомо по Counta.
+- Знакомо по Avalone.
 
 **Как моделировать граф в PostgreSQL:**
 
@@ -384,7 +384,7 @@ Client ←→ Load Balancer ←→ WebSocket Server 1
 
 ### Инфраструктура
 
-- **Фаза 0:** MacBook + Cloudflare tunnel (как Counta).
+- **Фаза 0:** MacBook + Cloudflare tunnel (как Avalone).
 - **Фаза 1:** VPS (Hetzner / DigitalOcean / AWS Lightsail) + Docker.
 - **Фаза 2:** Kubernetes или managed container platform.
 

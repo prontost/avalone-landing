@@ -1,14 +1,14 @@
-"""Playwright audit for Avalone shared UI across landing, Counta and Routa.
+"""Playwright audit for Avalone shared UI across landing, Avalone Finance and Avalone Work.
 
 Runs against locally-started services:
   - landing: http://127.0.0.1:8811
-  - counta:  http://127.0.0.1:8810
-  - routa:   http://127.0.0.1:8812
+  - finance:  http://127.0.0.1:8810
+  - work:   http://127.0.0.1:8812
 
 Checks:
   - each service serves the shared shell CSS
   - landing home renders the shared shell and app catalog
-  - counta / routa redirect anonymous users to the Avalone login page
+  - finance / work redirect anonymous users to the Avalone login page
   - no console errors or uncaught JS exceptions
 """
 
@@ -20,8 +20,8 @@ from playwright.sync_api import sync_playwright
 
 SERVICES = {
     "landing": "http://127.0.0.1:8811",
-    "counta": "http://127.0.0.1:8810",
-    "routa": "http://127.0.0.1:8812",
+    "finance": "http://127.0.0.1:8810",
+    "work": "http://127.0.0.1:8812",
 }
 
 # Network/console problems we tolerate (third-party or expected missing endpoints).
@@ -79,23 +79,23 @@ def main() -> int:
         if "Avalone" not in title:
             failures.append(f"landing: unexpected title {title!r}")
 
-        # Counta unauthenticated -> login
-        counta_base = SERVICES["counta"]
-        page.goto(counta_base + "/", wait_until="networkidle")
+        # Avalone Finance unauthenticated -> login
+        finance_base = SERVICES["finance"]
+        page.goto(finance_base + "/", wait_until="networkidle")
         parsed = urlparse(page.url)
         if parsed.path != "/login" or "next=" not in parsed.query:
-            failures.append(f"counta: expected redirect to login, got {page.url}")
+            failures.append(f"finance: expected redirect to login, got {page.url}")
         if page.locator("input#login").count() == 0:
-            failures.append("counta login page: login input not found")
+            failures.append("finance login page: login input not found")
 
-        # Routa unauthenticated -> login
-        routa_base = SERVICES["routa"]
-        page.goto(routa_base + "/", wait_until="networkidle")
+        # Avalone Work unauthenticated -> login
+        work_base = SERVICES["work"]
+        page.goto(work_base + "/", wait_until="networkidle")
         parsed = urlparse(page.url)
         if parsed.path != "/login" or "next=" not in parsed.query:
-            failures.append(f"routa: expected redirect to login, got {page.url}")
+            failures.append(f"work: expected redirect to login, got {page.url}")
         if page.locator("input#login").count() == 0:
-            failures.append("routa login page: login input not found")
+            failures.append("work login page: login input not found")
 
         # Mobile viewport smoke test on landing
         context2 = browser.new_context(

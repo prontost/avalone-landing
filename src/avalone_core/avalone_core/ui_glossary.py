@@ -134,7 +134,7 @@ EXACT: dict[str, str] = {
 }
 
 PREFIX: list[tuple[str, str]] = [
-    # Finance / work UI (existing Counta/Routa conventions).
+    # Finance / work UI (existing Avalone Finance/Avalone Work conventions).
     ("f_",      "Label or placeholder for an input field in the transaction/trip entry form."),
     ("t_",      "Short toast/snackbar confirmation message shown briefly after an action."),
     ("e_",      "Short inline error message shown when input is invalid."),

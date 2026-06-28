@@ -2,7 +2,7 @@
 """Rotated local backups of SQLite databases.
 
 Configuration: a JSON file with a list of absolute paths (see backup-config.json).
-If config is missing, falls back to the main Avalone/Counta/Work DBs.
+If config is missing, falls back to the main Avalone/Avalone Finance/Work DBs.
 
 Run manually:
     python3 infra/backup/backup_db.py --config infra/backup/backup-config.json
@@ -19,8 +19,8 @@ DEFAULT_RETENTION_DAYS = 14
 BACKUP_ROOT = Path.home() / ".avalone" / "backups" / "auto"
 FALLBACK_DBS = [
     Path.home() / ".avalone" / "avalone.db",
-    Path.home() / ".counta" / "counta.db",
-    Path.home() / ".routa" / "routa.db",
+    Path.home() / ".finance" / "finance.db",
+    Path.home() / ".work" / "work.db",
 ]
 
 

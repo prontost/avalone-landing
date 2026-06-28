@@ -1,4 +1,4 @@
-const CACHE_NAME = 'counta-v1';
+const CACHE_NAME = 'avalone-finance-v1';
 
 self.addEventListener('install', e => {
   self.skipWaiting();

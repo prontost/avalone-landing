@@ -11,7 +11,7 @@ router = APIRouter(prefix="/notifications")
 
 @router.get("")
 async def list_notifications(
-    app: str = "counta",
+    app: str = "money",
     filter: str = "all",
     limit: int = 50,
     offset: int = 0,
@@ -51,7 +51,7 @@ async def mark_dismissed(
 
 @router.get("/unread-count")
 async def unread_count(
-    app: str = "counta",
+    app: str = "money",
     tenant_id: int = Depends(current_tenant),
     service: NotificationService = Depends(get_notification_service),
 ):
@@ -73,7 +73,7 @@ async def create_notification(
         )
     nid = service.add(
         tenant_id,
-        app=payload.get("app", "counta"),
+        app=payload.get("app", "money"),
         title=title,
         body=payload.get("body", ""),
         kind=payload.get("kind", "info"),

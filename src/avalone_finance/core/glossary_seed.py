@@ -1,7 +1,7 @@
-"""Counta glossary seed.
+"""Avalone Finance glossary seed.
 
 Single source of truth for user-facing strings lives in `avalone_core.glossary_db`.
-This module provides the initial set of keys used by Counta (module=money).
+This module provides the initial set of keys used by Avalone Finance (module=money).
 Call `seed()` once at startup to upsert all rows idempotently.
 """
 from avalone_core import glossary_db
@@ -9,7 +9,7 @@ from avalone_core import ui_glossary
 
 _MODULE = "money"
 
-_COUNTA_SEED = [
+_FINANCE_SEED = [
     {
         "key": "acc_add",
         "ru": "Добавить аккаунт",
@@ -724,17 +724,17 @@ _COUNTA_SEED = [
         "desc": "Short UI string in the Avalone platform. Translate it as an everyday app-interface term, not literally.",
     },    {
         "key": "email_reset_subject",
-        "ru": "Сброс пароля Counta",
-        "en": "Counta password reset",
-        "ko": "Counta 비밀번호 재설정",
+        "ru": "Сброс пароля Avalone Finance",
+        "en": "Avalone Finance password reset",
+        "ko": "Avalone Finance 비밀번호 재설정",
         "kind": "email",
         "module": _MODULE,
         "desc": "Short UI string in the Avalone platform. Translate it as an everyday app-interface term, not literally.",
     },    {
         "key": "email_verify_body",
-        "ru": "Код подтверждения email для Counta: {code}\n\nКод действует 30 минут. Если вы не запрашивали подтверждение — просто проигнорируйте письмо.",
-        "en": "Counta email verification code: {code}\n\nThe code is valid for 30 minutes. If you did not request verification, please ignore this email.",
-        "ko": "Counta 이메일 인증 코드: {code}\n\n코드는 30분간 유효합니다. 인증을 요청하지 않으셨다면 이 이메일을 무시하세요.",
+        "ru": "Код подтверждения email для Avalone Finance: {code}\n\nКод действует 30 минут. Если вы не запрашивали подтверждение — просто проигнорируйте письмо.",
+        "en": "Avalone Finance email verification code: {code}\n\nThe code is valid for 30 minutes. If you did not request verification, please ignore this email.",
+        "ko": "Avalone Finance 이메일 인증 코드: {code}\n\n코드는 30분간 유효합니다. 인증을 요청하지 않으셨다면 이 이메일을 무시하세요.",
         "kind": "email",
         "module": _MODULE,
         "desc": "Short UI string in the Avalone platform. Translate it as an everyday app-interface term, not literally.",
@@ -3933,5 +3933,5 @@ _COUNTA_SEED = [
     },]
 
 def seed() -> int:
-    """Idempotently upsert all Counta keys into the unified glossary."""
-    return glossary_db.upsert_many(_COUNTA_SEED)
+    """Idempotently upsert all Avalone Finance keys into the unified glossary."""
+    return glossary_db.upsert_many(_FINANCE_SEED)

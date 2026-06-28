@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 LANGS = ("ru", "en", "ko")
 
-# Seed data for the portal / shared shell. Domain keys (Counta/Routa categories,
+# Seed data for the portal / shared shell. Domain keys (Avalone Finance/Avalone Work categories,
 # currencies, etc.) are migrated from legacy tables or seeded by the apps.
 _PORTAL_SEED: list[dict[str, Any]] = [
     # Apps
@@ -84,7 +84,7 @@ _PORTAL_SEED: list[dict[str, Any]] = [
     {"key": "nav_chat",    "ru": "Чат",     "en": "Chat",    "ko": "채팅",  "kind": "ui", "module": "portal"},
     {"key": "nav_profile", "ru": "Профиль", "en": "Profile", "ko": "프로필", "kind": "ui", "module": "portal"},
 
-    # Module nav (shared with Counta/Routa)
+    # Module nav (shared with Avalone Finance/Avalone Work)
     {"key": "nav_trips",          "ru": "Поездки",    "en": "Trips",       "ko": "출퇴근", "kind": "ui", "module": "portal"},
     {"key": "nav_stats",          "ru": "Статистика", "en": "Statistics",  "ko": "통계",  "kind": "ui", "module": "portal"},
     {"key": "nav_notifications",  "ru": "Уведомления", "en": "Notifications", "ko": "알림", "kind": "ui", "module": "portal"},

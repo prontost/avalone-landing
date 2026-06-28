@@ -11,19 +11,19 @@ from avalone_finance.core.app_access_repository import AppAccessRepository
 
 # Реестр приложений платформы. id — технический ключ, используется в URL/API.
 KNOWN_APPS: dict[str, dict] = {
-    "counta": {
-        "id": "counta",
-        "name": "Counta",
+    "money": {
+        "id": "money",
+        "name": "Финансы",
         "icon": "🪙",
         "public": True,
         "url": "https://avalone.online/finance",
     },
-    "routa": {
-        "id": "routa",
-        "name": "Routa",
+    "work": {
+        "id": "work",
+        "name": "Работа",
         "icon": "🚐",
         "public": True,
-        "url": "https://work.avalone.online",
+        "url": "https://avalone.online/work",
     },
 }
 

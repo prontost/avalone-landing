@@ -1,6 +1,6 @@
 """Data access for the per-user notification log.
 
-Table `money_notifications` stores notifications per tenant/app. Counta adds
+Table `money_notifications` stores notifications per tenant/app. Avalone Finance adds
 `app`, `read_at`, `dismissed_at` columns if the unified schema does not yet
 have them.
 """
@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 from avalone_core.database import Database, Repository
 
-import avalone_finance.core.db as _counta_db  # resolve DB_PATH dynamically (tests patch it)
+import avalone_finance.core.db as _finance_db  # resolve DB_PATH dynamically (tests patch it)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS money_notifications (
@@ -41,7 +41,7 @@ class NotificationRepository(Repository):
     """SQL access to `money_notifications`."""
 
     def __init__(self, db: Database | None = None) -> None:
-        super().__init__(db or Database(_counta_db.DB_PATH))
+        super().__init__(db or Database(_finance_db.DB_PATH))
 
     def _conn(self) -> sqlite3.Connection:
         con = self._db.connection()

@@ -1,6 +1,6 @@
 """Device fingerprinting and screen-time tracking for Avalone.
 
-Shared by the portal, Counta and Routa. Screen time is updated by a periodic
+Shared by the portal, Avalone Finance and Avalone Work. Screen time is updated by a periodic
 heartbeat from the shared shell JS.
 """
 

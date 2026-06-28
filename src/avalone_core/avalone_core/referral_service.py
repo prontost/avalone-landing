@@ -1,6 +1,6 @@
 """Referral code system for the Avalone platform.
 
-Repositories and services are reusable from the portal, Counta and Routa.
+Repositories and services are reusable from the portal, Avalone Finance and Avalone Work.
 """
 
 from __future__ import annotations

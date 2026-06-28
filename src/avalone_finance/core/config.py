@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime configuration for the unified Avalone platform.
 
-    Since Counta is now the ``/finance`` module inside Avalone, env vars use the
+    Since Avalone Finance is now the ``/finance`` module inside Avalone, env vars use the
     ``AVALONE_`` prefix and reuse the main app secret when no module-specific key
     is provided.
     """

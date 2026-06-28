@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role_id);
 
--- Money module (Counta)
+-- Money module (Avalone Finance)
 CREATE TABLE IF NOT EXISTS money_global_settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL

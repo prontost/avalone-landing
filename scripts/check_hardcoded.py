@@ -37,8 +37,7 @@ ALLOWLIST_PATH_SUFFIXES = {
     "scripts/cleanup_owner_categories.py",
     "scripts/migrate_tenant_pk.py",
     "scripts/seed_all_catalogs.py",
-    "src/counta/core/lexicon.py",
-    "src/routa/core/lexicon.py",
+    "src/avalone_landing/core/feedback_service.py",  # admin-only email templates, not user-facing UI
 }
 
 # Specific internal identifiers / test markers that are not user-facing UI.

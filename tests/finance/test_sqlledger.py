@@ -11,7 +11,7 @@ import pytest
 
 @pytest.fixture
 def led(tmp_path, monkeypatch):
-    # своя БД на тест — не трогаем рабочую counta.db
+    # своя БД на тест — не трогаем боевую avalone.db
     import avalone_finance.core.db as db
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.db")
     import importlib

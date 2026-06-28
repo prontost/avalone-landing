@@ -1,4 +1,4 @@
-"""Counta API domain router."""
+"""Avalone Finance API domain router."""
 
 import logging
 

@@ -1,4 +1,4 @@
-"""Avalone Finance — formerly Counta. Hard input forms, deterministic outputs.
+"""Avalone Finance — formerly Avalone Finance. Hard input forms, deterministic outputs.
 
 Telegram retired (разворот №3). Auth: Avalone SSO via shared signed cookie.
 No AI/LLM layer: all analytics and tips are rule-based.
@@ -39,10 +39,10 @@ _constants_service = ConstantsService()
 
 def _setup_logging() -> None:
     """Пишем логи приложения в файл с ротацией; stderr оставляем для launchd."""
-    log_dir = db.DB_PATH.parent if db.DB_PATH else Path.home() / ".counta"
+    log_dir = db.DB_PATH.parent if db.DB_PATH else Path.home() / ".finance"
     log_dir.mkdir(parents=True, exist_ok=True)
     handler = logging.handlers.RotatingFileHandler(
-        log_dir / "counta.log",
+        log_dir / "finance.log",
         maxBytes=_constants_service.get("log_max_bytes"),
         backupCount=_constants_service.get("log_backup_count"),
         encoding="utf-8",
@@ -312,7 +312,7 @@ async def _ensure_catalog():
         catalog_service.seed_glossary()
     except Exception:
         logging.getLogger(__name__).exception("glossary domain seed")
-    # Гарантируем наличие ролей по умолчанию и хотя бы одного администратора Counta.
+    # Гарантируем наличие ролей по умолчанию и хотя бы одного администратора Avalone Finance.
     try:
         from avalone_landing.core.role_service import RoleService, RoleRepository
         RoleService(RoleRepository(user_service._repo._db)).ensure_defaults()

@@ -7,11 +7,11 @@
 ## Текущее состояние (проблемы)
 
 - `~/.avalone/avalone.db` — только `users`.
-- `~/.counta/counta.db` — `users`, `external_users`, `money_*`, `led_*`, `catalog_i18n`, `notifications` и т.д.
-- `~/.routa/routa.db` — `users`, `external_users`, `money_*`, `led_*`, `catalog_i18n`, `notifications`, `trips`, `trip_members`.
+- `~/.counta/counta.db` — `users`, `external_users`, `money_*`, `led_*`, `catalog_i18n`, `notifications` и т.д. (legacy-файл данных модуля Финансов).
+- `~/.routa/routa.db` — `users`, `external_users`, `money_*`, `led_*`, `catalog_i18n`, `notifications`, `trips`, `trip_members` (legacy-файл данных модуля Работы).
 - В Avalone пользователь `lucifer` имеет `id=1`.
-- В Counta/Work `external_users` хранит: `avalone|1|3` — лишняя косвенность.
-- Fallback-логин в Counta/Work создаёт тенанты и пароли, дублируя пользователей Avalone.
+- В Финансы/Работа `external_users` хранит: `avalone|1|3` — лишняя косвенность.
+- Fallback-логин в Финансы/Работа создаёт тенанты и пароли, дублируя пользователей Avalone.
 - На landing есть раздел «Профиль» в быстрых действиях, который помечен как "в разработке", но страница `/profile` уже работает — противоречие.
 - Названия веток, URL, иконки и статусы дублируются в `config.py`, шаблонах и JS.
 
@@ -24,7 +24,7 @@
 - Таблицы модулей с префиксами:
   - `money_accounts`, `money_led_entries`, `money_catalog_i18n`, `money_notifications`…
   - `work_trips`, `work_trip_members`, `work_catalog_i18n`, `work_notifications`…
-- Единый реестр приложений/веток (`AvaloneRegistry`), который используется порталом, Counta, Work, shell, PWA manifest.
+- Единый реестр приложений/веток (`AvaloneRegistry`), который используется порталом, Финансы, Работа, shell, PWA manifest.
 - Landing не содержит противоречий и не обманывает пользователя статусами.
 
 ## Архитектура
@@ -33,8 +33,8 @@
 avalone_online/
 ├── src/
 │   ├── avalone_landing/          # портал + SSO
-│   ├── avalone_money/            # модуль Финансов (бывший Counta)
-│   ├── avalone_work/             # модуль Работы (бывший Routa)
+│   ├── avalone_money/            # модуль Финансов
+│   ├── avalone_work/             # модуль Работы
 │   └── avalone_core/             # общее ядро
 │       ├── db.py                 # единое подключение, миграции
 │       ├── registry.py           # AvaloneRegistry
@@ -73,8 +73,8 @@ class AvaloneRegistry:
 - `avalone_landing/config.py`
 - `avalone_landing/web/templates/landing.html`
 - `avalone_landing/web/templates/profile.html`
-- `counta/src/counta/web/templates/app.html`
-- `routa/src/routa/web/templates/work.html`
+- `src/avalone_finance/web/templates/app.html`
+- `src/avalone_work/web/templates/work.html` (когда модуль Работы появится)
 - `avalone_landing/web/templates/shell.html`
 
 ### 2. `TenantContext`
@@ -116,7 +116,7 @@ class UnifiedDB:
 
 1. Создать `src/avalone_core/registry.py` с `AvaloneRegistry`.
 2. Перенести туда все ветки из `config.py` Avalone landing.
-3. Удалить дублирующие `BRANCHES` из Counta/Work шаблонов — передавать из `AvaloneRegistry`.
+3. Удалить дублирующие `BRANCHES` из Финансы/Работа шаблонов — передавать из `AvaloneRegistry`.
 4. Обновить `shell.html` для рендеринга статусов из реестра.
 5. **Критерий:** в поиске по проекту `grep -R "Работа\|Финансы\|Обучение\|Жильё\|Поездки\|Здоровье"` встречается только в `registry.py` и глоссарии, но не захардкожено в шаблонах.
 
@@ -127,13 +127,13 @@ class UnifiedDB:
    - `MONEY_TABLES` (prefixed)
    - `WORK_TABLES` (prefixed)
    - `migrate()` — idempotent DDL.
-2. Скопировать структуру таблиц из Counta/Work с префиксами.
+2. Скопировать структуру таблиц из Финансы/Работа с префиксами.
 3. Мигрировать данные:
    - Avalone `users` → `users`.
-   - Counta tenant 3 (`lucifer`) → `money_*` с `tenant_id=1`.
-   - Work tenant 3 (`lucifer`) → `work_*` с `tenant_id=1`.
-   - Counta/Work `external_users` удалить.
-4. Удалить fallback-логин и таблицы `users` в Counta/Work.
+   - Финансы tenant 3 (`lucifer`) → `money_*` с `tenant_id=1`.
+   - Работа tenant 3 (`lucifer`) → `work_*` с `tenant_id=1`.
+   - Финансы/Работа `external_users` удалить.
+4. Удалить fallback-логин и таблицы `users` в Финансы/Работа.
 5. **Критерий:** `sqlite3 ~/.avalone/avalone.db ".tables"` показывает `users`, `money_*`, `work_*` и не показывает `external_users` в модулях.
 
 ### Этап 4. Обновление приложений
@@ -141,16 +141,16 @@ class UnifiedDB:
 1. Avalone landing:
    - Использовать `AvaloneRegistry`.
    - Подключаться к unified DB для users.
-2. Counta (Финансы):
+2. Модуль Финансы:
    - Подключаться к unified DB с префиксом `money_`.
    - Убрать `/login`, `/register`, `/recover`, `/reset` fallback.
-   - Убрать `counta_session` cookie, оставить только Avalone SSO.
-   - Удалить шаблоны `login.html`, `register.html` Counta.
-3. Work (Работа):
+   - Убрать legacy-cookie модуля Финансов, оставить только Avalone SSO.
+   - Удалить шаблоны `login.html`, `register.html` Финансы.
+3. Работа (Работа):
    - Подключаться к unified DB с префиксом `work_`.
    - Убрать fallback-логин.
-   - Удалить `login.html` Work.
-4. **Критерий:** авторизация только через Avalone; Counta/Work не имеют собственных страниц логина.
+   - Удалить `login.html` Работа.
+4. **Критерий:** авторизация только через Avalone; Финансы/Работа не имеют собственных страниц логина.
 
 ### Этап 5. Исправление landing
 
@@ -168,16 +168,16 @@ class UnifiedDB:
    - `core/` — бизнес-логика и БД.
    - `web/` — HTTP/шаблоны.
    - `api/` — API endpoints.
-4. Убрать дублирование между Counta и Work (общий ledger, общие настройки).
+4. Убрать дублирование между Финансы и Работа (общий ledger, общие настройки).
 5. **Критерий:** `grep -R "TODO\|FIXME\|HACK"` в `src/` не показывает критичных мест.
 
 ### Этап 7. Тестирование
 
 1. Написать/обновить тесты:
    - Регистрация/логин Avalone.
-   - SSO в Counta и Work.
-   - CRUD операций в Counta.
-   - CRUD поездок в Work.
+   - SSO в Финансы и Работа.
+   - CRUD операций в Финансы.
+   - CRUD поездок в Работа.
 2. Проверить мобильную адаптацию 320/375/768/1440.
 3. Проверить PWA manifest/sw для всех модулей.
 4. **Критерий:** все тесты green, pre-flight green, i18n линтер чист.
@@ -188,20 +188,20 @@ class UnifiedDB:
 2. Перенести unified DB в production location.
 3. Обновить launchd plist: убрать `COUNTA_DB_PATH`, `ROUTA_DB_PATH`, оставить одну `AVALONE_DB_PATH`.
 4. Перезапустить сервисы.
-5. Проверить end-to-end: вход lucifer → Counta/Work → данные на месте.
+5. Проверить end-to-end: вход lucifer → Финансы/Работа → данные на месте.
 
 ## Критерии приёмки
 
 ### Обязательные
 
 - [ ] Единая БД `~/.avalone/avalone.db` содержит `users`, `money_*`, `work_*` таблицы.
-- [ ] Нет fallback-логина в Counta/Work; вход только через Avalone SSO.
+- [ ] Нет fallback-логина в Финансы/Работа; вход только через Avalone SSO.
 - [ ] Нет аккаунта `owner` в production DB.
 - [ ] `AvaloneRegistry` — единственное место с определением веток/приложений.
 - [ ] Глоссарий — единственное место с пользовательскими текстами.
 - [ ] Landing не содержит противоречий в статусах.
 - [ ] Все тесты проходят; pre-flight green; i18n чист.
-- [ ] Авторизация lucifer → Counta/Work → данные lucifer, не owner.
+- [ ] Авторизация lucifer → Финансы/Работа → данные lucifer, не owner.
 
 ### UX/UI
 
@@ -228,4 +228,4 @@ class UnifiedDB:
 
 - Миграция данных из трёх БД в одну — критичная операция. Всегда делать бэкап.
 - Удаление fallback-логина: если Avalone SSO сломается, админ не зайдёт без восстановления. Нужно иметь CLI-команду экстренного доступа.
-- Рефакторинг большого `app.html` Counta может сломать JS. Нужны тесты и постепенные изменения.
+- Рефакторинг большого `app.html` Финансы может сломать JS. Нужны тесты и постепенные изменения.
