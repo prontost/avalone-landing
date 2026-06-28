@@ -73,6 +73,9 @@
       <label class="avalone-label">{{ t('profile_label_current_password', lang=lang) }}
         <input class="avalone-input" type="password" name="current_password" required autocomplete="current-password">
       </label>
+      <div class="avalone-auth-forgot">
+        <a href="/forgot-password">{{ t('reset_forgot_link', lang=lang) }}</a>
+      </div>
       <label class="avalone-label">{{ t('profile_label_new_password', lang=lang) }}
         <input class="avalone-input" type="password" name="new_password" required minlength="6" autocomplete="new-password">
       </label>
