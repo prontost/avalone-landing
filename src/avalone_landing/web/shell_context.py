@@ -13,9 +13,19 @@ from avalone_core.ui import Shell
 import avalone_core.ui
 from avalone_landing.core.auth_service import AuthService
 from avalone_landing.core.user_service import UserService
+from avalone_landing.web.widgets import AuthModal
 
 _UI_DIR = Path(avalone_core.ui.__file__).parent
 _UI_TEMPLATES_DIR = _UI_DIR / "templates"
+
+
+def _auth_modal_context(request: Request, templates: Jinja2Templates, user: dict | None) -> str:
+    mode = request.query_params.get("mode") or "login"
+    if mode not in ("login", "register", "forgot", "reset"):
+        mode = "login"
+    token = request.query_params.get("token", "") if mode == "reset" else ""
+    modal = AuthModal(mode=mode, token=token, user=user)
+    return modal.render(templates.env, request)
 
 
 def _session_context(request: Request) -> list[dict]:
@@ -56,10 +66,12 @@ def render_shell_context(
     """Return the context dict used by shell-based templates."""
     branches = AvaloneRegistry.for_shell(lang)
     sessions = _session_context(request)
+    auth_modal_html = _auth_modal_context(request, templates, user)
     shell = Shell(
         current_app=current_app,
         user=user,
         sessions=sessions,
+        auth_modal_html=auth_modal_html,
         branches=branches,
         app_nav=app_nav or [],
         lang=lang,
@@ -69,6 +81,7 @@ def render_shell_context(
         "build_id": build_id,
         "user": user,
         "sessions": sessions,
+        "auth_modal_html": auth_modal_html,
         "lang": lang,
         "shell_html": shell.render(templates.env, request),
     }

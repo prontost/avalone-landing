@@ -1,0 +1,72 @@
+<div class="avalone-modal" id="avalone-auth-modal" aria-hidden="true" data-mode="{{ mode }}" data-token="{{ token }}">
+  <div class="avalone-modal__backdrop" onclick="closeAuthModal()"></div>
+  <div class="avalone-modal__panel">
+    <div class="avalone-modal__header">
+      <span class="avalone-modal__title" id="auth-modal-title">{{ t('auth_login_title', lang=lang) }}</span>
+      <button type="button" class="avalone-icon-btn" onclick="closeAuthModal()" aria-label="{{ t('shell_close_menu', lang=lang) }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="avalone-modal__body">
+      <div class="avalone-auth-tabs">
+        <button type="button" class="avalone-auth-tab active" data-target="auth-login-panel">{{ t('auth_login_title', lang=lang) }}</button>
+        <button type="button" class="avalone-auth-tab" data-target="auth-register-panel">{{ t('auth_register_title', lang=lang) }}</button>
+      </div>
+
+      <div class="auth-status" id="auth-modal-status" style="display:none"></div>
+
+      <form class="avalone-stack auth-panel active" id="auth-login-panel" onsubmit="return submitAuthForm(this, 'login')">
+        <label class="avalone-label">{{ t('auth_label_login', lang=lang) }}
+          <input class="avalone-input" name="login" type="text" required autocomplete="username" placeholder="{{ t('auth_placeholder_login', lang=lang) }}">
+        </label>
+        <label class="avalone-label">{{ t('auth_label_password', lang=lang) }}
+          <input class="avalone-input" name="password" type="password" required autocomplete="current-password" placeholder="{{ t('auth_placeholder_password', lang=lang) }}">
+        </label>
+        <button type="button" class="avalone-link-sm" onclick="switchAuthView('forgot')">{{ t('reset_forgot_link', lang=lang) }}</button>
+        <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('auth_btn_login', lang=lang) }}</button>
+        <p class="avalone-auth-footer">
+          {{ t('auth_no_account', lang=lang) }} <button type="button" class="avalone-link-btn" onclick="switchAuthView('register')">{{ t('auth_register_link', lang=lang) }}</button>
+        </p>
+      </form>
+
+      <form class="avalone-stack auth-panel" id="auth-register-panel" onsubmit="return submitAuthForm(this, 'register')">
+        <label class="avalone-label">{{ t('auth_label_login', lang=lang) }}
+          <input class="avalone-input" name="login" type="text" required autocomplete="username" placeholder="{{ t('auth_placeholder_login', lang=lang) }}">
+        </label>
+        <label class="avalone-label">{{ t('auth_label_password', lang=lang) }}
+          <input class="avalone-input" name="password" type="password" required minlength="6" autocomplete="new-password" placeholder="{{ t('auth_placeholder_password', lang=lang) }}">
+        </label>
+        <label class="avalone-label">{{ t('auth_label_password2', lang=lang) }}
+          <input class="avalone-input" name="password2" type="password" required minlength="6" autocomplete="new-password" placeholder="{{ t('auth_placeholder_password2', lang=lang) }}">
+        </label>
+        <input type="hidden" name="invite" value="{{ request.query_params.get('ref', '') }}">
+        <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('auth_btn_register', lang=lang) }}</button>
+        <p class="avalone-auth-footer">
+          {{ t('auth_has_account', lang=lang) }} <button type="button" class="avalone-link-btn" onclick="switchAuthView('login')">{{ t('auth_login_link', lang=lang) }}</button>
+        </p>
+      </form>
+
+      <form class="avalone-stack auth-panel" id="auth-forgot-panel" onsubmit="return submitAuthForm(this, 'forgot')">
+        <p class="text-muted mt-0">{{ t('reset_forgot_hint', lang=lang) }}</p>
+        <label class="avalone-label">{{ t('reset_label_login_or_email', lang=lang) }}
+          <input class="avalone-input" name="login_or_email" type="text" required autocomplete="username" placeholder="{{ t('reset_placeholder_login_or_email', lang=lang) }}">
+        </label>
+        <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('reset_btn_send', lang=lang) }}</button>
+        <p class="avalone-auth-footer">
+          <button type="button" class="avalone-link-btn" onclick="switchAuthView('login')">{{ t('auth_login_link', lang=lang) }}</button>
+        </p>
+      </form>
+
+      <form class="avalone-stack auth-panel" id="auth-reset-panel" onsubmit="return submitAuthForm(this, 'reset')">
+        <input type="hidden" name="token" value="{{ token }}">
+        <label class="avalone-label">{{ t('auth_label_password', lang=lang) }}
+          <input class="avalone-input" name="password" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password', lang=lang) }}">
+        </label>
+        <label class="avalone-label">{{ t('auth_label_password2', lang=lang) }}
+          <input class="avalone-input" name="password2" type="password" required autocomplete="new-password" placeholder="{{ t('auth_placeholder_password2', lang=lang) }}">
+        </label>
+        <button class="avalone-btn avalone-btn-primary" type="submit">{{ t('reset_btn_save', lang=lang) }}</button>
+      </form>
+    </div>
+  </div>
+</div>

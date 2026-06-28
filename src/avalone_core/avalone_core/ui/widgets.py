@@ -69,6 +69,7 @@ class Shell(Widget):
     current_app: str = "portal"
     user: Any = None
     sessions: List[Any] = field(default_factory=list)
+    auth_modal_html: str = ""
     branches: List[Any] = field(default_factory=list)
     app_nav: List[Any] = field(default_factory=list)
     breadcrumbs: List[Any] = field(default_factory=list)
@@ -106,6 +107,7 @@ class Shell(Widget):
             "current_app": self.current_app,
             "user": self.user,
             "sessions": self.sessions,
+            "auth_modal_html": self.auth_modal_html,
             "branches": self.branches,
             "app_nav": self.app_nav,
             "active_branch": self.active_branch,

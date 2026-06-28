@@ -233,6 +233,127 @@ const AVALONE_I18N = window.AVALONE_I18N || {};
     if (switcher) switcher.classList.toggle('open');
   };
 
+  // Auth modal
+  function _authModal() { return document.getElementById('avalone-auth-modal'); }
+  function _authStatus() { return document.getElementById('auth-modal-status'); }
+
+  window.openAuthModal = function(mode, token) {
+    closeAvaloneMenu();
+    const modal = _authModal();
+    if (!modal) return;
+    if (mode) switchAuthView(mode, token);
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeAuthModal = function() {
+    const modal = _authModal();
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  };
+
+  window.switchAuthView = function(mode, token) {
+    const modal = _authModal();
+    if (!modal) return;
+    const panels = modal.querySelectorAll('.auth-panel');
+    panels.forEach(function(p){ p.classList.remove('active'); });
+    const tabs = modal.querySelectorAll('.avalone-auth-tab');
+    tabs.forEach(function(t){ t.classList.remove('active'); });
+
+    const target = modal.querySelector('#auth-' + mode + '-panel');
+    if (target) target.classList.add('active');
+
+    if (mode === 'login') {
+      modal.querySelector('[data-target="auth-login-panel"]')?.classList.add('active');
+    } else if (mode === 'register') {
+      modal.querySelector('[data-target="auth-register-panel"]')?.classList.add('active');
+    } else {
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+    }
+
+    if (token && mode === 'reset') {
+      const input = modal.querySelector('#auth-reset-panel input[name="token"]');
+      if (input) input.value = token;
+    }
+
+    const title = document.getElementById('auth-modal-title');
+    if (title) {
+      const titles = {
+        login: AVALONE_I18N.auth_login_title || 'Sign in',
+        register: AVALONE_I18N.auth_register_title || 'Sign up',
+        forgot: AVALONE_I18N.reset_forgot_title || 'Password recovery',
+        reset: AVALONE_I18N.reset_title || 'New password'
+      };
+      title.textContent = titles[mode] || titles.login;
+    }
+    const status = _authStatus();
+    if (status) status.style.display = 'none';
+  };
+
+  window.submitAuthForm = function(form, mode) {
+    const status = _authStatus();
+    if (status) status.style.display = 'none';
+    const endpoints = {
+      login: '/api/auth/login',
+      register: '/api/auth/register',
+      forgot: '/api/auth/forgot-password',
+      reset: '/api/auth/reset-password'
+    };
+    const url = endpoints[mode];
+    if (!url) return false;
+    const data = new FormData(form);
+    const body = {};
+    data.forEach(function(value, key){ body[key] = value; });
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+      credentials: 'same-origin'
+    }).then(function(r){
+      return r.json().then(function(payload){
+        if (r.ok && payload.ok) {
+          if (mode === 'forgot') {
+            if (status) {
+              status.textContent = payload.message || AVALONE_I18N.reset_email_sent || 'Link sent';
+              status.className = 'auth-status success';
+              status.style.display = 'block';
+            }
+            form.reset();
+          } else {
+            // login/register/reset: reload to apply new session
+            location.href = payload.next || '/';
+          }
+        } else {
+          if (status) {
+            status.textContent = payload.error || AVALONE_I18N.auth_error_invalid_credentials || 'Error';
+            status.className = 'auth-status error';
+            status.style.display = 'block';
+          }
+        }
+      });
+    }).catch(function(){
+      if (status) {
+        status.textContent = AVALONE_I18N.auth_error_invalid_credentials || 'Error';
+        status.className = 'auth-status error';
+        status.style.display = 'block';
+      }
+    });
+    return false;
+  };
+
+  // Auto-open modal from URL ?mode=reset&token=...
+  (function _autoOpenAuthModal(){
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    const token = params.get('token');
+    if (mode && document.getElementById('avalone-auth-modal')) {
+      openAuthModal(mode, token);
+    }
+  })();
+
   // Search overlay
   window.openGlobalSearch = function() {
     const overlay = document.getElementById('global-search-overlay');
