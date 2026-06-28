@@ -104,6 +104,14 @@ async def login(
     pw = str(form.get("password", ""))
     user = user_service.authenticate(login_field, pw)
     if user:
+        active_uid = auth_service.active_user_id(request)
+        if user.id == active_uid:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                _anon_shell_context(request, info=t("auth_already_active")),
+                status_code=200,
+            )
         next_url = str(form.get("next", "")).strip()
         if not next_url or not next_url.startswith(("http://", "https://", "/")):
             next_url = "/"

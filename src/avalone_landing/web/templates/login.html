@@ -17,6 +17,14 @@
 
     {% if error %}<div class="avalone-alert avalone-alert-danger">{{ error }}</div>{% endif %}
     {% if success %}<div class="avalone-alert avalone-alert-success">{{ success }}</div>{% endif %}
+    {% if info %}<div class="avalone-alert avalone-alert-info">{{ info }}</div>{% endif %}
+
+    {% if already_user %}
+    <p class="avalone-auth-lead">
+      {{ t('auth_currently_signed_in_as', lang=lang) }} <strong>{{ already_user.name or already_user.login }}</strong>.
+      {{ t('auth_add_account_hint', lang=lang) }}
+    </p>
+    {% endif %}
 
     <form method="post" action="/login">
       <input type="hidden" name="next" value="{{ request.query_params.get('next', '') }}">
