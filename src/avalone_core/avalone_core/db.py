@@ -197,19 +197,9 @@ CREATE TABLE IF NOT EXISTS money_slept_entries (
 
 -- Work module has been removed; legacy work_* tables are dropped on migration.
 
--- Unified glossary: single source of truth for all apps.
-CREATE TABLE IF NOT EXISTS avalone_glossary (
-    key        TEXT PRIMARY KEY,
-    ru         TEXT,
-    en         TEXT,
-    ko         TEXT,
-    kind       TEXT DEFAULT 'ui',
-    module     TEXT DEFAULT '',
-    desc       TEXT DEFAULT '',
-    updated_at TEXT DEFAULT ''
-);
-CREATE INDEX IF NOT EXISTS idx_avalone_glossary_kind   ON avalone_glossary(kind);
-CREATE INDEX IF NOT EXISTS idx_avalone_glossary_module ON avalone_glossary(module);
+-- Unified glossary is owned by GlossaryRepository (avalone_core.glossary_service).
+-- Do NOT define the table here; the repository handles schema creation, column
+-- migrations, and indexes after the core schema is applied.
 
 -- Platform-wide server settings (SMTP, VAPID, etc.) managed by the admin panel.
 CREATE TABLE IF NOT EXISTS avalone_global_settings (

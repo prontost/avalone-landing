@@ -18,7 +18,7 @@ from avalone_core.glossary_db import (
     _now,
 )
 
-SCHEMA = """
+_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS avalone_glossary (
     key        TEXT PRIMARY KEY,
     ru         TEXT,
@@ -29,18 +29,47 @@ CREATE TABLE IF NOT EXISTS avalone_glossary (
     desc       TEXT DEFAULT '',
     updated_at TEXT DEFAULT ''
 );
+"""
 
+_INDEX_SQL = """
 CREATE INDEX IF NOT EXISTS idx_avalone_glossary_kind   ON avalone_glossary(kind);
 CREATE INDEX IF NOT EXISTS idx_avalone_glossary_module ON avalone_glossary(module);
 """
+
+# Kept for consumers that may import it by name; do not use directly for executescript.
+SCHEMA = _TABLE_SQL + _INDEX_SQL
 
 
 class GlossaryRepository(Repository):
     """Repository for reading and writing glossary rows."""
 
     def ensure_schema(self) -> None:
+        # Create the table first (no-op if it already exists). If an existing
+        # table is missing columns added in later iterations, add them before
+        # creating indexes, otherwise index creation on missing columns fails.
         with connection() as con:
-            con.executescript(SCHEMA)
+            con.executescript(_TABLE_SQL)
+        self._ensure_columns()
+        with connection() as con:
+            con.executescript(_INDEX_SQL)
+
+    def _ensure_columns(self) -> None:
+        """Add columns introduced after the initial schema without recreating table."""
+        columns = {
+            "kind": "TEXT DEFAULT 'ui'",
+            "module": "TEXT DEFAULT ''",
+            "desc": "TEXT DEFAULT ''",
+            "updated_at": "TEXT DEFAULT ''",
+        }
+        with connection() as con:
+            existing = {row[1] for row in con.execute("PRAGMA table_info(avalone_glossary)").fetchall()}
+            for name, dtype in columns.items():
+                if name not in existing:
+                    try:
+                        con.execute(f"ALTER TABLE avalone_glossary ADD COLUMN {name} {dtype}")
+                    except sqlite3.OperationalError:
+                        pass
+            con.commit()
 
     def upsert(
         self,
