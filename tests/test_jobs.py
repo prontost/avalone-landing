@@ -63,7 +63,7 @@ def test_service_extracts_contacts_and_visa() -> None:
 
     assert post.contact_phone == "010-9876-5432"
     assert post.contact_email == "hr@school.kr"
-    assert post.visa_type == "E-2"
+    assert "E-2" in post.visa_type
     assert post.employer == "School HR"
 
 

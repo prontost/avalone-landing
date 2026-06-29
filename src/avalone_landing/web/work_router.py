@@ -34,20 +34,7 @@ async def work_index(
 
 
 @router.post("/fetch", response_class=RedirectResponse)
-async def work_fetch(
-    request: Request,
-    shell_context: ShellContext = Depends(get_shell_context),
-):
+async def work_fetch(request: Request):
     """Trigger a fresh fetch from the configured job board."""
-    from avalone_landing.web.app import BUILD_ID, templates
-
-    ctx = shell_context.build(
-        templates,
-        request,
-        current_app="work",
-        app_nav=[],
-        build_id=BUILD_ID,
-    )
-    target_lang = ctx.get("lang", "ru")
-    JobPostService().fetch_and_store(target_lang=target_lang)
+    JobPostService().fetch_and_store()
     return RedirectResponse("/work", status_code=303)

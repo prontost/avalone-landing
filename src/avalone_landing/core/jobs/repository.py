@@ -60,6 +60,32 @@ class JobPostRepository:
             rows = con.execute(sql, (limit,)).fetchall()
         return [self._row_to_post(r) for r in rows]
 
+    def list_untranslated(self, limit: int = 100) -> list[JobPost]:
+        """Return posts that have no translated title yet, oldest first."""
+        sql = (
+            "SELECT * FROM work_job_posts "
+            "WHERE COALESCE(title_translated, '') = '' "
+            "ORDER BY COALESCE(posted_at, parsed_at) ASC "
+            "LIMIT ?"
+        )
+        with connection() as con:
+            rows = con.execute(sql, (limit,)).fetchall()
+        return [self._row_to_post(r) for r in rows]
+
+    def update_translations(
+        self,
+        external_guid: str,
+        title_translated: str,
+        description_translated: str,
+    ) -> None:
+        with connection() as con:
+            con.execute(
+                "UPDATE work_job_posts SET title_translated = ?, description_translated = ? "
+                "WHERE external_guid = ?",
+                (title_translated, description_translated, external_guid),
+            )
+            con.commit()
+
     def count(self) -> int:
         with connection() as con:
             row = con.execute("SELECT COUNT(*) AS n FROM work_job_posts").fetchone()

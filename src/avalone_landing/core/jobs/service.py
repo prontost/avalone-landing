@@ -7,7 +7,6 @@ import re
 from .models import JobPost
 from .parser import KoreabridgeRSSParser
 from .repository import JobPostRepository
-from .translator import OpenRouterTranslator
 
 
 class JobPostService:
@@ -17,30 +16,23 @@ class JobPostService:
         self,
         parser: KoreabridgeRSSParser | None = None,
         repository: JobPostRepository | None = None,
-        translator: OpenRouterTranslator | None = None,
     ) -> None:
         self.parser = parser or KoreabridgeRSSParser()
         self.repository = repository or JobPostRepository()
-        self.translator = translator or OpenRouterTranslator()
 
-    def fetch_and_store(self, target_lang: str = "ru") -> dict[str, int]:
-        """Fetch recent posts, extract fields, translate, and persist them."""
+    def fetch_and_store(self) -> dict[str, int]:
+        """Fetch recent posts, extract fields, and persist them (no translation)."""
         posts = self.parser.fetch()
         for post in posts:
             self._extract_fields(post)
-            if target_lang == "en":
-                post.title_translated = post.title
-                post.description_translated = post.description_text
-            else:
-                post.title_translated = self.translator.translate(post.title, target_lang, "en")
-                post.description_translated = self.translator.translate(
-                    post.description_text, target_lang, "en"
-                )
             self.repository.save(post)
         return {"fetched": len(posts), "stored": len(posts)}
 
     def list_recent(self, limit: int = 100) -> list[JobPost]:
         return self.repository.list_recent(limit)
+
+    def list_untranslated(self, limit: int = 100) -> list[JobPost]:
+        return self.repository.list_untranslated(limit)
 
     def _extract_fields(self, post: JobPost) -> None:
         """Pull employer, phone, email, visa, location, and job type from the text."""

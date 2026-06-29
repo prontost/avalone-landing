@@ -7,7 +7,6 @@ Usage:
 
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
@@ -19,17 +18,8 @@ from avalone_landing.core.jobs.service import JobPostService
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Fetch job postings into Avalone")
-    parser.add_argument(
-        "--lang",
-        choices=["ru", "en", "ko"],
-        default="ru",
-        help="Target language for translation (default: ru)",
-    )
-    args = parser.parse_args()
-
     migrate()
-    result = JobPostService().fetch_and_store(target_lang=args.lang)
+    result = JobPostService().fetch_and_store()
     print(f"Fetched and stored {result['fetched']} postings.")
     return 0
 
