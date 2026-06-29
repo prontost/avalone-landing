@@ -61,8 +61,10 @@ select,input[type=number],input[type=text],input[type=password],input[type=email
 .list-row.cancelled{opacity:.5}
 .list-row.cancelled .num{text-decoration:line-through}
 .small{font-size:13px;color:var(--muted)}
-.app-tabs{display:flex;gap:6px;background:var(--card);
-  border:1px solid var(--line);border-radius:14px;padding:6px;margin:12px 0}
+.app-tabs{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);width:calc(100% - 32px);max-width:560px;display:flex;
+  gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:6px;margin:0;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.3)}
 @media (min-width: 769px) {
   .fab{right:calc(50% - 560px/2 + 18px)}
 }
@@ -131,12 +133,11 @@ select,input[type=number],input[type=text],input[type=password],input[type=email
 <div class="toast" id="toast"></div>
 <div class="wrap">
 
-<!-- in-app section tabs (replaces the former fixed bottom nav) -->
+<!-- in-app section tabs (floating bottom bar) -->
 <div class="app-tabs">
   <div class="tab tab-icon active" data-page="entry" onclick="go('entry')" data-i="tab_entry" data-i-title="tab_entry_t">🏠</div>
   <div class="tab tab-icon" data-page="ai" onclick="go('ai')" data-i="tab_ai" data-i-title="tab_ai_t">📊</div>
   <div class="tab tab-icon" data-page="balances" onclick="go('balances')" data-i="tab_bal" data-i-title="tab_bal_t">✏️</div>
-  <div class="tab" data-page="more" onclick="go('more')" data-i="tab_more">☰ {{ t('tab_more', lang=lang) }}</div>
 </div>
 
 <!-- БАННЕР ПОДТВЕРЖДЕНИЯ EMAIL -->
@@ -931,7 +932,6 @@ async function refreshAfterWrite(){
   const page = activeTab && activeTab.dataset.page;
   if(page==='balances'){ await loadAccounts(); editSelect($('edit-what').value); }
   if(page==='ai'){ loadReport(); loadTipsLibrary(); }
-  if(page==='more') loadMore();
 }
 
 /* Форма НЕ запоминает состояние между открытиями — каждый раз чистые дефолты. */
@@ -940,16 +940,16 @@ const ONESHOT_FIELDS = ['amount','remark'];
 /* СТРАНИЦЫ */
 function go(page){
   clearEditState();   // уход со вкладки гасит висящий спавн формы правки
-  ['entry','balances','ai','more'].forEach(p=>{
+  ['entry','balances','ai'].forEach(p=>{
     $('page-'+p).classList.toggle('hidden', p!==page);
-    document.querySelector(`.app-tabs .tab[data-page=${p}]`).classList.toggle('active', p===page);
+    const tab = document.querySelector(`.app-tabs .tab[data-page=${p}]`);
+    if(tab) tab.classList.toggle('active', p===page);
   });
   // хаб правки (✏️): по умолчанию открываем счета
   if(page==='balances' && $('edit-what')){
     const what = $('edit-what').value || 'accounts';
     editSelect(what);
   }
-  if(page==='more') loadMore();
   // FAB виден везде
   $('fab').classList.add('show');
   if(page==='ai'){ loadReport(); loadTipsLibrary(); }
@@ -1966,7 +1966,6 @@ function applyLang(l){
   document.querySelectorAll('[data-i]').forEach(el=>{ if(t[el.dataset.i]) el.textContent=t[el.dataset.i]; });
   document.querySelectorAll('[data-i-ph]').forEach(el=>{ if(t[el.dataset.iPh]) el.placeholder=t[el.dataset.iPh]; });
   document.querySelectorAll('[data-i-title]').forEach(el=>{ if(t[el.dataset.iTitle]) el.title=t[el.dataset.iTitle]; });
-  document.querySelector('.app-tabs .tab[data-page=more]').textContent=t.tab_more;
   // зависимые от языка динамические подписи
   if(typeof opChanged==='function') opChanged();
 }

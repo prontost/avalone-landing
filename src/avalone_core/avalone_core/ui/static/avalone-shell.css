@@ -183,7 +183,8 @@ body:has(.avalone-shell.has-sidebar) .avalone-main {
     min-height: var(--header-h);
     padding: 8px 12px;
     gap: 8px;
-    position: relative;
+    position: sticky;
+    top: 0;
   }
   .avalone-logo span { display: none; }
   .avalone-app-switcher__label { display: none; }
