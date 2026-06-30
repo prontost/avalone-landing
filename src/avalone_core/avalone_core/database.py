@@ -16,6 +16,34 @@ from typing import Self
 DEFAULT_DB_PATH = Path.home() / ".avalone" / "avalone.db"
 
 
+class ClosingConnection(sqlite3.Connection):
+    """A ``sqlite3.Connection`` that closes itself when used as a context manager.
+
+    The standard library connection only commits/rolls back on ``__exit__``;
+    it leaks the underlying file descriptor.  This subclass closes the
+    connection, matching the behaviour users of ``Database.connection()`` expect.
+    """
+
+    def __init__(self, path: str | Path) -> None:
+        super().__init__(str(path), check_same_thread=False)
+        self.row_factory = sqlite3.Row
+        self.execute("PRAGMA foreign_keys = ON")
+
+    def __enter__(self) -> sqlite3.Connection:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        # Commit or rollback the active transaction before closing, otherwise
+        # pending changes are silently discarded by sqlite3.Connection.close().
+        super().__exit__(exc_type, exc_val, exc_tb)
+        self.close()
+
+
 class Database:
     """Owner of the unified Avalone SQLite database.
 
@@ -53,12 +81,13 @@ class Database:
         return self._path
 
     def connection(self) -> sqlite3.Connection:
-        """Open a new connection with the platform defaults."""
+        """Open a new connection with the platform defaults.
+
+        The returned connection is a ``ClosingConnection`` — it closes itself
+        when used as a context manager, preventing file-descriptor leaks.
+        """
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(str(self._path), check_same_thread=False)
-        con.row_factory = sqlite3.Row
-        con.execute("PRAGMA foreign_keys = ON")
-        return con
+        return ClosingConnection(self._path)
 
     def table_exists(self, name: str) -> bool:
         with self.connection() as con:

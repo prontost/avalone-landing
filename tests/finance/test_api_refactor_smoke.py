@@ -15,7 +15,11 @@ def client(tmp_path, monkeypatch):
     import avalone_finance.core.sqlledger as sl
     import avalone_finance.core.engine as engine
     import avalone_finance.core.global_settings as gs
+    import avalone_finance.core.ledger_repository as ledger_repo
+    import avalone_finance.core.ledger_service as ledger_svc
     importlib.reload(tenant)
+    importlib.reload(ledger_repo)
+    importlib.reload(ledger_svc)
     importlib.reload(sl)
     importlib.reload(engine)
     importlib.reload(gs)
@@ -54,10 +58,11 @@ def seed_entries(client, monkeypatch):
 
 
 def test_report_endpoint(client, seed_entries):
-    r = client.get("/api/report?period=month&lang=ru")
+    # Use an explicit custom date range so the test is stable across month boundaries.
+    r = client.get("/api/report?period=custom&lang=ru&date_from=2026-06-01&date_to=2026-06-30")
     assert r.status_code == 200, r.text
     data = r.json()
-    assert data["period"] == "month"
+    assert data["period"] == "custom"
     assert "groups" in data
     assert isinstance(data["groups"], list)
     # в тестовых данных есть расходы и доход
@@ -66,11 +71,12 @@ def test_report_endpoint(client, seed_entries):
 
 
 def test_analytics_endpoints(client, seed_entries):
-    r = client.get("/api/analytics/summary?period=month&lang=ru")
+    # Use an explicit date range so the test is stable across month boundaries.
+    r = client.get("/api/analytics/summary?period=last90&lang=ru")
     assert r.status_code == 200, r.text
     assert "groups" in r.json()
 
-    r = client.get("/api/analytics/tip?period=month&lang=ru")
+    r = client.get("/api/analytics/tip?period=last90&lang=ru")
     assert r.status_code == 200, r.text
     assert "title" in r.json()
 
@@ -78,11 +84,11 @@ def test_analytics_endpoints(client, seed_entries):
     assert r.status_code == 200, r.text
     assert "tips" in r.json()
 
-    r = client.get("/api/analytics/trend?period=month&group_by=day&lang=ru")
+    r = client.get("/api/analytics/trend?period=last90&group_by=day&lang=ru")
     assert r.status_code == 200, r.text
     assert "series" in r.json()
 
-    r = client.get("/api/analytics/compare?period=month&lang=ru")
+    r = client.get("/api/analytics/compare?period=last90&lang=ru")
     assert r.status_code == 200, r.text
     assert "comparisons" in r.json()
 
@@ -101,7 +107,7 @@ def test_analytics_summary_includes_debts(client, seed_entries):
             date(2026, 6, 5), "debt spend", other, loan, Decimal("200"))
     asyncio.run(_make_debt())
 
-    r = client.get("/api/analytics/summary?period=month&lang=ru")
+    r = client.get("/api/analytics/summary?period=last90&lang=ru")
     assert r.status_code == 200, r.text
     data = r.json()
     assert "debts" in data
