@@ -212,6 +212,8 @@ CREATE TABLE IF NOT EXISTS work_job_posts (
     visa_type            TEXT,
     location             TEXT,
     job_type             TEXT,
+    salary               TEXT,
+    pay_type             TEXT,
     posted_at            TEXT,
     parsed_at            TEXT NOT NULL,
     raw_json             TEXT
@@ -366,6 +368,8 @@ def _apply_migrations() -> None:
                 visa_type            TEXT,
                 location             TEXT,
                 job_type             TEXT,
+                salary               TEXT,
+                pay_type             TEXT,
                 posted_at            TEXT,
                 parsed_at            TEXT NOT NULL,
                 raw_json             TEXT
@@ -374,6 +378,25 @@ def _apply_migrations() -> None:
             CREATE INDEX IF NOT EXISTS idx_work_job_posts_source_site ON work_job_posts(source_site);
             """
         )
+        # Idempotent column/index additions for existing work_job_posts tables.
+        try:
+            work_cols = {r[1] for r in con.execute("PRAGMA table_info(work_job_posts)")}
+        except sqlite3.OperationalError:
+            work_cols = set()
+        for col, dtype in (("salary", "TEXT"), ("pay_type", "TEXT")):
+            if col not in work_cols:
+                try:
+                    con.execute(f"ALTER TABLE work_job_posts ADD COLUMN {col} {dtype}")
+                except sqlite3.OperationalError:
+                    pass
+        for idx_col in ("salary", "pay_type"):
+            try:
+                con.execute(
+                    f"CREATE INDEX IF NOT EXISTS idx_work_job_posts_{idx_col} "
+                    f"ON work_job_posts({idx_col})"
+                )
+            except sqlite3.OperationalError:
+                pass
         con.commit()
 
 

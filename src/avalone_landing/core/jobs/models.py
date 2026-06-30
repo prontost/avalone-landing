@@ -30,3 +30,5 @@ class JobPost:
     visa_type: str = ""
     location: str = ""
     job_type: str = ""
+    salary: str = ""
+    pay_type: str = ""

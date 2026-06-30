@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from avalone_landing.core.jobs.models import JobPost
-from avalone_landing.core.jobs.parser import ExpatComKoreaParser, KoreabridgeRSSParser
+from avalone_landing.core.jobs.parser import AlbamonParser, KoreabridgeRSSParser
 from avalone_landing.core.jobs.repository import JobPostRepository
 from avalone_landing.core.jobs.service import JobPostService
 from avalone_landing.web.app import app
@@ -48,28 +48,25 @@ def test_parser_filters_old_posts() -> None:
     assert "010-1234-5678" in posts[0].description_text
 
 
-def test_expat_parser_extracts_offers() -> None:
+def test_albamon_parser_extracts_jobs() -> None:
     html = """
     <html><body>
-    <script>
-    var offers = {"list": [
-        {"title": "Aircraft Fitters", "description": "<p>Work in Seoul. Contact 010-1111-2222</p>",
-         "name": "DAHER", "link": "https://www.expat.com/job/1", "address": "Seoul",
-         "contractType": "Fixed-term", "date": "Added on 28/06/2026"}
-    ]};
+    <script id="__NEXT_DATA__" type="application/json">
+    {"props":{"pageProps":{"dehydratedState":{"queries":[{"state":{"data":{"collection":[
+        {"recruitNo": 12345, "recruitTitle": "카페 알바", "workplaceArea": "강남구", "companyName": "ABC카페", "pay": "12,000원", "payType": {"description": "시급"}}
+    ]}}}]}}}}
     </script>
     </body></html>
     """
-    service = JobPostService(parser=ExpatComKoreaParser(), repository=JobPostRepository())
-    posts = service.parser.parse(html, max_age_days=14)
-    for post in posts:
-        service._extract_fields(post)
+    parser = AlbamonParser()
+    posts = parser.parse(html)
 
     assert len(posts) == 1
-    assert posts[0].title == "Aircraft Fitters"
-    assert posts[0].source_site == "expat.com"
-    assert posts[0].location == "Seoul"
-    assert posts[0].contact_phone == "010-1111-2222"
+    assert posts[0].title == "카페 알바"
+    assert posts[0].source_site == "albamon.com"
+    assert posts[0].salary == "12,000원"
+    assert posts[0].pay_type == "시급"
+    assert "albamon.com/jobs/detail/12345" in posts[0].source_url
 
 
 def test_service_extracts_contacts_and_visa() -> None:
@@ -103,6 +100,8 @@ def test_repository_saves_and_lists() -> None:
         title_translated="Заголовок",
         description_translated="Текст",
         contact_phone="010-1111-2222",
+        salary="3.0M",
+        pay_type="월급",
     )
     repo.save(post)
     rows = repo.list_recent(limit=10)
@@ -110,17 +109,18 @@ def test_repository_saves_and_lists() -> None:
     assert "repo-test" in guids
 
 
-def test_repository_filters_by_source_and_location() -> None:
+def test_repository_filters_by_source_and_query() -> None:
     repo = JobPostRepository()
     repo.save(
         JobPost(
             external_guid="filter-seoul",
-            source_site="expat.com",
+            source_site="albamon.com",
             source_url="https://example.com/seoul",
-            title="Seoul job",
+            title="Seoul cafe job",
             description_html="",
             description_text="",
             location="Seoul",
+            salary="12,000원",
         )
     )
     repo.save(
@@ -128,19 +128,20 @@ def test_repository_filters_by_source_and_location() -> None:
             external_guid="filter-busan",
             source_site="koreabridge.net",
             source_url="https://example.com/busan",
-            title="Busan job",
+            title="Busan teacher job",
             description_html="",
             description_text="",
             location="Busan",
         )
     )
-    seoul_jobs = repo.list_recent(source_site="expat.com", location="Seoul")
+    seoul_jobs = repo.list_recent(source_site="albamon.com", query="cafe")
     assert len(seoul_jobs) == 1
     assert seoul_jobs[0].external_guid == "filter-seoul"
 
 
-def test_fetch_preserves_existing_translation() -> None:
+def test_fetch_preserves_existing_translation_and_posted_at() -> None:
     repo = JobPostRepository()
+    posted = datetime(2026, 6, 1, tzinfo=timezone.utc)
     repo.save(
         JobPost(
             external_guid="preserve-test",
@@ -151,9 +152,10 @@ def test_fetch_preserves_existing_translation() -> None:
             description_text="Original body",
             title_translated="Перевод",
             description_translated="Переведённый текст",
+            posted_at=posted,
         )
     )
-    # Re-save with empty translations — upsert must keep the existing ones.
+    # Re-save with empty translations and a different date — upsert must keep the existing ones.
     repo.save(
         JobPost(
             external_guid="preserve-test",
@@ -164,11 +166,15 @@ def test_fetch_preserves_existing_translation() -> None:
             description_text="Original body",
             title_translated="",
             description_translated="",
+            posted_at=datetime.now(timezone.utc),
         )
     )
-    post = repo.list_recent(limit=1)[0]
+    posts = [p for p in repo.list_recent(limit=100) if p.external_guid == "preserve-test"]
+    assert len(posts) == 1
+    post = posts[0]
     assert post.title_translated == "Перевод"
     assert post.description_translated == "Переведённый текст"
+    assert post.posted_at == posted
 
 
 def test_work_index_renders_feed() -> None:

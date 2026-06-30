@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 
 from .models import JobPost
-from .parser import BaseJobParser, ExpatComKoreaParser, KoreabridgeRSSParser, MultiSourceParser
+from .parser import AlbamonParser, BaseJobParser, KoreabridgeRSSParser, MultiSourceParser
 from .repository import JobPostRepository
 
 
@@ -22,24 +23,54 @@ class JobPostService:
 
     def fetch_and_store(self, max_age_days: int = 14) -> dict[str, int]:
         """Fetch recent posts from all sources, extract fields, and persist them."""
+        now = datetime.now(timezone.utc)
         posts = self.parser.fetch(max_age_days=max_age_days)
         for post in posts:
             self._extract_fields(post)
+            # Albamon does not expose posting dates; freeze the first time we see it.
+            if post.posted_at is None and isinstance(self.parser, AlbamonParser):
+                post.posted_at = now
             self.repository.save(post)
         return {"fetched": len(posts), "stored": len(posts)}
 
     def list_recent(
         self,
         limit: int = 100,
+        offset: int = 0,
         location: str | None = None,
         source_site: str | None = None,
         max_age_days: int | None = None,
+        query: str | None = None,
+        visa_type: str | None = None,
+        job_type: str | None = None,
     ) -> list[JobPost]:
         return self.repository.list_recent(
             limit=limit,
+            offset=offset,
             location=location,
             source_site=source_site,
             max_age_days=max_age_days,
+            query=query,
+            visa_type=visa_type,
+            job_type=job_type,
+        )
+
+    def count_recent(
+        self,
+        location: str | None = None,
+        source_site: str | None = None,
+        max_age_days: int | None = None,
+        query: str | None = None,
+        visa_type: str | None = None,
+        job_type: str | None = None,
+    ) -> int:
+        return self.repository.count_recent(
+            location=location,
+            source_site=source_site,
+            max_age_days=max_age_days,
+            query=query,
+            visa_type=visa_type,
+            job_type=job_type,
         )
 
     def list_untranslated(self, limit: int = 100) -> list[JobPost]:

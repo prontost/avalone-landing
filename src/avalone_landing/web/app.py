@@ -63,6 +63,15 @@ templates = Jinja2Templates(directory=[str(_templates_dir), str(_ui_templates_di
 templates.env.globals["t"] = glossary.t
 templates.env.globals["i18n_js"] = glossary.i18n_js
 templates.env.globals["registry"] = AvaloneRegistry
+
+
+def _replace_query_param(query: object, key: str, value: object) -> str:
+    params = dict(query) if hasattr(query, "__iter__") else {}
+    params[key] = str(value)
+    return "&".join(f"{k}={v}" for k, v in params.items())
+
+
+templates.env.filters["replace_query_param"] = _replace_query_param
 app.mount("/static/ui", StaticFiles(directory=str(_ui_static_dir)), name="ui_static")
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 

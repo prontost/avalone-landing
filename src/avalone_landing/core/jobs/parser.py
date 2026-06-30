@@ -107,20 +107,27 @@ class KoreabridgeRSSParser(BaseJobParser):
         return text.strip()
 
 
-class ExpatComKoreaParser(BaseJobParser):
-    """Fetch and parse https://www.expat.com/en/jobs/asia/south-korea/."""
+class AlbamonParser(BaseJobParser):
+    """Fetch and parse the Albamon mobile homepage.
 
-    URL = "https://www.expat.com/en/jobs/asia/south-korea/"
+    Albamon is a major Korean part-time / arbeit job board. The mobile
+    homepage embeds the job list inside ``window.__NEXT_DATA__``.
+    """
+
+    URL = "https://m.albamon.com/"
     USER_AGENT = (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Linux; Android 10; SM-G973F) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
     )
 
     @property
     def source_site(self) -> str:
-        return "expat.com"
+        return "albamon.com"
 
     def fetch(self, max_age_days: int = 14) -> list[JobPost]:
+        # max_age_days is accepted for interface compatibility; Albamon
+        # homepage always returns currently featured postings.
+        del max_age_days
         with httpx.Client(
             headers={"User-Agent": self.USER_AGENT},
             timeout=30,
@@ -128,84 +135,92 @@ class ExpatComKoreaParser(BaseJobParser):
         ) as client:
             response = client.get(self.URL)
         response.raise_for_status()
-        return self.parse(response.text, max_age_days)
+        return self.parse(response.text)
 
-    def parse(self, html_text: str, max_age_days: int = 14) -> list[JobPost]:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
-        offers_json = self._extract_offers_json(html_text)
-        if not offers_json:
+    def parse(self, html_text: str) -> list[JobPost]:
+        data = self._extract_next_data(html_text)
+        if not data:
             return []
 
+        seen: set[int] = set()
         posts: list[JobPost] = []
-        for item in offers_json:
-            posted_at = self._parse_date(item.get("date", ""))
-            if posted_at is not None and posted_at < cutoff:
+        for item in self._walk_collections(data):
+            recruit_no = item.get("recruitNo")
+            if not recruit_no or recruit_no in seen:
                 continue
+            seen.add(recruit_no)
 
-            title = (item.get("title") or "").strip()
-            description = item.get("description") or ""
-            description_text = self._html_to_text(description)
-            link = (item.get("link") or "").strip()
+            title = (item.get("recruitTitle") or "").strip()
+            area = (item.get("workplaceArea") or "").strip()
+            company = (item.get("companyName") or "").strip()
+            pay = (item.get("pay") or "").strip()
+            pay_type = ""
+            if isinstance(item.get("payType"), dict):
+                pay_type = (item["payType"].get("description") or "").strip()
+
             posts.append(
                 JobPost(
-                    external_guid=link or f"expat:{title}",
+                    external_guid=f"albamon:{recruit_no}",
                     source_site=self.source_site,
-                    source_url=link,
+                    source_url=f"https://m.albamon.com/jobs/detail/{recruit_no}",
                     title=title,
-                    description_html=description,
-                    description_text=description_text,
-                    posted_at=posted_at,
-                    author=(item.get("name") or "").strip(),
+                    description_html="",
+                    description_text=self._build_description(item),
+                    author=company,
                     raw=item,
-                    employer=(item.get("name") or "").strip(),
-                    location=(item.get("address") or "").strip(),
-                    job_type=(item.get("contractType") or "").strip(),
+                    employer=company,
+                    location=area,
+                    salary=pay,
+                    pay_type=pay_type,
                 )
             )
         return posts
 
-    def _extract_offers_json(self, html_text: str) -> list[dict[str, Any]]:
+    def _extract_next_data(self, html_text: str) -> dict[str, Any] | None:
         match = re.search(
-            r"var offers\s*=\s*(\{.*?\});",
+            r'id="__NEXT_DATA__"[^>]*>(.*?)</script>',
             html_text,
             re.DOTALL,
         )
         if not match:
-            return []
+            return None
         try:
-            data = json.loads(match.group(1))
-            return data.get("list", [])
+            return json.loads(match.group(1))
         except json.JSONDecodeError:
-            return []
-
-    def _parse_date(self, value: str) -> datetime | None:
-        # Format: "Added on 05/06/2026"
-        value = value.strip()
-        if not value:
-            return None
-        m = re.search(r"(\d{2})/(\d{2})/(\d{4})", value)
-        if not m:
-            return None
-        try:
-            return datetime(
-                int(m.group(3)), int(m.group(2)), int(m.group(1)),
-                tzinfo=timezone.utc,
-            )
-        except ValueError:
             return None
 
-    def _html_to_text(self, html_text: str) -> str:
-        text = re.sub(r"<[^>]+>", " ", html_text)
-        text = html.unescape(text)
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()
+    def _walk_collections(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        queries = (
+            data.get("props", {})
+            .get("pageProps", {})
+            .get("dehydratedState", {})
+            .get("queries", [])
+        )
+        for query in queries:
+            state = query.get("state", {})
+            payload = state.get("data", {})
+            if isinstance(payload, dict) and isinstance(payload.get("collection"), list):
+                items.extend(payload["collection"])
+            elif isinstance(payload, list):
+                items.extend(payload)
+        return items
+
+    def _build_description(self, item: dict[str, Any]) -> str:
+        parts = [
+            (item.get("payType") or {}).get("description", ""),
+            item.get("pay", ""),
+            item.get("workplaceArea", ""),
+            item.get("companyName", ""),
+        ]
+        return "\n".join(p for p in parts if p).strip()
 
 
 class MultiSourceParser(BaseJobParser):
     """Aggregate posts from all configured sources."""
 
     def __init__(self, parsers: list[BaseJobParser] | None = None) -> None:
-        self.parsers = parsers or [KoreabridgeRSSParser(), ExpatComKoreaParser()]
+        self.parsers = parsers or [KoreabridgeRSSParser(), AlbamonParser()]
 
     @property
     def source_site(self) -> str:

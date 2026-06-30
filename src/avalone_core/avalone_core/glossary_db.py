@@ -406,6 +406,17 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "work_days",                     "ru": "дн.",                                                 "en": "days",                                       "ko": "일", "kind": "ui", "module": "portal"},
     {"key": "work_show_original",            "ru": "Оригинал",                                            "en": "Original",                                   "ko": "원문", "kind": "ui", "module": "portal"},
     {"key": "work_show_translation",         "ru": "Перевод",                                             "en": "Translation",                                "ko": "번역", "kind": "ui", "module": "portal"},
+    {"key": "work_filter_search",            "ru": "Поиск",                                               "en": "Search",                                     "ko": "검색", "kind": "ui", "module": "portal"},
+    {"key": "work_filter_visa",              "ru": "Виза",                                                "en": "Visa",                                       "ko": "비자", "kind": "ui", "module": "portal"},
+    {"key": "work_filter_job_type",          "ru": "Тип работы",                                          "en": "Job type",                                   "ko": "직종", "kind": "ui", "module": "portal"},
+    {"key": "work_salary",                   "ru": "Зарплата",                                            "en": "Salary",                                     "ko": "급여", "kind": "ui", "module": "portal"},
+    {"key": "work_pay_type",                 "ru": "Тип оплаты",                                          "en": "Pay type",                                   "ko": "지급유형", "kind": "ui", "module": "portal"},
+    {"key": "work_today",                    "ru": "сегодня",                                             "en": "today",                                      "ko": "오늘", "kind": "ui", "module": "portal"},
+    {"key": "work_yesterday",                "ru": "вчера",                                               "en": "yesterday",                                  "ko": "어제", "kind": "ui", "module": "portal"},
+    {"key": "work_days_ago",                 "ru": "дн. назад",                                           "en": "days ago",                                   "ko": "일 전", "kind": "ui", "module": "portal"},
+    {"key": "work_new_badge",                "ru": "Новое",                                               "en": "New",                                        "ko": "신규", "kind": "ui", "module": "portal"},
+    {"key": "work_total_jobs",               "ru": "Всего вакансий",                                      "en": "Total jobs",                                 "ko": "총 채용 공고", "kind": "ui", "module": "portal"},
+    {"key": "work_page_of",                  "ru": "из",                                                  "en": "of",                                         "ko": "중", "kind": "ui", "module": "portal"},
 ]
 
 

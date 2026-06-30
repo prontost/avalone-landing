@@ -101,11 +101,12 @@ def main() -> int:
     parser.add_argument("--lang", default="ru", choices=["ru", "en", "ko"], help="Target language")
     parser.add_argument("--source", default="en", choices=["ru", "en", "ko"], help="Source language")
     parser.add_argument("--batch", type=int, default=5, help="Posts per kimi prompt")
+    parser.add_argument("--limit", type=int, default=0, help="Translate at most N posts (0 = all)")
     args = parser.parse_args()
 
     migrate()
     service = JobPostService()
-    untranslated = service.list_untranslated(limit=1000)
+    untranslated = service.list_untranslated(limit=args.limit if args.limit > 0 else 10000)
     if not untranslated:
         print("No untranslated postings found.")
         return 0

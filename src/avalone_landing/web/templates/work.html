@@ -6,6 +6,14 @@
 <link rel="stylesheet" href="/static/work.css?v={{ build_id }}">
 {% endblock %}
 
+{% macro relative_date(dt, lang) %}
+{% set now = now() %}
+{% set delta = (now - dt).days %}
+{% if delta == 0 %}{{ t('work_today', lang=lang) }}
+{% elif delta == 1 %}{{ t('work_yesterday', lang=lang) }}
+{% else %}{{ delta }} {{ t('work_days_ago', lang=lang) }}{% endif %}
+{% endmacro %}
+
 {% block content %}
 <div class="avalone-work">
   <div class="work-header">
@@ -26,9 +34,14 @@
   </div>
 
   <form class="work-filters" action="/work" method="get">
+    <div class="work-filter work-filter--wide">
+      <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
+      <input id="filter-q" type="search" name="q" value="{{ selected_query }}" placeholder="{{ t('work_filter_search', lang=lang) }}...">
+    </div>
+
     <div class="work-filter">
       <label for="filter-location">{{ t('work_filter_location', lang=lang) }}</label>
-      <select id="filter-location" name="location" onchange="this.form.submit()">
+      <select id="filter-location" name="location">
         <option value="" {% if not selected_location %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
         {% for loc in locations %}
         <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ loc }}</option>
@@ -38,7 +51,7 @@
 
     <div class="work-filter">
       <label for="filter-source">{{ t('work_filter_source', lang=lang) }}</label>
-      <select id="filter-source" name="source" onchange="this.form.submit()">
+      <select id="filter-source" name="source">
         <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
         {% for src in sources %}
         <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ src }}</option>
@@ -47,29 +60,45 @@
     </div>
 
     <div class="work-filter">
+      <label for="filter-visa">{{ t('work_filter_visa', lang=lang) }}</label>
+      <select id="filter-visa" name="visa">
+        <option value="" {% if not selected_visa %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+        {% for v in visa_types %}
+        <option value="{{ v }}" {% if selected_visa == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="work-filter">
+      <label for="filter-job-type">{{ t('work_filter_job_type', lang=lang) }}</label>
+      <select id="filter-job-type" name="job_type">
+        <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+        {% for jt in job_types %}
+        <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ jt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="work-filter">
       <label for="filter-days">{{ t('work_filter_period', lang=lang) }}</label>
-      <select id="filter-days" name="days" onchange="this.form.submit()">
+      <select id="filter-days" name="days">
         <option value="7" {% if selected_days == '7' %}selected{% endif %}>7 {{ t('work_days', lang=lang) }}</option>
         <option value="14" {% if selected_days == '14' %}selected{% endif %}>14 {{ t('work_days', lang=lang) }}</option>
         <option value="30" {% if selected_days == '30' %}selected{% endif %}>30 {{ t('work_days', lang=lang) }}</option>
         <option value="" {% if selected_days == '' %}selected{% endif %}>{{ t('work_filter_all_time', lang=lang) }}</option>
       </select>
     </div>
+
+    <div class="work-filter work-filter--submit">
+      <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_all', lang=lang) }}</button>
+    </div>
   </form>
 
-  <script>
-  (function () {
-    var container = document.querySelector('.avalone-work');
-    var btn = document.getElementById('work-original-toggle');
-    if (!container || !btn) return;
-    var translatedLabel = {{ t('work_show_original', lang=lang)|tojson }};
-    var originalLabel = {{ t('work_show_translation', lang=lang)|tojson }};
-    btn.addEventListener('click', function () {
-      container.classList.toggle('show-original');
-      btn.textContent = container.classList.contains('show-original') ? originalLabel : translatedLabel;
-    });
-  })();
-  </script>
+  {% if total_jobs is defined %}
+  <div class="work-stats">
+    {{ t('work_total_jobs', lang=lang)|default('Всего вакансий') }}: {{ total_jobs }}
+  </div>
+  {% endif %}
 
   {% if jobs %}
   <div class="job-list">
@@ -78,10 +107,13 @@
       <div class="job-card__meta">
         {% if job.posted_at %}
         <time class="job-card__date" datetime="{{ job.posted_at.isoformat() }}">
-          {{ job.posted_at.strftime('%Y-%m-%d') }}
+          {{ job.posted_at.strftime('%Y-%m-%d') }} ({{ relative_date(job.posted_at, lang) }})
         </time>
         {% endif %}
         <span class="job-card__source">{{ t('work_source_label', lang=lang) }}: {{ job.source_site }}</span>
+        {% if job.posted_at and (now() - job.posted_at).days <= 1 %}
+        <span class="job-badge job-badge--new">{{ t('work_new_badge', lang=lang) }}</span>
+        {% endif %}
       </div>
 
       <h2 class="job-card__title job-title-translated">
@@ -91,11 +123,17 @@
         {{ job.title }}
       </h2>
 
-      {% if job.location or job.visa_type or job.job_type %}
+      {% if job.location or job.visa_type or job.job_type or job.pay_type or job.salary %}
       <div class="job-card__tags">
         {% if job.location %}<span class="job-tag job-tag--location">{{ job.location }}</span>{% endif %}
         {% if job.visa_type %}<span class="job-tag job-tag--visa">{{ t('work_visa_type', lang=lang) }}: {{ job.visa_type }}</span>{% endif %}
         {% if job.job_type %}<span class="job-tag job-tag--type">{{ job.job_type }}</span>{% endif %}
+        {% if job.pay_type or job.salary %}
+        <span class="job-tag job-tag--salary">
+          {% if job.pay_type %}{{ job.pay_type }}{% endif %}
+          {% if job.salary %}{{ job.salary }}{% endif %}
+        </span>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -133,10 +171,39 @@
     </article>
     {% endfor %}
   </div>
+  {% if total_pages > 1 %}
+  <nav class="work-pagination" aria-label="Pagination">
+    {% if current_page > 1 %}
+    <a class="avalone-btn" href="?{{ request.query_params | replace_query_param('page', current_page - 1) }}">&larr; {{ t('work_prev', lang=lang)|default('Назад') }}</a>
+    {% else %}
+    <span class="avalone-btn disabled">&larr; {{ t('work_prev', lang=lang)|default('Назад') }}</span>
+    {% endif %}
+    <span class="work-pagination__info">{{ current_page }} {{ t('work_page_of', lang=lang) }} {{ total_pages }}</span>
+    {% if current_page < total_pages %}
+    <a class="avalone-btn" href="?{{ request.query_params | replace_query_param('page', current_page + 1) }}">{{ t('work_next', lang=lang)|default('Вперёд') }} &rarr;</a>
+    {% else %}
+    <span class="avalone-btn disabled">{{ t('work_next', lang=lang)|default('Вперёд') }} &rarr;</span>
+    {% endif %}
+  </nav>
+  {% endif %}
   {% else %}
   <div class="avalone-card work-empty">
     <p>{{ t('work_no_jobs', lang=lang) }}</p>
   </div>
   {% endif %}
 </div>
+
+<script>
+(function () {
+  var container = document.querySelector('.avalone-work');
+  var btn = document.getElementById('work-original-toggle');
+  if (!container || !btn) return;
+  var translatedLabel = {{ t('work_show_original', lang=lang)|tojson }};
+  var originalLabel = {{ t('work_show_translation', lang=lang)|tojson }};
+  btn.addEventListener('click', function () {
+    container.classList.toggle('show-original');
+    btn.textContent = container.classList.contains('show-original') ? originalLabel : translatedLabel;
+  });
+})();
+</script>
 {% endblock %}
