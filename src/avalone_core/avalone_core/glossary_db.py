@@ -421,6 +421,29 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "work_page_of",                  "ru": "из",                                                  "en": "of",                                         "ko": "중", "kind": "ui", "module": "portal"},
     {"key": "work_prev",                     "ru": "Назад",                                               "en": "Previous",                                   "ko": "이전", "kind": "ui", "module": "portal"},
     {"key": "work_next",                     "ru": "Вперёд",                                              "en": "Next",                                       "ko": "다음", "kind": "ui", "module": "portal"},
+    {"key": "work_filter_apply",             "ru": "Показать",                                            "en": "Show",                                       "ko": "보기", "kind": "ui", "module": "portal"},
+    {"key": "work_filter_reset",             "ru": "Сбросить",                                            "en": "Reset",                                      "ko": "초기화", "kind": "ui", "module": "portal"},
+    {"key": "work_new_posts_banner",         "ru": "Появились новые объявления",                          "en": "New postings available",                     "ko": "새 공고가 있습니다", "kind": "ui", "module": "portal"},
+    {"key": "work_new_posts_reload",         "ru": "Обновить ленту",                                      "en": "Refresh feed",                               "ko": "피드 새로고침", "kind": "ui", "module": "portal"},
+    {"key": "work_site_114114_co_kr",        "ru": "114114구인구직",                                      "en": "114114 Jobs",                                "ko": "114114구인구직", "kind": "ui", "module": "portal"},
+    {"key": "work_site_albamon_com",         "ru": "Albamon",                                             "en": "Albamon",                                    "ko": "알바몬", "kind": "ui", "module": "portal"},
+    {"key": "work_site_jobkorea_co_kr",      "ru": "JobKorea",                                            "en": "JobKorea",                                   "ko": "잡코리아", "kind": "ui", "module": "portal"},
+    {"key": "work_site_koreabridge_net",     "ru": "Koreabridge",                                         "en": "Koreabridge",                                "ko": "코리아브리지", "kind": "ui", "module": "portal"},
+    {"key": "work_site_saramin_co_kr",       "ru": "Saramin",                                             "en": "Saramin",                                    "ko": "사람인", "kind": "ui", "module": "portal"},
+    {"key": "work_country_kr",               "ru": "Южная Корея",                                         "en": "South Korea",                                "ko": "대한민국", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_fulltime",         "ru": "Полная занятость",                                    "en": "Full-time",                                  "ko": "정규직", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_parttime",         "ru": "Частичная занятость",                                 "en": "Part-time",                                  "ko": "파트타임", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_contract",         "ru": "Контракт",                                            "en": "Contract",                                   "ko": "계약직", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_internship",       "ru": "Стажировка",                                          "en": "Internship",                                 "ko": "인턴", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_freelance",        "ru": "Фриланс",                                             "en": "Freelance",                                  "ko": "프리랜서", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_daily_temp",       "ru": "Подработка / временная",                              "en": "Daily / temp",                               "ko": "일당/임시", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_daily_pay",        "ru": "Ежедневная оплата",                                   "en": "Daily pay",                                  "ko": "일당 지급", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_fulltime_monthly", "ru": "Полная занятость / помесячно",                        "en": "Full-time / monthly",                        "ko": "정규직 / 월급", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_fulltime_yearly",  "ru": "Полная занятость / погодово",                         "en": "Full-time / yearly",                         "ko": "정규직 / 연봉", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_permanent_after_contract", "ru": "Контракт с переходом на постоянную",            "en": "Contract-to-hire",                           "ko": "계약직 후 정규직전환", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_permanent",        "ru": "Постоянная работа",                                   "en": "Permanent",                                  "ko": "상용직", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_commissioned",     "ru": "По договору поручения",                               "en": "Commissioned",                               "ko": "위촉직", "kind": "ui", "module": "portal"},
+    {"key": "work_jobtype_temporary",        "ru": "Временная работа",                                    "en": "Temporary",                                  "ko": "임시직", "kind": "ui", "module": "portal"},
 ]
 
 
@@ -465,6 +488,23 @@ def get(key: str, lang: str = "ru") -> str:
 
 # Alias used in templates and registry.
 t = get
+
+
+def td(value: str, prefix: str, lang: str = "ru") -> str:
+    """Translate a dynamic value through the glossary.
+
+    Builds a key ``{prefix}_{sanitized_value}`` and returns the glossary
+    translation if it exists; otherwise returns the original value unchanged.
+    This lets dropdowns, badges and tags use glossary translations without
+    having to hardcode every possible raw value.
+    """
+    if not value:
+        return value
+    raw = str(value).strip()
+    safe = raw.lower().replace(" ", "_").replace("/", "_").replace("-", "_").replace(".", "_")
+    key = f"{prefix}_{safe}"
+    translated = _get_repo().get(key, lang)
+    return translated if translated != key else raw
 
 
 def all_by_lang(kind: str | None = None, module: str | None = None) -> dict[str, dict[str, str]]:

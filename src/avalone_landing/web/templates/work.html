@@ -51,7 +51,7 @@
       <select id="filter-source" name="source">
         <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
         {% for src in sources %}
-        <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ src }}</option>
+        <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ td(src, 'work_site', lang=lang) }}</option>
         {% endfor %}
       </select>
     </div>
@@ -71,7 +71,7 @@
       <select id="filter-job-type" name="job_type">
         <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
         {% for jt in job_types %}
-        <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ jt }}</option>
+        <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ td(jt, 'work_jobtype', lang=lang) }}</option>
         {% endfor %}
       </select>
     </div>
@@ -81,7 +81,7 @@
       <select id="filter-country" name="country">
         <option value="" {% if not selected_country %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
         {% for c in countries %}
-        <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ c }}</option>
+        <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ td(c, 'work_country', lang=lang) }}</option>
         {% endfor %}
       </select>
     </div>
@@ -97,9 +97,17 @@
     </div>
 
     <div class="work-filter work-filter--submit">
-      <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_all', lang=lang) }}</button>
+      <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_apply', lang=lang) }}</button>
+      <a href="/work" class="avalone-btn avalone-btn-secondary">{{ t('work_filter_reset', lang=lang) }}</a>
     </div>
   </form>
+
+  <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
+    <span>{{ t('work_new_posts_banner', lang=lang) }}</span>
+    <button type="button" class="avalone-btn avalone-btn-primary" id="work-new-posts-reload">
+      {{ t('work_new_posts_reload', lang=lang) }}
+    </button>
+  </div>
 
   {% if total_jobs is defined %}
   <div class="work-stats">
@@ -212,14 +220,19 @@
     btn.textContent = container.classList.contains('show-original') ? originalLabel : translatedLabel;
   });
 
-  // Live updates: reload the page when the server reports new postings.
-  if (typeof EventSource !== 'undefined') {
+  // Live updates: show a banner instead of forcing a reload so filters are not reset.
+  var banner = document.getElementById('work-new-posts-banner');
+  var reloadBtn = document.getElementById('work-new-posts-reload');
+  if (banner && reloadBtn && typeof EventSource !== 'undefined') {
     var es = new EventSource('/work/events');
     es.addEventListener('new-posts', function () {
-      window.location.reload();
+      banner.style.display = 'flex';
     });
     es.addEventListener('error', function () {
       // The browser will automatically try to reconnect.
+    });
+    reloadBtn.addEventListener('click', function () {
+      window.location.reload();
     });
   }
 })();
