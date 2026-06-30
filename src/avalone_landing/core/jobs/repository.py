@@ -206,16 +206,32 @@ class JobPostRepository:
             params.append(country)
         return where, params
 
-    def list_untranslated(self, limit: int = 100) -> list[JobPost]:
-        """Return posts that have no translated title yet, oldest first."""
+    def list_untranslated(
+        self,
+        limit: int = 100,
+        max_age_days: int | None = None,
+    ) -> list[JobPost]:
+        """Return posts that have no translated title yet, oldest first.
+
+        Args:
+            limit: Maximum rows to return.
+            max_age_days: If set, ignore posts older than this many days.
+        """
+        where = ["COALESCE(title_translated, '') = ''"]
+        params: list[Any] = []
+        if max_age_days is not None:
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
+            where.append("COALESCE(posted_at, parsed_at) >= ?")
+            params.append(cutoff)
         sql = (
             "SELECT * FROM work_job_posts "
-            "WHERE COALESCE(title_translated, '') = '' "
+            f"WHERE {' AND '.join(where)} "
             "ORDER BY COALESCE(posted_at, parsed_at) ASC "
             "LIMIT ?"
         )
+        params.append(limit)
         with connection() as con:
-            rows = con.execute(sql, (limit,)).fetchall()
+            rows = con.execute(sql, params).fetchall()
         return [self._row_to_post(r) for r in rows]
 
     def update_translations(

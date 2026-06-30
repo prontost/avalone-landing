@@ -7,16 +7,23 @@ Usage:
 The script fetches untranslated posts from work_job_posts, sends them in
 batches to `kimi -p`, parses the returned JSON, and writes the translations
 back to the database.
+
+Unlike a cron job, this is a single foreground worker: it translates one
+batch, immediately picks the next batch, and continues until there are no
+untranslated posts left, a limit is reached, or a timeout expires.  This keeps
+translation quality high (one capable model) while still making steady
+progress.
 """
 
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import subprocess
 import sys
+import time
 from argparse import ArgumentParser
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +35,14 @@ from avalone_landing.core.jobs.service import JobPostService
 
 
 KIMI_CLI = shutil.which("kimi") or str(Path.home() / ".kimi-code" / "bin" / "kimi")
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def _log(message: str) -> None:
+    print(f"[{_now()}] {message}", flush=True)
 
 
 def _build_prompt(posts: list[Any], target_lang: str, source_lang: str) -> str:
@@ -96,44 +111,151 @@ def _translate_batch(posts: list[Any], target_lang: str, source_lang: str) -> di
     return {item["external_guid"]: item for item in data}
 
 
+def _apply_batch(
+    service: JobPostService,
+    batch: list[Any],
+    mapping: dict[str, dict[str, str]],
+) -> int:
+    applied = 0
+    for post in batch:
+        item = mapping.get(post.external_guid)
+        if not item:
+            _log(f"No translation returned for {post.external_guid}")
+            continue
+        service.repository.update_translations(
+            post.external_guid,
+            item.get("title_translated", ""),
+            item.get("description_translated", ""),
+        )
+        applied += 1
+    return applied
+
+
+def _translate_loop(
+    service: JobPostService,
+    args: Any,
+    deadline: float | None,
+) -> dict[str, int]:
+    """Translate batches back-to-back until work runs out or a limit is hit."""
+    stats = {"total_seen": 0, "translated": 0, "batches": 0, "failures": 0}
+
+    while True:
+        remaining_limit = None
+        if args.limit > 0:
+            remaining_limit = args.limit - stats["translated"]
+            if remaining_limit <= 0:
+                _log(f"Reached --limit {args.limit}; stopping.")
+                break
+
+        batch_limit = args.batch
+        if remaining_limit is not None:
+            batch_limit = min(batch_limit, remaining_limit)
+
+        untranslated = service.list_untranslated(
+            limit=batch_limit,
+            max_age_days=args.max_age_days,
+        )
+        if not untranslated:
+            _log("No untranslated postings left. Worker finished.")
+            break
+
+        if deadline is not None and time.time() >= deadline:
+            _log("Translation timeout reached; stopping.")
+            break
+
+        stats["total_seen"] += len(untranslated)
+        stats["batches"] += 1
+        _log(
+            f"Batch {stats['batches']}: translating {len(untranslated)} posts "
+            f"({args.source} -> {args.lang})..."
+        )
+
+        try:
+            mapping = _translate_batch(untranslated, args.lang, args.source)
+            applied = _apply_batch(service, untranslated, mapping)
+        except Exception as exc:
+            stats["failures"] += 1
+            _log(f"Batch failed: {exc}")
+            if stats["failures"] >= args.max_failures:
+                _log(f"Reached {args.max_failures} consecutive failures; stopping.")
+                break
+            time.sleep(args.retry_delay)
+            continue
+
+        stats["failures"] = 0
+        stats["translated"] += applied
+        _log(f"Batch done: {applied}/{len(untranslated)} applied (total {stats['translated']}).")
+
+        if args.loop:
+            time.sleep(args.interval)
+        else:
+            # Without --loop, pause briefly between batches to avoid hammering the CLI.
+            time.sleep(args.retry_delay)
+
+    return stats
+
+
 def main() -> int:
     parser = ArgumentParser(description="Translate job postings via Kimi CLI")
     parser.add_argument("--lang", default="ru", choices=["ru", "en", "ko"], help="Target language")
     parser.add_argument("--source", default="en", choices=["ru", "en", "ko"], help="Source language")
     parser.add_argument("--batch", type=int, default=5, help="Posts per kimi prompt")
-    parser.add_argument("--limit", type=int, default=0, help="Translate at most N posts (0 = all)")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Translate at most N posts in this run (0 = no limit)",
+    )
+    parser.add_argument(
+        "--max-age-days",
+        type=int,
+        default=None,
+        help="Only translate posts newer than N days (limits spend on stale listings)",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=0,
+        help="Stop after N seconds regardless of remaining work (0 = no timeout)",
+    )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="Keep running: after draining the queue, sleep and wait for new posts",
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=60,
+        help="Seconds to sleep between checks in --loop mode",
+    )
+    parser.add_argument(
+        "--retry-delay",
+        type=int,
+        default=10,
+        help="Seconds to wait after a failed batch before retrying",
+    )
+    parser.add_argument(
+        "--max-failures",
+        type=int,
+        default=3,
+        help="Stop after N consecutive batch failures",
+    )
     args = parser.parse_args()
 
     migrate()
     service = JobPostService()
-    untranslated = service.list_untranslated(limit=args.limit if args.limit > 0 else 10000)
-    if not untranslated:
-        print("No untranslated postings found.")
-        return 0
 
-    total = len(untranslated)
-    translated = 0
-    for i in range(0, total, args.batch):
-        batch = untranslated[i : i + args.batch]
-        print(f"Translating batch {i // args.batch + 1}/{(total - 1) // args.batch + 1} ({len(batch)} posts)...")
-        try:
-            mapping = _translate_batch(batch, args.lang, args.source)
-        except Exception as exc:
-            print(f"Batch failed: {exc}", file=sys.stderr)
-            continue
-        for post in batch:
-            item = mapping.get(post.external_guid)
-            if not item:
-                print(f"  No translation returned for {post.external_guid}", file=sys.stderr)
-                continue
-            service.repository.update_translations(
-                post.external_guid,
-                item.get("title_translated", ""),
-                item.get("description_translated", ""),
-            )
-            translated += 1
+    deadline = None
+    if args.timeout_seconds > 0:
+        deadline = time.time() + args.timeout_seconds
 
-    print(f"Translated {translated}/{total} postings to {args.lang}.")
+    _log("Translation worker started.")
+    stats = _translate_loop(service, args, deadline)
+    _log(
+        f"Done. {stats['translated']} postings translated "
+        f"in {stats['batches']} batches ({stats['failures']} failures)."
+    )
     return 0
 
 

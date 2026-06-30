@@ -85,8 +85,12 @@ class JobPostService:
             country=country,
         )
 
-    def list_untranslated(self, limit: int = 100) -> list[JobPost]:
-        return self.repository.list_untranslated(limit)
+    def list_untranslated(
+        self,
+        limit: int = 100,
+        max_age_days: int | None = None,
+    ) -> list[JobPost]:
+        return self.repository.list_untranslated(limit, max_age_days)
 
     def _extract_fields(self, post: JobPost) -> None:
         """Pull employer, phone, email, visa, location, and job type from the text."""

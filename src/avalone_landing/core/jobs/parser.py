@@ -345,11 +345,213 @@ class SaraminParser(BaseJobParser):
         return None
 
 
+class JobKoreaParser(BaseJobParser):
+    """Fetch and parse JobKorea search results.
+
+    JobKorea renders search results via Next.js React Server Components.
+    The job payload is embedded inside ``self.__next_f.push()`` calls as
+    escaped JSON strings.
+    """
+
+    SEARCH_URL = "https://rss.jobkorea.co.kr/"
+    USER_AGENT = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    )
+
+    @property
+    def source_site(self) -> str:
+        return "jobkorea.co.kr"
+
+    def fetch(self, max_age_days: int = 14) -> list[JobPost]:
+        del max_age_days  # JobKorea RSS page returns current featured results.
+        with httpx.Client(
+            headers={"User-Agent": self.USER_AGENT},
+            timeout=30,
+            follow_redirects=True,
+        ) as client:
+            response = client.get(self.SEARCH_URL)
+        response.raise_for_status()
+        return self.parse(response.text)
+
+    def parse(self, html_text: str) -> list[JobPost]:
+        pushes = self._extract_next_f_pushes(html_text)
+        seen: set[str] = set()
+        posts: list[JobPost] = []
+        for payload in pushes:
+            for item in self._extract_job_items(payload):
+                job = item.get("job", {})
+                company = item.get("company", {})
+                job_id = job.get("jobId")
+                if not job_id or job_id in seen:
+                    continue
+                seen.add(job_id)
+
+                title = (job.get("title") or "").strip()
+                job_url = (job.get("jobUrl") or "").strip()
+                source_url = f"https://www.jobkorea.co.kr{job_url}" if job_url else ""
+                posted_at = self._parse_iso(job.get("firstPostedAt"))
+                location = (job.get("workplaceLocation") or "").strip()
+                pay_type_key = (job.get("payType") or "").strip()
+                salary = self._format_salary(job)
+                employment = (job.get("employmentType") or "").strip()
+
+                posts.append(
+                    JobPost(
+                        external_guid=f"jobkorea:{job_id}",
+                        source_site=self.source_site,
+                        source_url=source_url,
+                        title=title,
+                        description_html="",
+                        description_text=self._build_description(job, company),
+                        posted_at=posted_at,
+                        author=(company.get("companyName") or "").strip(),
+                        employer=(company.get("companyName") or "").strip(),
+                        location=location,
+                        salary=salary,
+                        pay_type=self._pay_type_name(pay_type_key),
+                        job_type=self._employment_type_name(employment),
+                        country="KR",
+                        raw=item,
+                    )
+                )
+        return posts
+
+    def _extract_next_f_pushes(self, html_text: str) -> list[str]:
+        """Return the string payload from each self.__next_f.push() call."""
+        pushes: list[str] = []
+        pos = 0
+        marker = "self.__next_f.push("
+        while True:
+            start = html_text.find(marker, pos)
+            if start == -1:
+                break
+            i = start + len(marker)
+            depth = 1
+            while i < len(html_text) and depth > 0:
+                c = html_text[i]
+                if c in "([{":
+                    depth += 1
+                elif c in ")]}":
+                    depth -= 1
+                elif c == '"':
+                    i += 1
+                    while i < len(html_text):
+                        if html_text[i] == "\\":
+                            i += 2
+                        elif html_text[i] == '"':
+                            break
+                        else:
+                            i += 1
+                i += 1
+            pushes.append(html_text[start + len(marker) : i - 1])
+            pos = i
+        return pushes
+
+    def _extract_job_items(self, push_text: str) -> list[dict[str, Any]]:
+        """Unescape the RSC payload and parse out {company, job} objects."""
+        try:
+            arr = json.loads(push_text)
+            payload = arr[1] if len(arr) > 1 and isinstance(arr[1], str) else ""
+        except Exception:
+            return []
+        # Unescape the encoded JSON object strings inside the RSC payload.
+        s = payload.replace("\\\\", "\x00").replace('\\"', '"').replace("\x00", "\\")
+        items: list[dict[str, Any]] = []
+        start = 0
+        while True:
+            idx = s.find('{"company":', start)
+            if idx == -1:
+                break
+            depth = 0
+            i = idx
+            while i < len(s):
+                c = s[i]
+                if c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                elif c == "\\":
+                    i += 1
+                i += 1
+            block = s[idx : i + 1]
+            try:
+                obj = json.loads(block)
+                if "job" in obj and "company" in obj:
+                    items.append(obj)
+            except Exception:
+                pass
+            start = idx + 1
+        return items
+
+    @staticmethod
+    def _parse_iso(value: str) -> datetime | None:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value).astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _format_salary(job: dict[str, Any]) -> str:
+        start = job.get("payRangeStart")
+        end = job.get("payRangeEnd")
+        options = job.get("payOptionTypes") or []
+        if start and end:
+            return f"{start} ~ {end} 만원"
+        if start:
+            return f"{start} 만원"
+        if "DECIDED_AFTER_INTERVIEW" in options:
+            return "면접 후 결정"
+        return ""
+
+    @staticmethod
+    def _pay_type_name(key: str) -> str:
+        mapping = {
+            "ANNUALLY_SALARY": "연봉",
+            "MONTHLY_SALARY": "월급",
+            "DAILY_WAGE": "일급",
+            "HOURLY_WAGE": "시급",
+            "PER_TASK": "건당",
+            "COMPANY_POLICY": "회사내규",
+        }
+        return mapping.get(key, key)
+
+    @staticmethod
+    def _employment_type_name(key: str) -> str:
+        mapping = {
+            "PERMANENT": "Full-time",
+            "CONTRACT": "Contract",
+            "INTERN": "Internship",
+            "FREELANCE": "Freelance",
+            "PART_TIME": "Part-time",
+        }
+        return mapping.get(key, key)
+
+    @staticmethod
+    def _build_description(job: dict[str, Any], company: dict[str, Any]) -> str:
+        parts = [
+            job.get("workplaceLocation", ""),
+            company.get("companyName", ""),
+            JobKoreaParser._pay_type_name(job.get("payType", "")),
+            JobKoreaParser._format_salary(job),
+        ]
+        return "\n".join(p for p in parts if p).strip()
+
+
 class MultiSourceParser(BaseJobParser):
     """Aggregate posts from all configured sources."""
 
     def __init__(self, parsers: list[BaseJobParser] | None = None) -> None:
-        self.parsers = parsers or [KoreabridgeRSSParser(), AlbamonParser(), SaraminParser()]
+        self.parsers = parsers or [
+            KoreabridgeRSSParser(),
+            AlbamonParser(),
+            SaraminParser(),
+            JobKoreaParser(),
+        ]
 
     @property
     def source_site(self) -> str:

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from avalone_landing.core.jobs.models import JobPost
-from avalone_landing.core.jobs.parser import AlbamonParser, KoreabridgeRSSParser, SaraminParser
+from avalone_landing.core.jobs.parser import AlbamonParser, JobKoreaParser, KoreabridgeRSSParser, SaraminParser
 from avalone_landing.core.jobs.repository import JobPostRepository
 from avalone_landing.core.jobs.service import JobPostService
 from avalone_landing.web.app import app
@@ -93,6 +93,24 @@ def test_saramin_parser_extracts_jobs() -> None:
     assert posts[0].country == "KR"
     assert posts[0].posted_at is None  # Saramin dates are deadlines, not posting dates
     assert "saramin.co.kr" in posts[0].source_url
+
+
+def test_jobkorea_parser_extracts_jobs() -> None:
+    html = r'''
+    <script>self.__next_f.push([1, "1:\"$Sreact.fragment\"\n7:I[...]\n0:{\"company\":{\"companyName\":\"ExampleCorp\"},\"job\":{\"jobId\":\"99999\",\"title\":\"Backend Engineer\",\"jobUrl\":\"/Recruit/GI_Read/99999\",\"firstPostedAt\":\"2026-06-15T10:00:00+09:00\",\"workplaceLocation\":\"서울 강남구\",\"payType\":\"ANNUALLY_SALARY\",\"payRangeStart\":\"5000\",\"payRangeEnd\":\"7000\",\"employmentType\":\"PERMANENT\"}}"]);
+    </script>
+    '''
+    parser = JobKoreaParser()
+    posts = parser.parse(html)
+
+    assert len(posts) == 1
+    assert posts[0].external_guid == "jobkorea:99999"
+    assert posts[0].title == "Backend Engineer"
+    assert posts[0].employer == "ExampleCorp"
+    assert posts[0].job_type == "Full-time"
+    assert "5000 ~ 7000 만원" in posts[0].salary
+    assert "jobkorea.co.kr" in posts[0].source_url
+    assert posts[0].country == "KR"
 
 
 def test_service_extracts_contacts_and_visa() -> None:
@@ -214,6 +232,47 @@ def test_fetch_preserves_existing_translation_and_posted_at() -> None:
     assert post.title_translated == "Перевод"
     assert post.description_translated == "Переведённый текст"
     assert post.posted_at == posted
+
+
+def test_repository_list_untranslated_respects_max_age() -> None:
+    repo = JobPostRepository()
+    now = datetime.now(timezone.utc)
+    old = now - timedelta(days=30)
+    recent = now - timedelta(days=2)
+    repo.save(
+        JobPost(
+            external_guid="untranslated-old",
+            source_site="koreabridge.net",
+            source_url="https://example.com/old",
+            title="Old untranslated",
+            description_html="",
+            description_text="",
+            posted_at=old,
+            content_hash="hash-old",
+            country="KR",
+        )
+    )
+    repo.save(
+        JobPost(
+            external_guid="untranslated-recent",
+            source_site="koreabridge.net",
+            source_url="https://example.com/recent",
+            title="Recent untranslated",
+            description_html="",
+            description_text="",
+            posted_at=recent,
+            content_hash="hash-recent",
+            country="KR",
+        )
+    )
+    all_untranslated = repo.list_untranslated(limit=100)
+    guids = {p.external_guid for p in all_untranslated}
+    assert {"untranslated-old", "untranslated-recent"}.issubset(guids)
+
+    fresh_untranslated = repo.list_untranslated(limit=100, max_age_days=14)
+    fresh_guids = {p.external_guid for p in fresh_untranslated}
+    assert "untranslated-recent" in fresh_guids
+    assert "untranslated-old" not in fresh_guids
 
 
 def test_content_hash_avoids_unnecessary_update() -> None:
