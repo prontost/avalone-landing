@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 
 from avalone_landing.core.jobs.models import JobPost
-from avalone_landing.core.jobs.parser import AlbamonParser, JobKoreaParser, KoreabridgeRSSParser, SaraminParser
+from avalone_landing.core.jobs.parser import AlbamonParser, JobKoreaParser, KoreabridgeRSSParser, OneOneFourParser, SaraminParser
 from avalone_landing.core.jobs.repository import JobPostRepository
 from avalone_landing.core.jobs.service import JobPostService
 from avalone_landing.web.app import app
@@ -110,6 +111,40 @@ def test_jobkorea_parser_extracts_jobs() -> None:
     assert posts[0].job_type == "Full-time"
     assert "5000 ~ 7000 만원" in posts[0].salary
     assert "jobkorea.co.kr" in posts[0].source_url
+    assert posts[0].country == "KR"
+
+
+def test_oneonefour_parser_extracts_jobs() -> None:
+    payload = [
+        {
+            "id": 12345,
+            "title": "공장 단순 포장 직원 모집",
+            "content": "경기도 안산시 단원구에서 단순 포장 및 검사 업무를 담당할 직원을 모집합니다. 연락처: 010-1234-5678.",
+            "publishedAt": "2026-06-28T09:00:00.000Z",
+            "contentoption": {
+                "workLocated": "경기도 안산시 단원구",
+                "workerType": "정규직",
+                "paidTimes": "월급",
+                "paidMuch": "3000000",
+            },
+            "user": {
+                "username": "01098765432",
+                "verifyinfo": {"companyName": "테스트주식회사"},
+            },
+        }
+    ]
+    parser = OneOneFourParser()
+    posts = parser.parse(json.dumps(payload))
+
+    assert len(posts) == 1
+    assert posts[0].external_guid == "114114:12345"
+    assert posts[0].title == "공장 단순 포장 직원 모집"
+    assert posts[0].employer == "테스트주식회사"
+    assert posts[0].location == "경기도 안산시 단원구"
+    assert posts[0].job_type == "Full-time"
+    assert "3000000" in posts[0].salary
+    assert posts[0].pay_type == "Monthly salary"
+    assert posts[0].contact_phone == "010-9876-5432"
     assert posts[0].country == "KR"
 
 

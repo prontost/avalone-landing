@@ -542,6 +542,136 @@ class JobKoreaParser(BaseJobParser):
         return "\n".join(p for p in parts if p).strip()
 
 
+class OneOneFourParser(BaseJobParser):
+    """Fetch and parse 114114구인구직 job posts.
+
+    The site is a React SPA backed by a public Strapi-like API at
+    ``/api/posts``.  The endpoint returns a flat JSON array of the most
+    recent listings (currently ~97 per call).  We filter client-side by
+    ``publishedAt`` to respect ``max_age_days``.
+    """
+
+    API_URL = (
+        "https://old114be.5m81857qerhww.ap-northeast-2.cs.amazonlightsail.com/api/posts"
+    )
+    USER_AGENT = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    )
+
+    @property
+    def source_site(self) -> str:
+        return "114114.co.kr"
+
+    def fetch(self, max_age_days: int = 14) -> list[JobPost]:
+        with httpx.Client(
+            headers={"User-Agent": self.USER_AGENT},
+            timeout=30,
+            follow_redirects=True,
+        ) as client:
+            response = client.get(self.API_URL)
+        response.raise_for_status()
+        return self.parse(response.text, max_age_days=max_age_days)
+
+    def parse(self, json_text: str, max_age_days: int = 14) -> list[JobPost]:
+        data = json.loads(json_text)
+        if not isinstance(data, list):
+            return []
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+        posts: list[JobPost] = []
+        for item in data:
+            published = self._parse_iso(item.get("publishedAt"))
+            if published and published < cutoff:
+                continue
+            posts.append(self._item_to_post(item, published))
+        return posts
+
+    def _item_to_post(self, item: dict[str, Any], published: datetime | None) -> JobPost:
+        job_id = item.get("id")
+        title = (item.get("title") or "").strip()
+        content = (item.get("content") or "").strip()
+        option = item.get("contentoption") or {}
+        user = item.get("user") or {}
+        verify = user.get("verifyinfo") or {}
+        employer = (verify.get("companyName") or "").strip()
+        location = (option.get("workLocated") or verify.get("companyAddress") or "").strip()
+        salary = self._format_salary(option)
+        pay_type = self._pay_type_name(option.get("paidTimes") or "")
+        job_type = self._worker_type_name(option.get("workerType") or "")
+        phone = self._extract_phone(user, content)
+
+        return JobPost(
+            external_guid=f"114114:{job_id}",
+            source_site=self.source_site,
+            source_url="https://xn--114114-176wa5211dg1e.com/",
+            title=title,
+            description_html="",
+            description_text=content,
+            posted_at=published,
+            author=employer,
+            employer=employer,
+            location=location,
+            salary=salary,
+            pay_type=pay_type,
+            job_type=job_type,
+            contact_phone=phone,
+            country="KR",
+            raw=item,
+        )
+
+    @staticmethod
+    def _parse_iso(value: str | None) -> datetime | None:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _format_salary(option: dict[str, Any]) -> str:
+        amount = option.get("paidMuch") or ""
+        unit = option.get("paidTimes") or ""
+        if amount and unit:
+            return f"{amount} {unit}"
+        return amount or unit
+
+    @staticmethod
+    def _pay_type_name(key: str) -> str:
+        mapping = {
+            "시급": "Hourly wage",
+            "일급": "Daily wage",
+            "월급": "Monthly salary",
+            "연봉": "Annual salary",
+            "건당": "Per task",
+            "회사내규": "Company policy",
+        }
+        return mapping.get(key, key)
+
+    @staticmethod
+    def _worker_type_name(key: str) -> str:
+        mapping = {
+            "정규직": "Full-time",
+            "계약직": "Contract",
+            "일용직": "Daily/temp",
+            "아륰": "Part-time",
+            "알바": "Part-time",
+            "파견직": "Dispatch",
+            "프리랜서": "Freelance",
+            "인턴": "Internship",
+        }
+        return mapping.get(key, key)
+
+    @staticmethod
+    def _extract_phone(user: dict[str, Any], content: str) -> str:
+        # The username is often the employer's phone number.
+        username = (user.get("username") or "").strip()
+        if username.startswith("010") and len(username) >= 10:
+            return f"{username[:3]}-{username[3:7]}-{username[7:]}"
+        phones = re.findall(r"\b010[-.\s]?\d{3,4}[-.\s]?\d{4}\b", content)
+        return phones[0] if phones else ""
+
+
 class MultiSourceParser(BaseJobParser):
     """Aggregate posts from all configured sources."""
 
@@ -551,6 +681,7 @@ class MultiSourceParser(BaseJobParser):
             AlbamonParser(),
             SaraminParser(),
             JobKoreaParser(),
+            OneOneFourParser(),
         ]
 
     @property
