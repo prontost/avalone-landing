@@ -139,13 +139,11 @@ def _apply_batch(
         title = (item.get("title_translated") or "").strip()
         description = (item.get("description_translated") or "").strip()
 
-        # If the source is already in the target language, preserve it as-is.
-        if not title and _is_already_target_language(post.title, target_lang):
+        # If the source is already in the target language, preserve the
+        # original text instead of re-translating it.
+        if _is_already_target_language(post.title, target_lang):
             title = post.title
-        if (
-            not description
-            and _is_already_target_language(post.description_text, target_lang)
-        ):
+        if _is_already_target_language(post.description_text, target_lang):
             description = post.description_text
 
         if not title or not description:

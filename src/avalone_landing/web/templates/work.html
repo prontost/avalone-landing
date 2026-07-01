@@ -142,7 +142,7 @@
 
       {% set tr = translations.get(job.external_guid, {}) %}
       <h2 class="job-card__title job-title-translated">
-        {{ tr.title or job.title }}
+        {{ (tr.title or job.title)|safe }}
       </h2>
       <h2 class="job-card__title job-title-original">
         {{ job.title }}
