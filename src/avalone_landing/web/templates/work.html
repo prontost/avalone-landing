@@ -35,86 +35,91 @@
     {{ t('work_disclaimer', lang=lang) }}
   </div>
 
-  <form class="work-filters" action="/work" method="get">
-    <div class="work-filter work-filter--wide">
-      <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
-      <input id="filter-q" type="search" name="q" value="{{ selected_query }}" placeholder="{{ t('work_filter_search', lang=lang) }}...">
-    </div>
+  <div class="work-filters-wrap" id="work-filters-wrap">
+    <button type="button" class="avalone-btn avalone-btn-ghost work-filters-toggle" id="work-filters-toggle" aria-expanded="true" aria-controls="work-filters">
+      {{ t('work_hide_filters', lang=lang) }}
+    </button>
+    <form class="work-filters" id="work-filters" action="/work" method="get">
+      <div class="work-filter work-filter--wide">
+        <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
+        <input id="filter-q" type="search" name="q" value="{{ selected_query }}" placeholder="{{ t('work_filter_search', lang=lang) }}...">
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-location">{{ t('work_filter_location', lang=lang) }}</label>
-      <select id="filter-location" name="location">
-        <option value="" {% if not selected_location %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-        {% for loc in locations %}
-        <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ location_labels.get(loc, loc) }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-location">{{ t('work_filter_location', lang=lang) }}</label>
+        <select id="filter-location" name="location">
+          <option value="" {% if not selected_location %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+          {% for loc in locations %}
+          <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ location_labels.get(loc, loc) }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-loc-lang">{{ t('work_location_lang', lang=lang) }}</label>
-      <select id="filter-loc-lang" onchange="setAvaloneLang(this.value)">
-        <option value="ru" {% if selected_loc_lang == 'ru' %}selected{% endif %}>{{ t('lang_ru', lang=lang) }}</option>
-        <option value="en" {% if selected_loc_lang == 'en' %}selected{% endif %}>{{ t('lang_en', lang=lang) }}</option>
-        <option value="ko" {% if selected_loc_lang == 'ko' %}selected{% endif %}>{{ t('lang_ko', lang=lang) }}</option>
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-loc-lang">{{ t('work_location_lang', lang=lang) }}</label>
+        <select id="filter-loc-lang" onchange="setAvaloneLang(this.value)">
+          <option value="ru" {% if selected_loc_lang == 'ru' %}selected{% endif %}>{{ t('lang_ru', lang=lang) }}</option>
+          <option value="en" {% if selected_loc_lang == 'en' %}selected{% endif %}>{{ t('lang_en', lang=lang) }}</option>
+          <option value="ko" {% if selected_loc_lang == 'ko' %}selected{% endif %}>{{ t('lang_ko', lang=lang) }}</option>
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-source">{{ t('work_filter_source', lang=lang) }}</label>
-      <select id="filter-source" name="source">
-        <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-        {% for src in sources %}
-        <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ td(src, 'work_site', lang=selected_loc_lang) }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-source">{{ t('work_filter_source', lang=lang) }}</label>
+        <select id="filter-source" name="source">
+          <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+          {% for src in sources %}
+          <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ td(src, 'work_site', lang=selected_loc_lang) }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-visa">{{ t('work_filter_visa', lang=lang) }}</label>
-      <select id="filter-visa" name="visa">
-        <option value="" {% if not selected_visa %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-        {% for v in visa_types %}
-        <option value="{{ v }}" {% if selected_visa == v %}selected{% endif %}>{{ td_list(v, 'work_visa', lang=selected_loc_lang) }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-visa">{{ t('work_filter_visa', lang=lang) }}</label>
+        <select id="filter-visa" name="visa">
+          <option value="" {% if not selected_visa %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+          {% for v in visa_types %}
+          <option value="{{ v }}" {% if selected_visa == v %}selected{% endif %}>{{ td_list(v, 'work_visa', lang=selected_loc_lang) }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-job-type">{{ t('work_filter_job_type', lang=lang) }}</label>
-      <select id="filter-job-type" name="job_type">
-        <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-        {% for jt in job_types %}
-        <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ td(jt, 'work_jobtype', lang=selected_loc_lang) }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-job-type">{{ t('work_filter_job_type', lang=lang) }}</label>
+        <select id="filter-job-type" name="job_type">
+          <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+          {% for jt in job_types %}
+          <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ td(jt, 'work_jobtype', lang=selected_loc_lang) }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-country">{{ t('work_filter_country', lang=lang) }}</label>
-      <select id="filter-country" name="country">
-        <option value="" {% if not selected_country %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-        {% for c in countries %}
-        <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ td(c, 'work_country', lang=selected_loc_lang) }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-country">{{ t('work_filter_country', lang=lang) }}</label>
+        <select id="filter-country" name="country">
+          <option value="" {% if not selected_country %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+          {% for c in countries %}
+          <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ td(c, 'work_country', lang=selected_loc_lang) }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="work-filter">
-      <label for="filter-days">{{ t('work_filter_period', lang=lang) }}</label>
-      <select id="filter-days" name="days">
-        <option value="7" {% if selected_days == '7' %}selected{% endif %}>7 {{ t('work_days', lang=lang) }}</option>
-        <option value="14" {% if selected_days == '14' %}selected{% endif %}>14 {{ t('work_days', lang=lang) }}</option>
-        <option value="30" {% if selected_days == '30' %}selected{% endif %}>30 {{ t('work_days', lang=lang) }}</option>
-        <option value="" {% if selected_days == '' %}selected{% endif %}>{{ t('work_filter_all_time', lang=lang) }}</option>
-      </select>
-    </div>
+      <div class="work-filter">
+        <label for="filter-days">{{ t('work_filter_period', lang=lang) }}</label>
+        <select id="filter-days" name="days">
+          <option value="7" {% if selected_days == '7' %}selected{% endif %}>7 {{ t('work_days', lang=lang) }}</option>
+          <option value="14" {% if selected_days == '14' %}selected{% endif %}>14 {{ t('work_days', lang=lang) }}</option>
+          <option value="30" {% if selected_days == '30' %}selected{% endif %}>30 {{ t('work_days', lang=lang) }}</option>
+          <option value="" {% if selected_days == '' %}selected{% endif %}>{{ t('work_filter_all_time', lang=lang) }}</option>
+        </select>
+      </div>
 
-    <div class="work-filter work-filter--submit">
-      <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_apply', lang=lang) }}</button>
-      <a href="/work" class="avalone-btn avalone-btn-secondary">{{ t('work_filter_reset', lang=lang) }}</a>
-    </div>
-  </form>
+      <div class="work-filter work-filter--submit">
+        <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_apply', lang=lang) }}</button>
+        <a href="/work" class="avalone-btn avalone-btn-secondary">{{ t('work_filter_reset', lang=lang) }}</a>
+      </div>
+    </form>
+  </div>
 
   <div class="work-view-chips">
     {% if current_view == 'feed' %}
@@ -387,6 +392,28 @@ function setAvaloneLang(lang) {
       interact(guid, action, value, button);
     });
   });
+
+  // --- filters collapse ---
+  var filtersWrap = document.getElementById('work-filters-wrap');
+  var filtersToggle = document.getElementById('work-filters-toggle');
+  var filtersForm = document.getElementById('work-filters');
+  if (filtersWrap && filtersToggle && filtersForm) {
+    var showFiltersLabel = {{ t('work_show_filters', lang=lang)|tojson }};
+    var hideFiltersLabel = {{ t('work_hide_filters', lang=lang)|tojson }};
+    var filtersKey = 'work_filters_collapsed';
+    var collapsed = localStorage.getItem(filtersKey) === '1';
+    function setFiltersCollapsed(state) {
+      collapsed = state;
+      filtersWrap.classList.toggle('collapsed', collapsed);
+      filtersToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      filtersToggle.textContent = collapsed ? showFiltersLabel : hideFiltersLabel;
+      localStorage.setItem(filtersKey, collapsed ? '1' : '0');
+    }
+    setFiltersCollapsed(collapsed);
+    filtersToggle.addEventListener('click', function () {
+      setFiltersCollapsed(!collapsed);
+    });
+  }
 
   // --- bulk selection ---
   var selectAll = document.getElementById('work-select-all');
