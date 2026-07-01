@@ -19,116 +19,143 @@
 <div class="avalone-work">
   <div class="work-header">
     <h1>{{ t(page_title_key|default('work_page_title'), lang=lang) }}</h1>
-    <div class="work-header__actions">
-      <nav class="work-view-tabs" aria-label="{{ t('work_view_tabs', lang=lang)|default('') }}">
-        <a class="work-view-tab{% if current_view == 'feed' %} active{% endif %}" href="/work">{{ t('work_tab_feed', lang=lang) }}</a>
-        <a class="work-view-tab{% if current_view == 'saved' %} active{% endif %}" href="/work/saved">{{ t('work_tab_saved', lang=lang) }}</a>
-        <a class="work-view-tab{% if current_view == 'hidden' %} active{% endif %}" href="/work/hidden">{{ t('work_tab_hidden', lang=lang) }}</a>
-      </nav>
-      <button type="button" class="avalone-btn work-original-toggle" id="work-original-toggle">
-        {{ t('work_show_original', lang=lang) }}
-      </button>
-    </div>
+    <button type="button" class="avalone-btn work-original-toggle" id="work-original-toggle">
+      {{ t('work_show_original', lang=lang) }}
+    </button>
   </div>
 
   <div class="work-disclaimer">
     {{ t('work_disclaimer', lang=lang) }}
   </div>
 
-  <div class="work-filters-wrap" id="work-filters-wrap">
-    <button type="button" class="avalone-btn avalone-btn-ghost work-filters-toggle" id="work-filters-toggle" aria-expanded="true" aria-controls="work-filters">
-      {{ t('work_hide_filters', lang=lang) }}
-    </button>
-    <form class="work-filters" id="work-filters" action="/work" method="get">
-      <div class="work-filter work-filter--wide">
-        <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
-        <input id="filter-q" type="search" name="q" value="{{ selected_query }}" placeholder="{{ t('work_filter_search', lang=lang) }}...">
+  <div class="work-control-card" id="work-control-card">
+    <div class="work-control-card__header">
+      <nav class="work-view-tabs" aria-label="{{ t('work_view_tabs', lang=lang)|default('') }}">
+        <a class="work-view-tab{% if current_view == 'feed' %} active{% endif %}" href="/work">{{ t('work_tab_feed', lang=lang) }}</a>
+        <a class="work-view-tab{% if current_view == 'saved' %} active{% endif %}" href="/work/saved">{{ t('work_tab_saved', lang=lang) }}</a>
+        <a class="work-view-tab{% if current_view == 'hidden' %} active{% endif %}" href="/work/hidden">{{ t('work_tab_hidden', lang=lang) }}</a>
+      </nav>
+      <button type="button" class="work-control-card__toggle" id="work-control-toggle" aria-expanded="true" aria-controls="work-control-body">
+        <span class="work-control-card__toggle-text">{{ t('work_collapse_controls', lang=lang) }}</span>
+        <span class="work-control-card__toggle-chevron" aria-hidden="true">▾</span>
+      </button>
+    </div>
+
+    <div class="work-control-card__body" id="work-control-body">
+      <div class="work-view-chips">
+        {% if current_view == 'feed' %}
+        <a class="work-chip{% if only_saved %} active{% endif %}" href="?{{ request.query_params | replace_query_param('only_saved', '1') | replace_query_param('show_hidden', '') }}">{{ t('work_filter_saved_only', lang=lang) }}</a>
+        <a class="work-chip{% if show_hidden %} active{% endif %}" href="?{{ request.query_params | replace_query_param('show_hidden', '1') }}">{{ t('work_filter_show_hidden', lang=lang) }}</a>
+        {% if show_hidden or only_saved %}
+        <a class="work-chip" href="?{{ request.query_params | replace_query_param('show_hidden', '') | replace_query_param('only_saved', '') }}">{{ t('work_filter_reset_view', lang=lang) }}</a>
+        {% endif %}
+        {% endif %}
       </div>
 
-      <div class="work-filter">
-        <label for="filter-location">{{ t('work_filter_location', lang=lang) }}</label>
-        <select id="filter-location" name="location">
-          <option value="" {% if not selected_location %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-          {% for loc in locations %}
-          <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ location_labels.get(loc, loc) }}</option>
-          {% endfor %}
-        </select>
+      <div class="work-filters-wrap" id="work-filters-wrap">
+        <button type="button" class="avalone-btn avalone-btn-ghost work-filters-toggle" id="work-filters-toggle" aria-expanded="true" aria-controls="work-filters">
+          {{ t('work_hide_filters', lang=lang) }}
+        </button>
+        <form class="work-filters" id="work-filters" action="/work" method="get">
+          <div class="work-filter work-filter--wide">
+            <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
+            <input id="filter-q" type="search" name="q" value="{{ selected_query }}" placeholder="{{ t('work_filter_search', lang=lang) }}...">
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-location">{{ t('work_filter_location', lang=lang) }}</label>
+            <select id="filter-location" name="location">
+              <option value="" {% if not selected_location %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+              {% for loc in locations %}
+              <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ location_labels.get(loc, loc) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-loc-lang">{{ t('work_location_lang', lang=lang) }}</label>
+            <select id="filter-loc-lang" onchange="setAvaloneLang(this.value)">
+              <option value="ru" {% if selected_loc_lang == 'ru' %}selected{% endif %}>{{ t('lang_ru', lang=lang) }}</option>
+              <option value="en" {% if selected_loc_lang == 'en' %}selected{% endif %}>{{ t('lang_en', lang=lang) }}</option>
+              <option value="ko" {% if selected_loc_lang == 'ko' %}selected{% endif %}>{{ t('lang_ko', lang=lang) }}</option>
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-source">{{ t('work_filter_source', lang=lang) }}</label>
+            <select id="filter-source" name="source">
+              <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+              {% for src in sources %}
+              <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ td(src, 'work_site', lang=selected_loc_lang) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-visa">{{ t('work_filter_visa', lang=lang) }}</label>
+            <select id="filter-visa" name="visa">
+              <option value="" {% if not selected_visa %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+              {% for v in visa_types %}
+              <option value="{{ v }}" {% if selected_visa == v %}selected{% endif %}>{{ td_list(v, 'work_visa', lang=selected_loc_lang) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-job-type">{{ t('work_filter_job_type', lang=lang) }}</label>
+            <select id="filter-job-type" name="job_type">
+              <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+              {% for jt in job_types %}
+              <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ td(jt, 'work_jobtype', lang=selected_loc_lang) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-country">{{ t('work_filter_country', lang=lang) }}</label>
+            <select id="filter-country" name="country">
+              <option value="" {% if not selected_country %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
+              {% for c in countries %}
+              <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ td(c, 'work_country', lang=selected_loc_lang) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="work-filter">
+            <label for="filter-days">{{ t('work_filter_period', lang=lang) }}</label>
+            <select id="filter-days" name="days">
+              <option value="7" {% if selected_days == '7' %}selected{% endif %}>7 {{ t('work_days', lang=lang) }}</option>
+              <option value="14" {% if selected_days == '14' %}selected{% endif %}>14 {{ t('work_days', lang=lang) }}</option>
+              <option value="30" {% if selected_days == '30' %}selected{% endif %}>30 {{ t('work_days', lang=lang) }}</option>
+              <option value="" {% if selected_days == '' %}selected{% endif %}>{{ t('work_filter_all_time', lang=lang) }}</option>
+            </select>
+          </div>
+
+          <div class="work-filter work-filter--submit">
+            <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_apply', lang=lang) }}</button>
+            <a href="/work" class="avalone-btn avalone-btn-secondary">{{ t('work_filter_reset', lang=lang) }}</a>
+          </div>
+        </form>
       </div>
 
-      <div class="work-filter">
-        <label for="filter-loc-lang">{{ t('work_location_lang', lang=lang) }}</label>
-        <select id="filter-loc-lang" onchange="setAvaloneLang(this.value)">
-          <option value="ru" {% if selected_loc_lang == 'ru' %}selected{% endif %}>{{ t('lang_ru', lang=lang) }}</option>
-          <option value="en" {% if selected_loc_lang == 'en' %}selected{% endif %}>{{ t('lang_en', lang=lang) }}</option>
-          <option value="ko" {% if selected_loc_lang == 'ko' %}selected{% endif %}>{{ t('lang_ko', lang=lang) }}</option>
-        </select>
+      {% if jobs %}
+      <div class="work-bulk-toolbar" id="work-bulk-toolbar">
+        <label class="work-bulk-checkbox">
+          <input type="checkbox" id="work-select-all" aria-label="{{ t('work_select_all', lang=lang) }}">
+          <span>{{ t('work_select_all', lang=lang) }}</span>
+        </label>
+        <div class="work-bulk-actions">
+          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="hidden" data-value="true">{{ t('work_action_hide', lang=lang) }}</button>
+          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="bookmarked" data-value="true">{{ t('work_action_bookmark', lang=lang) }}</button>
+          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="liked" data-value="true">{{ t('work_action_like', lang=lang) }}</button>
+          {% if current_view == 'hidden' %}
+          <button type="button" class="avalone-btn avalone-btn-primary" data-action="hidden" data-value="false">{{ t('work_action_show', lang=lang) }}</button>
+          {% endif %}
+        </div>
+        <span class="work-bulk-count" id="work-bulk-count"></span>
       </div>
-
-      <div class="work-filter">
-        <label for="filter-source">{{ t('work_filter_source', lang=lang) }}</label>
-        <select id="filter-source" name="source">
-          <option value="" {% if not selected_source %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-          {% for src in sources %}
-          <option value="{{ src }}" {% if selected_source == src %}selected{% endif %}>{{ td(src, 'work_site', lang=selected_loc_lang) }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="work-filter">
-        <label for="filter-visa">{{ t('work_filter_visa', lang=lang) }}</label>
-        <select id="filter-visa" name="visa">
-          <option value="" {% if not selected_visa %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-          {% for v in visa_types %}
-          <option value="{{ v }}" {% if selected_visa == v %}selected{% endif %}>{{ td_list(v, 'work_visa', lang=selected_loc_lang) }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="work-filter">
-        <label for="filter-job-type">{{ t('work_filter_job_type', lang=lang) }}</label>
-        <select id="filter-job-type" name="job_type">
-          <option value="" {% if not selected_job_type %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-          {% for jt in job_types %}
-          <option value="{{ jt }}" {% if selected_job_type == jt %}selected{% endif %}>{{ td(jt, 'work_jobtype', lang=selected_loc_lang) }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="work-filter">
-        <label for="filter-country">{{ t('work_filter_country', lang=lang) }}</label>
-        <select id="filter-country" name="country">
-          <option value="" {% if not selected_country %}selected{% endif %}>{{ t('work_filter_all', lang=lang) }}</option>
-          {% for c in countries %}
-          <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ td(c, 'work_country', lang=selected_loc_lang) }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="work-filter">
-        <label for="filter-days">{{ t('work_filter_period', lang=lang) }}</label>
-        <select id="filter-days" name="days">
-          <option value="7" {% if selected_days == '7' %}selected{% endif %}>7 {{ t('work_days', lang=lang) }}</option>
-          <option value="14" {% if selected_days == '14' %}selected{% endif %}>14 {{ t('work_days', lang=lang) }}</option>
-          <option value="30" {% if selected_days == '30' %}selected{% endif %}>30 {{ t('work_days', lang=lang) }}</option>
-          <option value="" {% if selected_days == '' %}selected{% endif %}>{{ t('work_filter_all_time', lang=lang) }}</option>
-        </select>
-      </div>
-
-      <div class="work-filter work-filter--submit">
-        <button type="submit" class="avalone-btn avalone-btn-primary">{{ t('work_filter_apply', lang=lang) }}</button>
-        <a href="/work" class="avalone-btn avalone-btn-secondary">{{ t('work_filter_reset', lang=lang) }}</a>
-      </div>
-    </form>
-  </div>
-
-  <div class="work-view-chips">
-    {% if current_view == 'feed' %}
-    <a class="work-chip{% if only_saved %} active{% endif %}" href="?{{ request.query_params | replace_query_param('only_saved', '1') | replace_query_param('show_hidden', '') }}">{{ t('work_filter_saved_only', lang=lang) }}</a>
-    <a class="work-chip{% if show_hidden %} active{% endif %}" href="?{{ request.query_params | replace_query_param('show_hidden', '1') }}">{{ t('work_filter_show_hidden', lang=lang) }}</a>
-    {% if show_hidden or only_saved %}
-    <a class="work-chip" href="?{{ request.query_params | replace_query_param('show_hidden', '') | replace_query_param('only_saved', '') }}">{{ t('work_filter_reset_view', lang=lang) }}</a>
-    {% endif %}
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
 
   <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
@@ -145,22 +172,6 @@
   {% endif %}
 
   {% if jobs %}
-  <div class="work-bulk-toolbar" id="work-bulk-toolbar">
-    <label class="work-bulk-checkbox">
-      <input type="checkbox" id="work-select-all" aria-label="{{ t('work_select_all', lang=lang) }}">
-      <span>{{ t('work_select_all', lang=lang) }}</span>
-    </label>
-    <div class="work-bulk-actions">
-      <button type="button" class="avalone-btn avalone-btn-secondary" data-action="hidden" data-value="true">{{ t('work_action_hide', lang=lang) }}</button>
-      <button type="button" class="avalone-btn avalone-btn-secondary" data-action="bookmarked" data-value="true">{{ t('work_action_bookmark', lang=lang) }}</button>
-      <button type="button" class="avalone-btn avalone-btn-secondary" data-action="liked" data-value="true">{{ t('work_action_like', lang=lang) }}</button>
-      {% if current_view == 'hidden' %}
-      <button type="button" class="avalone-btn avalone-btn-primary" data-action="hidden" data-value="false">{{ t('work_action_show', lang=lang) }}</button>
-      {% endif %}
-    </div>
-    <span class="work-bulk-count" id="work-bulk-count"></span>
-  </div>
-
   <div class="job-list" id="work-job-list">
     {% for job in jobs %}
     {% set tr = translations.get(job.external_guid, {}) %}
@@ -392,6 +403,29 @@ function setAvaloneLang(lang) {
       interact(guid, action, value, button);
     });
   });
+
+  // --- control card collapse ---
+  var controlCard = document.getElementById('work-control-card');
+  var controlToggle = document.getElementById('work-control-toggle');
+  var controlBody = document.getElementById('work-control-body');
+  if (controlCard && controlToggle && controlBody) {
+    var expandLabel = {{ t('work_expand_controls', lang=lang)|tojson }};
+    var collapseLabel = {{ t('work_collapse_controls', lang=lang)|tojson }};
+    var controlKey = 'work_controls_collapsed';
+    var controlCollapsed = localStorage.getItem(controlKey) === '1';
+    function setControlCollapsed(state) {
+      controlCollapsed = state;
+      controlCard.classList.toggle('collapsed', controlCollapsed);
+      controlToggle.setAttribute('aria-expanded', controlCollapsed ? 'false' : 'true');
+      var text = controlToggle.querySelector('.work-control-card__toggle-text');
+      if (text) text.textContent = controlCollapsed ? expandLabel : collapseLabel;
+      localStorage.setItem(controlKey, controlCollapsed ? '1' : '0');
+    }
+    setControlCollapsed(controlCollapsed);
+    controlToggle.addEventListener('click', function () {
+      setControlCollapsed(!controlCollapsed);
+    });
+  }
 
   // --- filters collapse ---
   var filtersWrap = document.getElementById('work-filters-wrap');

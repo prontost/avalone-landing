@@ -449,6 +449,8 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "work_toast_err",                "ru": "Не удалось. Попробуйте ещё раз.",                    "en": "Failed. Please try again.",                  "ko": "실패했습니다. 다시 시도해주세요.", "kind": "ui", "module": "portal"},
     {"key": "work_show_filters",             "ru": "Показать фильтры",                                    "en": "Show filters",                               "ko": "필터 표시", "kind": "ui", "module": "portal"},
     {"key": "work_hide_filters",             "ru": "Скрыть фильтры",                                      "en": "Hide filters",                               "ko": "필터 숨기기", "kind": "ui", "module": "portal"},
+    {"key": "work_collapse_controls",        "ru": "Свернуть панель",                                     "en": "Collapse panel",                             "ko": "패널 접기", "kind": "ui", "module": "portal"},
+    {"key": "work_expand_controls",          "ru": "Развернуть панель",                                   "en": "Expand panel",                               "ko": "패널 펼치기", "kind": "ui", "module": "portal"},
     {"key": "work_site_114114_co_kr",        "ru": "114114구인구직",                                      "en": "114114 Jobs",                                "ko": "114114구인구직", "kind": "ui", "module": "portal"},
     {"key": "work_site_albamon_com",         "ru": "Albamon",                                             "en": "Albamon",                                    "ko": "알바몬", "kind": "ui", "module": "portal"},
     {"key": "work_site_jobkorea_co_kr",      "ru": "JobKorea",                                            "en": "JobKorea",                                   "ko": "잡코리아", "kind": "ui", "module": "portal"},
