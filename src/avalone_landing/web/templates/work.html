@@ -48,7 +48,7 @@
 
     <div class="work-filter">
       <label for="filter-loc-lang">{{ t('work_location_lang', lang=lang) }}</label>
-      <select id="filter-loc-lang" name="loc_lang" onchange="this.form.submit()">
+      <select id="filter-loc-lang" onchange="setAvaloneLang(this.value)">
         <option value="ru" {% if selected_loc_lang == 'ru' %}selected{% endif %}>{{ t('lang_ru', lang=lang) }}</option>
         <option value="en" {% if selected_loc_lang == 'en' %}selected{% endif %}>{{ t('lang_en', lang=lang) }}</option>
         <option value="ko" {% if selected_loc_lang == 'ko' %}selected{% endif %}>{{ t('lang_ko', lang=lang) }}</option>
@@ -218,6 +218,28 @@
 </div>
 
 <script>
+function setAvaloneLang(lang) {
+  fetch('/api/lang', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({lang: lang})
+  }).then(function (r) {
+    if (r.ok) {
+      var url = new URL(window.location.href);
+      url.searchParams.delete('loc_lang');
+      window.location.href = url.toString();
+    }
+  }).catch(function () {
+    // Fallback for no-JS or network errors: set the cookie locally and reload.
+    var maxAge = 365 * 24 * 60 * 60;
+    document.cookie = 'avalone_lang=' + encodeURIComponent(lang) +
+      ';path=/;max-age=' + maxAge + ';SameSite=Lax';
+    var url = new URL(window.location.href);
+    url.searchParams.delete('loc_lang');
+    window.location.href = url.toString();
+  });
+}
+
 (function () {
   var container = document.querySelector('.avalone-work');
   var btn = document.getElementById('work-original-toggle');

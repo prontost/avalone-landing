@@ -55,22 +55,45 @@ async def work_index(
     # The language selector on /work controls both the UI language and the
     # language used for dynamic values (locations, job types, etc.). We persist
     # the choice in the same cookie that LanguageService.detect() reads so the
-    # shell renders consistently on the next request.
-    effective_lang = loc_lang or ctx.get("lang") or "ru"
+    # shell renders consistently on the next request. The query parameter is
+    # only a one-time switch for anonymous users or users with language='auto':
+    # after setting the cookie we redirect to a clean URL so a page refresh
+    # respects the user's saved preference instead of re-applying the old query
+    # value. Authenticated users with an explicit profile language keep that
+    # language regardless of the query string.
     current_cookie = request.cookies.get("avalone_lang", "")
-    if effective_lang != current_cookie:
-        response = RedirectResponse(
-            url=str(request.url.replace_query_params(**dict(request.query_params))),
-            status_code=302,
-        )
-        response.set_cookie(
-            "avalone_lang",
-            effective_lang,
-            max_age=365 * 24 * 60 * 60,
-            httponly=False,
-            samesite="lax",
-        )
-        return response
+    clean_url = str(request.url.remove_query_params("loc_lang"))
+    user_has_explicit_lang = user is not None and getattr(user, "language", "auto") != "auto"
+
+    if loc_lang:
+        if user_has_explicit_lang:
+            # Profile language wins. Sync the cookie to the profile value so
+            # follow-up requests (and redirect followers) send the right lang.
+            if current_cookie != user.language:
+                response = RedirectResponse(url=clean_url, status_code=302)
+                response.set_cookie(
+                    "avalone_lang",
+                    user.language,
+                    max_age=365 * 24 * 60 * 60,
+                    httponly=False,
+                    samesite="lax",
+                )
+                return response
+            return RedirectResponse(url=clean_url, status_code=302)
+        if loc_lang != current_cookie:
+            response = RedirectResponse(url=clean_url, status_code=302)
+            response.set_cookie(
+                "avalone_lang",
+                loc_lang,
+                max_age=365 * 24 * 60 * 60,
+                httponly=False,
+                samesite="lax",
+            )
+            return response
+        # Cookie already matches; just remove the parameter from the URL.
+        return RedirectResponse(url=clean_url, status_code=302)
+
+    effective_lang = ctx.get("lang") or "ru"
     loc_lang = effective_lang
 
     service = JobPostService()

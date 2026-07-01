@@ -74,6 +74,7 @@ class UserRepository(Repository):
             created_at=row["created_at"],
             name=row["name"] or "",
             email_verified=bool(row["email_verified"]),
+            language=row["language"] or "auto",
         )
         user.roles = self._roles_for(user.id)
         user.permissions = sorted(self._permissions_for(user.id))
@@ -89,7 +90,7 @@ class UserRepository(Repository):
     def get_by_id(self, user_id: int) -> User | None:
         with self._conn() as con:
             row = con.execute(
-                "SELECT id, login, name, email, email_verified, referral_code, referred_by, created_at "
+                "SELECT id, login, name, email, email_verified, language, referral_code, referred_by, created_at "
                 "FROM users WHERE id = ?",
                 (user_id,),
             ).fetchone()
@@ -101,7 +102,7 @@ class UserRepository(Repository):
         value = value.strip().lower()
         with self._conn() as con:
             row = con.execute(
-                "SELECT id, login, name, email, email_verified, referral_code, referred_by, created_at "
+                "SELECT id, login, name, email, email_verified, language, referral_code, referred_by, created_at "
                 "FROM users WHERE login = ? OR email = ?",
                 (value, value),
             ).fetchone()
@@ -119,7 +120,7 @@ class UserRepository(Repository):
     def list_all(self) -> list[User]:
         with self._conn() as con:
             rows = con.execute(
-                "SELECT id, login, name, email, email_verified, referral_code, referred_by, created_at "
+                "SELECT id, login, name, email, email_verified, language, referral_code, referred_by, created_at "
                 "FROM users ORDER BY login"
             ).fetchall()
         return [self._row_to_user(row) for row in rows if row["id"]]

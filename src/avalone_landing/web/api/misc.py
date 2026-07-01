@@ -54,7 +54,7 @@ async def set_language(
         max_age=60 * 60 * 24 * 365,
         path="/",
         samesite="lax",
-        secure=True,
+        secure=request.url.scheme == "https",
     )
     return response
 

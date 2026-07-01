@@ -14,5 +14,6 @@ class User:
     name: str = ""
     email_verified: bool = False
     is_admin: bool = False
+    language: str = "auto"
     roles: list[str] = field(default_factory=list)
     permissions: list[str] = field(default_factory=list)
