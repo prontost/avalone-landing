@@ -316,6 +316,10 @@
   color: var(--muted, #8b92a8);
 }
 
+.work-bulk-count:empty {
+  display: none;
+}
+
 .job-list {
   display: flex;
   flex-direction: column;
@@ -550,54 +554,174 @@
   .work-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .work-header h1 {
+    font-size: 1.25rem;
   }
 
   .work-control-card {
-    top: calc(var(--header-h, 56px) + 6px);
-    padding: 10px;
+    top: calc(var(--header-h, 56px) + 4px);
+    padding: 8px;
+    border-radius: 12px;
   }
 
   .work-control-card__header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
 
   .work-control-card__header .work-view-tabs {
-    width: 100%;
-    order: 0;
+    flex: 1;
     display: flex;
+    min-width: 0;
   }
 
   .work-control-card__header .work-view-tab {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
     text-align: center;
-    padding: 10px 6px;
+    padding: 6px 4px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .work-control-card__toggle {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    min-height: 28px;
+  }
+
+  .work-control-card__toggle-text {
+    display: none;
   }
 
   .work-control-card .work-new-posts-banner {
-    flex-wrap: wrap;
-    gap: 8px;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    margin-top: 6px;
+    gap: 6px;
   }
 
-  .work-bulk-toolbar {
-    flex-wrap: wrap;
-    gap: 10px;
+  .work-control-card .work-new-posts-banner button {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .work-control-card > .work-bulk-toolbar {
+    margin-top: 6px;
+    padding: 6px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .work-bulk-checkbox {
+    font-size: 0.78rem;
+    gap: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .work-bulk-checkbox input {
+    width: 16px;
+    height: 16px;
+  }
+
+  .work-bulk-actions {
+    gap: 5px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  .work-bulk-actions button {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    min-height: 28px;
+    white-space: nowrap;
   }
 
   .work-bulk-count {
-    width: 100%;
-    margin-left: 0;
+    font-size: 0.72rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .work-filters-wrap {
+    margin-bottom: 6px;
+  }
+
+  .work-filters-toggle {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    min-height: 30px;
+    margin-bottom: 6px;
+  }
+
+  .work-filters {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .work-filter {
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .work-filter--wide {
+    grid-column: auto;
+  }
+
+  .work-filter label {
+    font-size: 0.65rem;
+  }
+
+  .work-filter select,
+  .work-filter input[type="search"] {
+    padding: 4px 18px 4px 6px;
+    font-size: 0.74rem;
+    min-height: 30px;
+    border-radius: 8px;
+  }
+
+  .work-filter--submit {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .work-filter--submit button,
+  .work-filter--submit a {
+    flex: 1;
+    min-height: 32px;
+    font-size: 0.74rem;
+    padding: 5px 6px;
+  }
+
+  .work-view-chips {
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .work-chip {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 
   .job-card {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+    padding: 10px;
   }
 
   .job-card__select {
@@ -606,5 +730,35 @@
 
   .job-card__actions {
     flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .job-card__actions .avalone-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    min-height: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .work-control-card__header .work-view-tab {
+    padding: 5px 1px;
+    font-size: 0.62rem;
+  }
+
+  .work-bulk-actions button {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    min-height: 26px;
+  }
+
+  .work-bulk-checkbox {
+    font-size: 0.7rem;
+  }
+
+  .work-filter select,
+  .work-filter input[type="search"] {
+    font-size: 0.7rem;
+    min-height: 28px;
   }
 }
