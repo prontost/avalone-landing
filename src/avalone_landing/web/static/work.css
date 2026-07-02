@@ -194,6 +194,10 @@
   transition: max-height .25s ease, opacity .2s ease, padding .25s ease, border-width .25s ease;
 }
 
+.work-filters-wrap.collapsed .work-view-chips {
+  display: none;
+}
+
 .work-filters-wrap.collapsed .work-filters {
   max-height: 0;
   opacity: 0;

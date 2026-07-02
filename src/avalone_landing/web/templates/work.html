@@ -54,17 +54,17 @@
     </div>
 
     <div class="work-control-card__body" id="work-control-body">
-      <div class="work-view-chips">
-        {% if current_view == 'feed' %}
-        <a class="work-chip{% if only_saved %} active{% endif %}" href="?{{ request.query_params | replace_query_param('only_saved', '1') | replace_query_param('show_hidden', '') }}">{{ t('work_filter_saved_only', lang=lang) }}</a>
-        <a class="work-chip{% if show_hidden %} active{% endif %}" href="?{{ request.query_params | replace_query_param('show_hidden', '1') }}">{{ t('work_filter_show_hidden', lang=lang) }}</a>
-        {% if show_hidden or only_saved %}
-        <a class="work-chip" href="?{{ request.query_params | replace_query_param('show_hidden', '') | replace_query_param('only_saved', '') }}">{{ t('work_filter_reset_view', lang=lang) }}</a>
-        {% endif %}
-        {% endif %}
-      </div>
-
       <div class="work-filters-wrap" id="work-filters-wrap">
+        <div class="work-view-chips">
+          {% if current_view == 'feed' %}
+          <a class="work-chip{% if only_saved %} active{% endif %}" href="?{{ request.query_params | replace_query_param('only_saved', '1') | replace_query_param('show_hidden', '') }}">{{ t('work_filter_saved_only', lang=lang) }}</a>
+          <a class="work-chip{% if show_hidden %} active{% endif %}" href="?{{ request.query_params | replace_query_param('show_hidden', '1') }}">{{ t('work_filter_show_hidden', lang=lang) }}</a>
+          {% if show_hidden or only_saved %}
+          <a class="work-chip" href="?{{ request.query_params | replace_query_param('show_hidden', '') | replace_query_param('only_saved', '') }}">{{ t('work_filter_reset_view', lang=lang) }}</a>
+          {% endif %}
+          {% endif %}
+        </div>
+
         <form class="work-filters" id="work-filters" action="/work" method="get">
           <div class="work-filter work-filter--wide">
             <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
@@ -466,6 +466,12 @@ function setAvaloneLang(lang) {
     }
     setFiltersCollapsed(collapsed);
     filtersToggle.addEventListener('click', function () {
+      if (controlCard && controlBody && controlCard.classList.contains('collapsed')) {
+        // panel is collapsed; expand it and show filters regardless of current label
+        setControlCollapsed(false);
+        setFiltersCollapsed(false);
+        return;
+      }
       setFiltersCollapsed(!collapsed);
     });
   }
