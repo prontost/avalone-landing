@@ -135,9 +135,23 @@
   pointer-events: none;
 }
 
-.work-control-card .work-new-posts-banner {
+.work-controls-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
   margin-top: 8px;
-  margin-bottom: 0;
+}
+
+.work-controls-row .work-filters-toggle {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+.work-controls-row .work-new-posts-banner {
+  flex: 1 1 auto;
+  display: none;
+  margin: 0;
 }
 
 .work-control-card > .work-bulk-toolbar {
@@ -150,8 +164,6 @@
 }
 
 .work-filters-toggle {
-  width: 100%;
-  margin-bottom: 8px;
   justify-content: center;
   display: inline-flex;
   align-items: center;
@@ -164,7 +176,7 @@
   transition: transform .2s;
 }
 
-.work-filters-wrap.collapsed .work-filters-toggle::before {
+.work-filters-toggle.collapsed::before {
   transform: rotate(-90deg);
 }
 
@@ -603,16 +615,33 @@
     display: none;
   }
 
-  .work-control-card .work-new-posts-banner {
+  .work-controls-row {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .work-controls-row .work-filters-toggle {
+    min-width: 0;
     padding: 6px 8px;
-    font-size: 0.78rem;
-    margin-top: 6px;
+    font-size: 0.75rem;
+    min-height: 32px;
+  }
+
+  .work-controls-row .work-new-posts-banner {
+    flex: 0 0 auto;
+    padding: 5px 8px;
     gap: 6px;
   }
 
-  .work-control-card .work-new-posts-banner button {
-    padding: 5px 10px;
+  .work-new-posts-banner__text {
+    display: none;
+  }
+
+  .work-controls-row .work-new-posts-banner button {
+    padding: 5px 8px;
     font-size: 0.72rem;
+    min-height: 28px;
+    white-space: nowrap;
   }
 
   .work-control-card > .work-bulk-toolbar {
@@ -655,13 +684,6 @@
   }
 
   .work-filters-wrap {
-    margin-bottom: 6px;
-  }
-
-  .work-filters-toggle {
-    padding: 5px 8px;
-    font-size: 0.75rem;
-    min-height: 30px;
     margin-bottom: 6px;
   }
 

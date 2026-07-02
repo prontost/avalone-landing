@@ -41,11 +41,16 @@
       </button>
     </div>
 
-    <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
-      <span>{{ t('work_new_posts_banner', lang=lang) }}</span>
-      <button type="button" class="avalone-btn avalone-btn-primary" id="work-new-posts-reload">
-        {{ t('work_new_posts_reload', lang=lang) }}
+    <div class="work-controls-row">
+      <button type="button" class="avalone-btn avalone-btn-secondary work-filters-toggle" id="work-filters-toggle" aria-expanded="true" aria-controls="work-filters">
+        {{ t('work_hide_filters', lang=lang) }}
       </button>
+      <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
+        <span class="work-new-posts-banner__text">{{ t('work_new_posts_banner', lang=lang) }}</span>
+        <button type="button" class="avalone-btn avalone-btn-primary" id="work-new-posts-reload">
+          {{ t('work_new_posts_reload', lang=lang) }}
+        </button>
+      </div>
     </div>
 
     <div class="work-control-card__body" id="work-control-body">
@@ -60,9 +65,6 @@
       </div>
 
       <div class="work-filters-wrap" id="work-filters-wrap">
-        <button type="button" class="avalone-btn avalone-btn-ghost work-filters-toggle" id="work-filters-toggle" aria-expanded="true" aria-controls="work-filters">
-          {{ t('work_hide_filters', lang=lang) }}
-        </button>
         <form class="work-filters" id="work-filters" action="/work" method="get">
           <div class="work-filter work-filter--wide">
             <label for="filter-q">{{ t('work_filter_search', lang=lang) }}</label>
@@ -457,6 +459,7 @@ function setAvaloneLang(lang) {
     function setFiltersCollapsed(state) {
       collapsed = state;
       filtersWrap.classList.toggle('collapsed', collapsed);
+      filtersToggle.classList.toggle('collapsed', collapsed);
       filtersToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
       filtersToggle.textContent = collapsed ? showFiltersLabel : hideFiltersLabel;
       localStorage.setItem(filtersKey, collapsed ? '1' : '0');
