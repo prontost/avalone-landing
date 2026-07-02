@@ -92,3 +92,32 @@ def test_service_bookmarked_only_feed() -> None:
     posts = service.list_recent(limit=100, include_only_guids=bookmarked_guids)
     assert len(posts) == 1
     assert posts[0].external_guid == "bookmarked-post"
+
+
+def test_bulk_interactions() -> None:
+    _save_sample_post("bulk-a")
+    _save_sample_post("bulk-b")
+    _save_sample_post("bulk-c")
+
+    service = JobPostService()
+    count = service.apply_bulk_interactions(
+        user_id=20,
+        external_guids=["bulk-a", "bulk-b", "bulk-c"],
+        hidden=True,
+    )
+    assert count == 3
+
+    hidden = service.hidden_guids(user_id=20)
+    assert hidden == {"bulk-a", "bulk-b", "bulk-c"}
+
+    # Clear one flag via bulk and add another flag.
+    service.apply_bulk_interactions(
+        user_id=20,
+        external_guids=["bulk-a", "bulk-b"],
+        hidden=False,
+        bookmarked=True,
+    )
+    hidden = service.hidden_guids(user_id=20)
+    bookmarked = service.bookmarked_guids(user_id=20)
+    assert hidden == {"bulk-c"}
+    assert bookmarked == {"bulk-a", "bulk-b"}

@@ -135,6 +135,16 @@
   pointer-events: none;
 }
 
+.work-control-card .work-new-posts-banner {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.work-control-card > .work-bulk-toolbar {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
 .work-filters-wrap {
   margin-bottom: 12px;
 }
@@ -490,6 +500,15 @@
   color: var(--muted, #8b92a8);
 }
 
+.work-pagination__page {
+  min-width: 38px;
+  text-align: center;
+}
+
+.work-pagination__page.active {
+  cursor: default;
+}
+
 .avalone-work .job-title-original,
 .avalone-work .job-body-original {
   display: none;
@@ -533,17 +552,42 @@
     align-items: flex-start;
   }
 
-  .work-header__actions {
-    width: 100%;
-    justify-content: space-between;
+  .work-control-card {
+    top: calc(var(--header-h, 56px) + 6px);
+    padding: 10px;
   }
 
-  .work-view-tabs {
-    order: 2;
+  .work-control-card__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .work-control-card__header .work-view-tabs {
+    width: 100%;
+    order: 0;
+    display: flex;
+  }
+
+  .work-control-card__header .work-view-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 6px;
+  }
+
+  .work-control-card__toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .work-control-card .work-new-posts-banner {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .work-bulk-toolbar {
     flex-wrap: wrap;
+    gap: 10px;
   }
 
   .work-bulk-count {
@@ -558,5 +602,9 @@
 
   .job-card__select {
     padding-top: 0;
+  }
+
+  .job-card__actions {
+    flex-wrap: wrap;
   }
 }

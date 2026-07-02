@@ -41,6 +41,13 @@
       </button>
     </div>
 
+    <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
+      <span>{{ t('work_new_posts_banner', lang=lang) }}</span>
+      <button type="button" class="avalone-btn avalone-btn-primary" id="work-new-posts-reload">
+        {{ t('work_new_posts_reload', lang=lang) }}
+      </button>
+    </div>
+
     <div class="work-control-card__body" id="work-control-body">
       <div class="work-view-chips">
         {% if current_view == 'feed' %}
@@ -138,31 +145,24 @@
         </form>
       </div>
 
-      {% if jobs %}
-      <div class="work-bulk-toolbar" id="work-bulk-toolbar">
-        <label class="work-bulk-checkbox">
-          <input type="checkbox" id="work-select-all" aria-label="{{ t('work_select_all', lang=lang) }}">
-          <span>{{ t('work_select_all', lang=lang) }}</span>
-        </label>
-        <div class="work-bulk-actions">
-          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="hidden" data-value="true">{{ t('work_action_hide', lang=lang) }}</button>
-          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="bookmarked" data-value="true">{{ t('work_action_bookmark', lang=lang) }}</button>
-          <button type="button" class="avalone-btn avalone-btn-secondary" data-action="liked" data-value="true">{{ t('work_action_like', lang=lang) }}</button>
-          {% if current_view == 'hidden' %}
-          <button type="button" class="avalone-btn avalone-btn-primary" data-action="hidden" data-value="false">{{ t('work_action_show', lang=lang) }}</button>
-          {% endif %}
-        </div>
-        <span class="work-bulk-count" id="work-bulk-count"></span>
-      </div>
-      {% endif %}
     </div>
-  </div>
-
-  <div id="work-new-posts-banner" class="work-new-posts-banner" style="display:none;">
-    <span>{{ t('work_new_posts_banner', lang=lang) }}</span>
-    <button type="button" class="avalone-btn avalone-btn-primary" id="work-new-posts-reload">
-      {{ t('work_new_posts_reload', lang=lang) }}
-    </button>
+    {% if jobs %}
+    <div class="work-bulk-toolbar" id="work-bulk-toolbar">
+      <label class="work-bulk-checkbox">
+        <input type="checkbox" id="work-select-all" aria-label="{{ t('work_select_all', lang=lang) }}">
+        <span>{{ t('work_select_all', lang=lang) }}</span>
+      </label>
+      <div class="work-bulk-actions">
+        <button type="button" class="avalone-btn avalone-btn-secondary" data-action="hidden" data-value="true">{{ t('work_action_hide', lang=lang) }}</button>
+        <button type="button" class="avalone-btn avalone-btn-secondary" data-action="bookmarked" data-value="true">{{ t('work_action_bookmark', lang=lang) }}</button>
+        <button type="button" class="avalone-btn avalone-btn-secondary" data-action="liked" data-value="true">{{ t('work_action_like', lang=lang) }}</button>
+        {% if current_view == 'hidden' %}
+        <button type="button" class="avalone-btn avalone-btn-primary" data-action="hidden" data-value="false">{{ t('work_action_show', lang=lang) }}</button>
+        {% endif %}
+      </div>
+      <span class="work-bulk-count" id="work-bulk-count"></span>
+    </div>
+    {% endif %}
   </div>
 
   {% if total_jobs is defined %}
@@ -197,7 +197,7 @@
         </div>
 
         <h2 class="job-card__title job-title-translated">
-          {{ (tr.title or job.title)|safe }}
+          {{ tr.title or job.title }}
         </h2>
         <h2 class="job-card__title job-title-original">
           {{ job.title }}
@@ -218,10 +218,11 @@
         {% endif %}
 
         <div class="job-card__body job-body-translated">
-          {{ (tr.description or job.description_text or job.description_html)|safe }}
+          {% set body = tr.description or job.description_text or job.description_html %}
+          {{ body|striptags if body else '' }}
         </div>
         <div class="job-card__body job-body-original">
-          {{ job.description_text|safe }}
+          {{ job.description_text|striptags }}
         </div>
 
         <div class="job-card__contacts">
@@ -270,6 +271,13 @@
     {% else %}
     <span class="avalone-btn disabled">&larr; {{ t('work_prev', lang=lang) }}</span>
     {% endif %}
+    {% for p in page_range %}
+    {% if p == current_page %}
+    <span class="avalone-btn avalone-btn-primary work-pagination__page active" aria-current="page">{{ p }}</span>
+    {% else %}
+    <a class="avalone-btn work-pagination__page" href="?{{ request.query_params | replace_query_param('page', p) }}">{{ p }}</a>
+    {% endif %}
+    {% endfor %}
     <span class="work-pagination__info">{{ current_page }} {{ t('work_page_of', lang=lang) }} {{ total_pages }}</span>
     {% if current_page < total_pages %}
     <a class="avalone-btn" href="?{{ request.query_params | replace_query_param('page', current_page + 1) }}">{{ t('work_next', lang=lang) }} &rarr;</a>
@@ -280,7 +288,12 @@
   {% endif %}
   {% else %}
   <div class="avalone-card work-empty">
+    {% if selected_query or selected_location or selected_source or selected_visa or selected_job_type or selected_country or selected_days or show_hidden or only_saved %}
+    <p>{{ t('work_no_jobs_filtered', lang=lang) }}</p>
+    <a href="/work" class="avalone-btn avalone-btn-primary">{{ t('work_filter_reset', lang=lang) }}</a>
+    {% else %}
     <p>{{ t('work_no_jobs', lang=lang) }}</p>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -372,7 +385,12 @@ function setAvaloneLang(lang) {
       updateCardState(guid, data);
       if (action === 'hidden' && value === true && document.body.dataset.view !== 'hidden') {
         var card = document.querySelector('.job-card[data-guid="' + CSS.escape(guid) + '"]');
-        if (card) card.style.opacity = '0.4';
+        if (card) {
+          card.style.transition = 'opacity .2s, transform .2s';
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.98)';
+          setTimeout(function () { card.remove(); updateBulkBar(); }, 200);
+        }
       }
       showToast({{ t('work_toast_ok', lang=lang)|tojson }});
     }).catch(function () {

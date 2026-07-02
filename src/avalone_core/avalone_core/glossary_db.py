@@ -386,6 +386,7 @@ _PORTAL_SEED_EXTRA: list[dict[str, Any]] = [
     {"key": "app_work_desc",                 "ru": "Вакансии и подработки в Южной Корее.",                "en": "Jobs and part-time work in South Korea.",    "ko": "대한민국의 구인 및 아를바이트.", "kind": "ui", "module": "portal"},
     {"key": "work_page_title",               "ru": "Вакансии",                                            "en": "Job postings",                               "ko": "채용 공고", "kind": "ui", "module": "portal"},
     {"key": "work_no_jobs",                  "ru": "Пока нет объявлений. Нажмите «Обновить», чтобы загрузить.", "en": "No postings yet. Tap Refresh to load.",      "ko": "공고가 없습니다. 새로고침을 눌러주세요.", "kind": "ui", "module": "portal"},
+    {"key": "work_no_jobs_filtered",         "ru": "Нет объявлений по выбранным фильтрам.",               "en": "No postings match the selected filters.",    "ko": "선택한 필터에 맞는 공고가 없습니다.", "kind": "ui", "module": "portal"},
     {"key": "work_refresh",                  "ru": "Обновить",                                            "en": "Refresh",                                    "ko": "새로고침", "kind": "ui", "module": "portal"},
     {"key": "work_refreshing",               "ru": "Загрузка...",                                         "en": "Loading...",                                 "ko": "로딩 중...", "kind": "ui", "module": "portal"},
     {"key": "work_source_label",             "ru": "Источник",                                            "en": "Source",                                     "ko": "출처", "kind": "ui", "module": "portal"},

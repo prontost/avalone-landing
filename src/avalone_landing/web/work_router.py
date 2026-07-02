@@ -159,6 +159,9 @@ async def _render_feed(
         **filters,
     )
     total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    page_start = max(1, current_page - 2)
+    page_end = min(total_pages, current_page + 2)
+    page_range = list(range(page_start, page_end + 1))
 
     translations = service.attach_translations(jobs, loc_lang)
     interactions = service.attach_interactions(user_id, jobs)
@@ -203,6 +206,7 @@ async def _render_feed(
             "display_location": _display_location_list,
             "current_page": current_page,
             "total_pages": total_pages,
+            "page_range": page_range,
             "total_jobs": total,
             "page_size": PAGE_SIZE,
             "page_title_key": title_key,
@@ -391,8 +395,8 @@ async def work_events(request: Request):
                 new_posts = service.repository.list_since(last_check)
             except Exception:
                 new_posts = []
+            now = datetime.now(timezone.utc)
             if new_posts:
-                last_check = datetime.now(timezone.utc)
                 payload = json.dumps(
                     {
                         "count": len(new_posts),
@@ -401,6 +405,7 @@ async def work_events(request: Request):
                     ensure_ascii=False,
                 )
                 yield f"event: new-posts\ndata: {payload}\n\n"
+            last_check = now
 
     return StreamingResponse(
         event_generator(),

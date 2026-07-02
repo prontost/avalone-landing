@@ -148,21 +148,17 @@ class JobPostService:
         bookmarked: bool | None = None,
     ) -> int:
         """Apply the same interaction flag to many posts."""
-        count = 0
-        for guid in external_guids:
-            self.interactions.upsert(
-                user_id, guid, liked=liked, hidden=hidden, bookmarked=bookmarked
-            )
-            count += 1
-        return count
+        return self.interactions.upsert_many(
+            user_id, external_guids, liked=liked, hidden=hidden, bookmarked=bookmarked
+        )
 
     def hidden_guids(self, user_id: int) -> set[str]:
         """Return the set of post GUIDs hidden by the user."""
-        return set(self.interactions.list_hidden(user_id, limit=10000))
+        return set(self.interactions.list_hidden(user_id, limit=-1))
 
     def bookmarked_guids(self, user_id: int) -> set[str]:
         """Return the set of post GUIDs bookmarked by the user."""
-        return set(self.interactions.list_bookmarked(user_id, limit=10000))
+        return set(self.interactions.list_bookmarked(user_id, limit=-1))
 
     def _extract_fields(self, post: JobPost) -> None:
         """Pull employer, phone, email, visa, location, and job type from the text."""

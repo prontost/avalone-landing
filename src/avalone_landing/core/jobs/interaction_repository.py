@@ -60,6 +60,69 @@ class UserJobInteractionRepository:
 
         return self.get(user_id, external_guid)
 
+    def upsert_many(
+        self,
+        user_id: int,
+        external_guids: list[str],
+        *,
+        liked: bool | None = None,
+        hidden: bool | None = None,
+        bookmarked: bool | None = None,
+    ) -> int:
+        """Bulk update interaction flags for many posts at once.
+
+        ``True`` sets the timestamp, ``False`` clears it, ``None`` leaves it
+        unchanged. All rows share the same flag transition.
+        """
+        if not external_guids:
+            return 0
+        now = datetime.now(timezone.utc).isoformat()
+        liked_at = now if liked else None
+        hidden_at = now if hidden else None
+        bookmarked_at = now if bookmarked else None
+        liked_flag = 1 if liked is True else (0 if liked is False else -1)
+        hidden_flag = 1 if hidden is True else (0 if hidden is False else -1)
+        bookmarked_flag = 1 if bookmarked is True else (0 if bookmarked is False else -1)
+        rows = [
+            (
+                user_id,
+                guid,
+                liked_at,
+                hidden_at,
+                bookmarked_at,
+                now,
+                liked_flag,
+                liked_flag,
+                hidden_flag,
+                hidden_flag,
+                bookmarked_flag,
+                bookmarked_flag,
+            )
+            for guid in external_guids
+        ]
+        with connection() as con:
+            con.executemany(
+                """
+                INSERT INTO work_user_interactions
+                    (user_id, external_guid, liked_at, hidden_at, bookmarked_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, external_guid) DO UPDATE SET
+                    liked_at = CASE WHEN ? = 1 THEN EXCLUDED.liked_at
+                                    WHEN ? = 0 THEN NULL
+                                    ELSE liked_at END,
+                    hidden_at = CASE WHEN ? = 1 THEN EXCLUDED.hidden_at
+                                     WHEN ? = 0 THEN NULL
+                                     ELSE hidden_at END,
+                    bookmarked_at = CASE WHEN ? = 1 THEN EXCLUDED.bookmarked_at
+                                         WHEN ? = 0 THEN NULL
+                                         ELSE bookmarked_at END,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                rows,
+            )
+            con.commit()
+        return len(external_guids)
+
     def get(self, user_id: int, external_guid: str) -> UserJobInteraction:
         with connection() as con:
             row = con.execute(
