@@ -748,6 +748,7 @@ async function newCat(){
     headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})});
   const d = await r.json();
   if(d.error){ toast(T(d.error),false); return; }
+  DATA_VERSION++;          // сбрасываем кэш SW, чтобы новая категория сразу появилась
   await loadFormData();
   $('category').value = d.name;
   toast(T('t_cat_created'));
@@ -1211,11 +1212,23 @@ async function purgeAccount(encName){
   toast(T('t_purged')); await loadFormData(); await loadAccounts(); await refreshAfterWrite();
 }
 /* 🗑 КАТЕГОРИЯ/ИСТОЧНИК навсегда: каскадный перенос записей на другой ярлык,
-   выбираемый вручную; история цела. Удаляем из того же раздела, что открыт. */
+   выбираемый вручную; история цела. Удаляем из того же раздела, что открыт.
+   Если записей нет — удаляем сразу, без выбора целевого ярлыка. */
 async function purgeCategory(encName){
   const isInc = !$('incomes-block').classList.contains('hidden');
   const list = isInc ? INC_CACHE : CAT_CACHE;
   const me = decodeURIComponent(encName);
+  const u = await (await fetch(`/finance/api/account/${encName}/usage`)).json();
+  if(u.count === 0){
+    if(!confirm(T('cf_delete_empty_cat'))) return;
+    const d = await (await fetch(`/finance/api/account/${encName}/purge-category`,{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({move_to:''})})).json();
+    if(d.error){toast(T(d.error),false);return;}
+    toast(T('t_purged')); await loadFormData();
+    if(isInc) await loadIncomes(); else await loadCats();
+    await refreshAfterWrite();
+    return;
+  }
   const targets = list.filter(x=>x.name!==me && !x.disabled);
   if(!targets.length){ toast(T('t_purge_no_target'),false); return; }
   // простой выбор: пронумерованный prompt (выбор вручную, без дефолта)

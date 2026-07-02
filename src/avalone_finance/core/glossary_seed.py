@@ -459,6 +459,14 @@ _FINANCE_SEED = [
         "module": _MODULE,
         "desc": "Text of a confirmation dialog/prompt before a destructive or important action.",
     },    {
+        "key": "cf_delete_empty_cat",
+        "ru": "У категории нет записей. Удалить её?",
+        "en": "This category has no entries. Delete it?",
+        "ko": "이 카테고리에 기록이 없습니다. 삭제할까요?",
+        "kind": "ui",
+        "module": _MODULE,
+        "desc": "Confirmation dialog shown when deleting a category that has no transactions.",
+    },    {
         "key": "cf_purge_entry",
         "ru": "⚠️ Удалить запись НАВСЕГДА, без возможности вернуть?\n\nДля подтверждения введите слово: УДАЛИТЬ",
         "en": "⚠️ Delete this entry FOREVER? It cannot be undone.\n\nType the word DELETE to confirm:",

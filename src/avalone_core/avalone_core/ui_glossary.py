@@ -34,6 +34,7 @@ EXACT: dict[str, str] = {
     "tab_entry":            "Bottom navigation tab: home / new transaction entry. Shown as a house icon.",
     "trash_restore":        "Button to restore (un-hide / un-cancel) a previously hidden or cancelled item.",
     "flt_hide_cancelled":   "Checkbox to hide cancelled transactions from the journal list.",
+    "cf_delete_empty_cat":  "Confirmation dialog shown when deleting a category that has no transactions.",
 
     # First-run wizard (finance).
     "wz3_b":                "First-run wizard step: instruction to record current real balances (cash in various currencies, cards, credit card) as 'income' operations so balances reflect reality. Keep it concrete and encouraging.",

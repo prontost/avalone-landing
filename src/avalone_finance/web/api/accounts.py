@@ -223,18 +223,22 @@ async def category_purge(
     money_service: MoneyAccountService = Depends(get_money_account_service),
     catalog_service: CatalogService = Depends(get_catalog_service),
 ):
-    """ОКОНЧАТЕЛЬНОЕ удаление КАТЕГОРИИ/ИСТОЧНИКА: КАСКАДНЫЙ перенос — все его
-    проводки переносятся на другой ярлык (move_to, выбирается вручную), затем
-    пустой счёт удаляется. История цела (траты/доходы остаются под новым ярлыком)."""
+    """ОКОНЧАТЕЛЬНОЕ удаление КАТЕГОРИИ/ИСТОЧНИКА.
+
+    Если у счёта есть проводки — каскадный перенос на другой ярлык (move_to,
+    выбирается вручную), затем пустой счёт удаляется. История цела.
+    Если проводок нет — удаляем сразу, без выбора целевого ярлыка."""
+    entries = ledger_service.entries_of_account(account, docstatus=(1, 2))
     move_to = (payload.get("move_to") or "").strip()
-    if not move_to:
+    if entries and not move_to:
         return JSONResponse({"error": "move_to_required"}, status_code=400)
-    valid = {a["name"] for a in ledger_service.list_accounts(include_disabled=True)}
-    if move_to not in valid or move_to == account:
-        return JSONResponse({"error": "bad_target"}, status_code=400)
+    if move_to:
+        valid = {a["name"] for a in ledger_service.list_accounts(include_disabled=True)}
+        if move_to not in valid or move_to == account:
+            return JSONResponse({"error": "bad_target"}, status_code=400)
     try:
         # переносим каждую проводку: пересоздаём с заменой нужной стороны на move_to
-        for v in ledger_service.entries_of_account(account, docstatus=(1, 2)):
+        for v in entries:
             det = ledger_service.entry_detail(v)
             if not det:
                 continue
